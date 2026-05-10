@@ -23,7 +23,9 @@ The checklist is platform-neutral unless a line explicitly says Windows or Termu
 Windows-specific:
 
 - [ ] D Work paths are recognized
-- [ ] `D:\work\var\tmp` can be used as intake/staging
+- [ ] `D:\work\files\downloads` is recognized as the ordinary download intake folder
+- [ ] `D:\work\files\downloads\.tul\work` can be used as package-local staging
+- [ ] `D:\work\var\tmp` remains available for large scratch or non-download temp work
 - [ ] `D:\work\var\cache` is not treated as repo content
 - [ ] `D:\work\home` is not mutated during repo work
 
@@ -75,7 +77,7 @@ Termux-specific:
 
 ## v0.5 — watch / clipboard handoff
 
-- [ ] `tul watch <inbox>`
+- [ ] `tul watch <repo>`
 - [ ] `tul paste <repo>`
 - [ ] clipboard code block extraction
 - [ ] import/download polling
@@ -85,7 +87,7 @@ Termux-specific:
 Windows-specific:
 
 - [ ] clipboard staging works from D Work Terminal where feasible
-- [ ] watch mode can monitor an explicit D:\work intake folder
+- [ ] watch mode can monitor `D:\work\files\downloads` and stage packages under `.tul\work`
 
 Termux-specific:
 

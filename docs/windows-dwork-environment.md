@@ -1,8 +1,8 @@
-# Windows D:\work Environment
+# Windows `D:\work` Environment
 
 This document describes the Windows track for `tul`.
 
-The goal is a reproducible local terminal environment where AI-assisted work can happen inside `D:\work` without scattering state across the Windows user profile.
+The goal is a reproducible local terminal environment where AI-assisted work can happen inside `D:\work` without scattering state across the normal Windows user profile.
 
 ---
 
@@ -48,6 +48,7 @@ D:\work\
     backup\
     archive\
   files\
+    downloads\
 ```
 
 ---
@@ -75,11 +76,8 @@ D:\work\wt\wt.ps1
 Design rule:
 
 ```text
-D:\work\wt\wt.exe
-= normal/shared Windows Terminal
-
-D:\work\wt\D Work Terminal.lnk
-= user-specific D:\work development terminal
+D:\work\wt\wt.exe = normal/shared Windows Terminal
+D:\work\wt\D Work Terminal.lnk = user-specific D:\work development terminal
 ```
 
 This keeps the shared terminal normal while allowing the user-specific shortcut to load the D Work environment.
@@ -93,16 +91,13 @@ This keeps the shared terminal normal while allowing the user-specific shortcut 
 ```powershell
 $env:WORK_ROOT = "D:\work"
 $env:WORK_HOME = "D:\work\home"
-
 $env:HOME = "D:\work\home"
 $env:USERPROFILE = "D:\work\home"
-
 $env:CODEX_HOME = "D:\work\home\.codex"
-
+$env:GEMINI_HOME = "D:\work\home\.gemini"
 $env:NPM_CONFIG_PREFIX = "D:\work\tools\npm-global"
 $env:NPM_CONFIG_CACHE = "D:\work\var\cache\npm"
 $env:NPM_CONFIG_USERCONFIG = "D:\work\home\.npmrc"
-
 $env:PIP_CACHE_DIR = "D:\work\var\cache\pip"
 $env:XDG_CACHE_HOME = "D:\work\var\cache\xdg"
 ```
@@ -154,7 +149,9 @@ Python:
 - prefer python -m pip over pip
 ```
 
-The updater should never delete old runtimes immediately. It should move them into:
+The updater should never delete old runtimes immediately.
+
+It should move them into:
 
 ```text
 D:\work\var\backup\runtimes
@@ -225,9 +222,7 @@ git@github.com:humtr/tul.git
 
 ## 7. Local CA / TLS interception handling
 
-Some networks or security tools insert a local CA certificate.
-
-Node-based CLIs may fail with:
+Some networks or security tools insert a local CA certificate. Node-based CLIs may fail with:
 
 ```text
 self-signed certificate in certificate chain
@@ -259,33 +254,60 @@ except for short-lived emergency diagnosis.
 
 ## 8. Safe import workflow
 
-Do not unpack assistant-generated packages directly inside a repo.
+For ordinary Windows downloads, `tul` should not require the user to manually move files from the downloads folder into `D:\work\var\tmp`.
 
-Use:
+The normal intake location is:
 
 ```text
-D:\work\var\tmp\<task>
+D:\work\files\downloads
 ```
 
-Then copy only reviewed files into:
+For downloaded update packages, `tul` should create package-local working directories under:
 
 ```text
-D:\work\prj\<repo>
+D:\work\files\downloads\.tul\work
+```
+
+Example package work directory:
+
+```text
+D:\work\files\downloads\.tul\work\<package-id>\
+  source.zip
+  extracted\
+  report.md
+```
+
+Only reviewed output files should be copied into:
+
+```text
+D:\work\prj\
 ```
 
 Example flow:
 
 ```powershell
-New-Item -ItemType Directory -Force -Path D:\work\var\tmp\tul-roadmap | Out-Null
-Expand-Archive .\package.zip -DestinationPath D:\work\var\tmp\tul-roadmap\extracted -Force
-
-Copy-Item D:\work\var\tmp\tul-roadmap\extracted\docs\file.md D:\work\prj\tul\docs\ -Force
+$work = "D:\work\files\downloads\.tul\work\tul-roadmap-20260511-001530"
+New-Item -ItemType Directory -Force -Path $work | Out-Null
+Copy-Item D:\work\files\downloads\package.zip "$work\source.zip" -Force
+Expand-Archive "$work\source.zip" -DestinationPath "$work\extracted" -Force
+Copy-Item "$work\extracted\docs\file.md" D:\work\prj\tul\docs\ -Force
 ```
+
+After the update is complete, the package-local work directory may be deleted or moved to:
+
+```text
+D:\work\files\downloads\.tul\archive
+```
+
+Default behavior should prefer archiving over deletion. Deletion should require an explicit user request.
+
+`D:\work\var\tmp` remains available for large scratch work and non-download temporary work, but it is not required for ordinary downloaded update packages.
 
 `tul` should eventually automate this as:
 
 ```bash
 tul import latest
+tul update D:\work\prj\tul
 tul report D:\work\prj\tul
 ```
 
@@ -293,12 +315,30 @@ but it must still ask before applying or executing unknown scripts.
 
 ---
 
-## 9. Boundaries for AI agents
+## 9. LLM-user-terminal-LLM loop
+
+The Windows track should support a fluid loop across multiple LLM surfaces:
+
+```text
+ChatGPT / Codex / Gemini
+→ user decision
+→ D Work Terminal
+→ local repo/runtime
+→ tul report
+→ ChatGPT / Codex / Gemini
+```
+
+The important boundary is not which LLM is used.
+The important boundary is that the user remains the approval point for applying, committing, pushing, or changing local runtimes.
+
+---
+
+## 10. Boundaries for AI agents
 
 When running Codex/Gemini in a repo, the initial instruction should constrain the work root:
 
 ```text
-작업 범위는 D:\work\prj\<repo>로 제한해.
+작업 범위는 D:\work\prj\로 제한해.
 D:\work\home, D:\work\wt, D:\work\tools, D:\work\var, D:\work\archive는 수정하지 마.
 ```
 

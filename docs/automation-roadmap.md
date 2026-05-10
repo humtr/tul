@@ -2,22 +2,51 @@
 
 `tul` means **Terminal Update Loop**.
 
-This document defines the staged automation goals for `tul`: a local, human-controlled update loop for moving AI-generated artifacts between ChatGPT/Codex/Gemini, local terminal environments, and one or more GitHub repositories.
+This document defines the staged automation goals for `tul`: a local, human-controlled update loop for moving AI-generated artifacts between LLM assistants, users, terminal environments, local repositories, runtimes, and GitHub.
+
+The core loop is:
+
+```text
+LLM / assistant
+→ user
+→ terminal
+→ repo/runtime
+→ report
+→ LLM / assistant
+```
+
+The LLM may be:
+
+```text
+ChatGPT
+Codex
+Gemini
+or another assistant/model interface
+```
+
+The terminal may be:
+
+```text
+Windows D:\work Terminal
+Android Termux
+WSL
+another local shell
+```
 
 The project began as a **Termux Update Loop**, but the intended scope is now broader:
 
 ```text
-Terminal Update Loop
-= Windows D:\work track
-+ Android / Termux track
-+ shared safe update/report/apply primitives
+Terminal Update Loop =
+  Windows D:\work track
+  + Android / Termux track
+  + shared safe update/report/apply primitives
 ```
 
 The first practical targets are:
 
 ```text
 Windows: D:\work\prj\ai and D:\work\prj\tul
-Termux:  ~/prj/ai and future Android-side repos
+Termux: ~/prj/ai and future Android-side repos
 ```
 
 ---
@@ -37,23 +66,25 @@ Keep every update resumable and reportable.
 The intended loop is:
 
 ```text
-AI assistant produces package or instructions
--> user places the artifact in a safe intake area
--> tul imports or stages it outside the target repo
--> tul identifies the target project/update package
--> tul applies only with user confirmation
--> tul validates the repo
--> tul generates an assistant-ready report
--> user performs manual checks when needed
--> user commits/pushes explicitly
--> assistant verifies remote state if requested
+AI assistant produces package, patch, code block, or instructions
+→ user explicitly transfers or approves the artifact
+→ tul imports or stages it outside the target repo
+→ tul identifies the target project/update package
+→ tul applies only with user confirmation
+→ tul validates the repo
+→ tul generates an assistant-ready report
+→ user performs manual checks when needed
+→ user commits/pushes explicitly
+→ assistant verifies remote state if requested
 ```
+
+`tul` should not depend on one assistant product. It should support work moving fluidly among ChatGPT, Codex, Gemini, local terminal sessions, and GitHub.
 
 ---
 
 ## 2. Supported environment tracks
 
-### 2.1 Windows D:\work track
+### 2.1 Windows `D:\work` track
 
 The Windows track covers the local environment built around:
 
@@ -66,7 +97,8 @@ D:\work\home\.codex, .gemini, .ssh
 D:\work\tools\runtimes\git, nodejs, python
 D:\work\tools\npm-global
 D:\work\var\cache, tmp, backup, archive
-D:\work\prj\<repo>
+D:\work\files\downloads
+D:\work\prj\
 ```
 
 Windows-specific automation goals:
@@ -79,14 +111,18 @@ Windows-specific automation goals:
 - keep SSH config/keys under D:\work\home\.ssh
 - keep npm global packages under D:\work\tools\npm-global
 - keep npm/pip/XDG caches under D:\work\var\cache
-- use D:\work\var\tmp as artifact intake/staging
+- use D:\work\files\downloads as the ordinary download intake folder
+- use D:\work\files\downloads\.tul\work as the default package-local staging area
+- keep D:\work\var\tmp available for large scratch or non-download temporary work
 - use D:\work\var\backup and D:\work\var\archive for non-destructive moves
 - support GitHub SSH over port 443 through D:\work\home\.ssh\config
 - support local CA handling through NODE_EXTRA_CA_CERTS when required
 - support runtime update helpers for Git, Node.js, and Python
 ```
 
-The Windows track must treat `D:\work\prj\<repo>` as the only normal mutation target during repo work. It should not modify these paths unless explicitly requested:
+The Windows track must treat `D:\work\prj\` as the only normal mutation target during repo work.
+
+It should not modify these paths unless explicitly requested:
 
 ```text
 D:\work\home
@@ -104,9 +140,9 @@ The Termux track covers the original mobile handoff workflow:
 
 ```text
 ChatGPT artifact
--> /sdcard/Download
--> /sdcard/termux/import
--> ~/prj/<repo>
+→ /sdcard/Download
+→ /sdcard/termux/import
+→ ~/prj/
 ```
 
 Termux-specific automation goals:
@@ -272,8 +308,8 @@ Purpose: make update progress explicit and resumable.
 Cross-platform state root examples:
 
 ```text
-Windows: D:\work\var\tul
-Termux:  /sdcard/termux/import/tul
+Windows: D:\work\files\downloads\.tul
+Termux: /sdcard/termux/import/tul
 ```
 
 Suggested state layout:
@@ -281,17 +317,17 @@ Suggested state layout:
 ```text
 tul/
   inbox/
-  packages/
-  extracted/
+    packages/
+    extracted/
   projects/
-    <project>/
+    <project-id>/
       active.json
       reports/
       logs/
-  archive/
-    applied/
-    failed/
-    skipped/
+      archive/
+        applied/
+        failed/
+        skipped/
   index.json
 ```
 
@@ -304,11 +340,11 @@ Project identification:
 4. If ambiguous, append a short hash of repo root path.
 ```
 
-Example:
+Examples:
 
 ```text
 D:\work\prj\ai -> ai
-~/prj/ai          -> ai
+~/prj/ai -> ai
 ```
 
 `active.json` example:
@@ -359,10 +395,10 @@ Preferred package format:
 package.zip or package.tar.gz
   tul-package.yml
   apply.ps1 or apply.sh
-  rollback.ps1 or rollback.sh   # optional
-  README.md                     # optional
-  files/                        # optional
-  patches/                      # optional
+  rollback.ps1 or rollback.sh    # optional
+  README.md                      # optional
+  files/                         # optional
+  patches/                       # optional
 ```
 
 `tul-package.yml` example:
@@ -447,7 +483,7 @@ Commands:
 ```bash
 tul deploy <repo>
 tul remote-check <repo>
-tul commit <repo> --files <paths> --message "<message>"
+tul commit <repo> --files <file...> --message "<message>"
 ```
 
 `tul deploy`:
@@ -497,7 +533,7 @@ Purpose: reduce user handoff cost further without crawling ChatGPT.
 Commands:
 
 ```bash
-tul watch <inbox>
+tul watch <repo>
 tul paste <repo>
 ```
 
@@ -540,9 +576,9 @@ Allowed direction:
 
 ```text
 local terminal or backend
--> model API
--> package generation
--> tul package import/apply/verify/report loop
+→ model API
+→ package generation
+→ tul package import/apply/verify/report loop
 ```
 
 Avoid:
@@ -579,6 +615,8 @@ Scope:
 - inbox/import
 - basic project id
 - platform-aware intake directories
+- Windows download intake: D:\work\files\downloads
+- Windows package work root: D:\work\files\downloads\.tul\work
 - tul-managed staging
 - no automatic apply
 ```
@@ -593,7 +631,7 @@ Success criteria:
 - no destructive operations by default
 ```
 
-Target automation level: **2.5 -> 3**.
+Target automation level: **2.5 → 3**.
 
 ---
 
@@ -602,7 +640,7 @@ Target automation level: **2.5 -> 3**.
 Scope:
 
 ```text
-- projects/<project>/active.json
+- projects/<project-id>/active.json
 - tul update <repo>
 - tul resume <repo>
 - manifest package support
@@ -620,7 +658,7 @@ Success criteria:
 - failed update can be resumed or archived
 ```
 
-Target automation level: **3.5 -> 4**.
+Target automation level: **3.5 → 4**.
 
 ---
 
@@ -642,11 +680,14 @@ Scope:
 ```yaml
 name: ai
 repo: humtr/ai
+
 verify:
   commands:
     - git diff --check
+
 deploy:
   command: ./scripts/install-termux.sh
+
 clean:
   patterns:
     - "*.bak"
@@ -694,7 +735,7 @@ Target automation level: **4.5**.
 Scope:
 
 ```text
-- tul watch <inbox>
+- tul watch <repo>
 - tul paste <repo>
 - clipboard code block extraction
 - import/download polling
@@ -704,7 +745,7 @@ Scope:
 Success criteria:
 
 ```text
-- user no longer manually moves files from downloads into staging
+- user no longer manually moves files from downloads into a separate tmp directory
 - user can copy small code blocks into clipboard and stage them safely
 - tul still asks before applying or executing
 ```
@@ -772,7 +813,8 @@ These can be considered later only with explicit safeguards:
 
 `humtr/tul` should be used as the self-hosting documentation and tooling target.
 
-Do not make `tul` depend on `humtr/ai`. Use `humtr/ai` as an example and regression target.
+Do not make `tul` depend on `humtr/ai`.
+Use `humtr/ai` as an example and regression target.
 
 ---
 
@@ -831,4 +873,5 @@ This keeps the loop structured and prevents long-context confusion.
 
 `tul` should aim for **Level 3 in v0.1**, **Level 4 by v0.2/v0.3**, and **Level 5 by v1.0**.
 
-The goal is not full autonomy. The goal is a reliable, local, resumable, multi-project update loop where repetitive transport, verification, reporting, and state tracking are automated while risky decisions remain under user control.
+The goal is not full autonomy.
+The goal is a reliable, local, resumable, multi-project update loop where repetitive transport, verification, reporting, and state tracking are automated while risky decisions remain under user control.
