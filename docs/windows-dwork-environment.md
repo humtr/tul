@@ -303,19 +303,40 @@ Default behavior should prefer archiving over deletion. Deletion should require 
 
 `D:\work\var\tmp` remains available for large scratch work and non-download temporary work, but it is not required for ordinary downloaded update packages.
 
-`tul` should eventually automate this as:
+---
 
-```bash
-tul import latest
-tul update D:\work\prj\tul
-tul report D:\work\prj\tul
+## 9. Default update command
+
+The normal Windows flow should become:
+
+```powershell
+Set-Location D:\work\prj\ai
+tul sync .
+tul update . --files lib\ai_tui.py --message "Update ai TUI handling"
 ```
 
-but it must still ask before applying or executing unknown scripts.
+`update` should complete the loop:
+
+```text
+download intake
+→ package work root
+→ apply
+→ check
+→ sweep
+→ explicit-file stage
+→ staged check
+→ commit
+→ push
+→ remote verification
+→ rollback hint
+→ report
+```
+
+This is what allows Termux to continue from the same remote branch.
 
 ---
 
-## 9. LLM-user-terminal-LLM loop
+## 10. LLM-user-terminal-LLM loop
 
 The Windows track should support a fluid loop across multiple LLM surfaces:
 
@@ -324,16 +345,18 @@ ChatGPT / Codex / Gemini
 → user decision
 → D Work Terminal
 → local repo/runtime
+→ tul commit/push
 → tul report
 → ChatGPT / Codex / Gemini
 ```
 
 The important boundary is not which LLM is used.
+
 The important boundary is that the user remains the approval point for applying, committing, pushing, or changing local runtimes.
 
 ---
 
-## 10. Boundaries for AI agents
+## 11. Boundaries for AI agents
 
 When running Codex/Gemini in a repo, the initial instruction should constrain the work root:
 

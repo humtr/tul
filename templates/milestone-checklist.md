@@ -6,19 +6,19 @@ The checklist is platform-neutral unless a line explicitly says Windows or Termu
 
 ---
 
-## v0.1 — status / verify / report / clean / import
+## v0.1 — status / sync / check / report / import
 
 - [ ] `bin/tul help`
 - [ ] `bin/tul status <repo>`
-- [ ] `bin/tul verify <repo>`
+- [ ] `bin/tul sync <repo>`
+- [ ] `bin/tul check <repo>`
 - [ ] `bin/tul report <repo>`
-- [ ] `bin/tul clean <repo>`
 - [ ] `bin/tul import latest`
 - [ ] project id detection works
 - [ ] assistant-ready report format exists
 - [ ] safe staging area exists
-- [ ] no automatic apply
-- [ ] no automatic commit/push
+- [ ] no automatic apply yet
+- [ ] no `git add -A`
 
 Windows-specific:
 
@@ -32,57 +32,61 @@ Windows-specific:
 Termux-specific:
 
 - [ ] `/sdcard/Download` scan is limited and safe
-- [ ] `/sdcard/termux/import/tul` queue exists
+- [ ] `/sdcard/termux/import/tul/work` queue exists
 - [ ] no broad `/sdcard` scan
 
 ---
 
-## v0.2 — active update state / confirmed apply
+## v0.2 — update full-loop skeleton
 
 - [ ] `tul update <repo>`
-- [ ] `tul resume <repo>`
-- [ ] `active.json`
-- [ ] manifest package support
-- [ ] legacy apply script detection
-- [ ] apply confirmation prompt
-- [ ] verify after apply
-- [ ] report after apply
-- [ ] failed update can be resumed or archived
+- [ ] update imports latest package
+- [ ] update detects target package
+- [ ] update applies with confirmation when needed
+- [ ] update runs check after apply
+- [ ] update runs sweep
+- [ ] update runs report
+- [ ] update stops before commit if commit files/message are missing
+- [ ] split commands are available for debugging
 
 ---
 
-## v0.3 — .tul.yml project configuration / deploy hooks
+## v0.3 — update commit path
 
-- [ ] `.tul.yml`
-- [ ] custom verify commands
-- [ ] forbidden grep rules
-- [ ] clean patterns
-- [ ] deploy command
-- [ ] no project-specific hardcoding
-- [ ] Windows and Termux paths can be represented without hardcoding one platform
-
----
-
-## v0.4 — remote-check / safe commit helper
-
-- [ ] `tul remote-check <repo>`
-- [ ] `tul commit <repo> --files ... --message ...`
-- [ ] explicit file list required
-- [ ] verify before commit
-- [ ] untracked warnings
-- [ ] no `git add -A` by default
-- [ ] no automatic push
+- [ ] `tul update <repo> --files ... --message ...`
+- [ ] package manifest can provide commit files/message
+- [ ] explicit file list required when manifest is absent
+- [ ] no `git add -A`
+- [ ] staged diff check
+- [ ] staged file allowlist check
+- [ ] commit hash is recorded
+- [ ] rollback hint is prepared
 
 ---
 
-## v0.5 — watch / clipboard handoff
+## v0.4 — update push/remote verification
 
-- [ ] `tul watch <repo>`
-- [ ] `tul paste <repo>`
-- [ ] clipboard code block extraction
-- [ ] import/download polling
-- [ ] no automatic execution from clipboard
-- [ ] platform-specific clipboard integrations are optional
+- [ ] `tul update <repo>` pushes by default after successful commit
+- [ ] `--no-push` exists for debugging/manual intervention
+- [ ] update fetches after push
+- [ ] update verifies local HEAD == origin/<branch>
+- [ ] update prints `git revert <commit>` rollback instructions
+- [ ] update does not force-push
+- [ ] another platform can run `tul sync <repo>` and continue
+
+---
+
+## v0.5 — split commands and recovery
+
+- [ ] `tul import [latest|path]`
+- [ ] `tul apply <repo>`
+- [ ] `tul check <repo>`
+- [ ] `tul sweep <repo>`
+- [ ] `tul publish <repo>`
+- [ ] `tul rollback <repo>`
+- [ ] `publish` replaces the vague `finish` concept
+- [ ] `sweep` moves artifacts instead of deleting them
+- [ ] rollback uses revert + push by default
 
 Windows-specific:
 
@@ -104,5 +108,6 @@ Termux-specific:
 - [ ] multi-project examples
 - [ ] Windows D Work example
 - [ ] Android Termux example
+- [ ] `humtr/ai` regression example
 - [ ] assistant-ready reports
 - [ ] recovery documentation

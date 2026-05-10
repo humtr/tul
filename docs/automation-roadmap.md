@@ -4,6 +4,18 @@
 
 This document defines the staged automation goals for `tul`: a local, human-controlled update loop for moving AI-generated artifacts between LLM assistants, users, terminal environments, local repositories, runtimes, and GitHub.
 
+The first operational target is:
+
+```text
+humtr/ai
+```
+
+The self-hosting/tooling target is:
+
+```text
+humtr/tul
+```
+
 The core loop is:
 
 ```text
@@ -11,6 +23,7 @@ LLM / assistant
 → user
 → terminal
 → repo/runtime
+→ commit + push
 → report
 → LLM / assistant
 ```
@@ -39,7 +52,7 @@ The project began as a **Termux Update Loop**, but the intended scope is now bro
 Terminal Update Loop =
   Windows D:\work track
   + Android / Termux track
-  + shared safe update/report/apply primitives
+  + shared safe update/report/apply/publish primitives
 ```
 
 The first practical targets are:
@@ -59,8 +72,17 @@ Termux: ~/prj/ai and future Android-side repos
 Automate repetition.
 Ask before risky execution.
 Never delete when moving is safer.
-Never commit or push by default.
+Never use git add -A by default.
+Never force-push by default.
 Keep every update resumable and reportable.
+```
+
+Important clarification:
+
+```text
+`tul update <repo>` is explicit update intent.
+After a successful commit, it should push by default so another platform can continue from the same remote state.
+Use --no-commit or --no-push only for debugging/manual intervention.
 ```
 
 The intended loop is:
@@ -70,12 +92,15 @@ AI assistant produces package, patch, code block, or instructions
 → user explicitly transfers or approves the artifact
 → tul imports or stages it outside the target repo
 → tul identifies the target project/update package
-→ tul applies only with user confirmation
+→ tul applies with user confirmation where needed
 → tul validates the repo
+→ tul sweeps local artifacts
+→ tul stages intended files only
+→ tul commits
+→ tul pushes
+→ tul verifies remote HEAD
 → tul generates an assistant-ready report
-→ user performs manual checks when needed
-→ user commits/pushes explicitly
-→ assistant verifies remote state if requested
+→ user/assistant decide next step
 ```
 
 `tul` should not depend on one assistant product. It should support work moving fluidly among ChatGPT, Codex, Gemini, local terminal sessions, and GitHub.
@@ -141,7 +166,7 @@ The Termux track covers the original mobile handoff workflow:
 ```text
 ChatGPT artifact
 → /sdcard/Download
-→ /sdcard/termux/import
+→ /sdcard/termux/import/tul/work
 → ~/prj/
 ```
 
@@ -154,6 +179,7 @@ Termux-specific automation goals:
 - preserve sha256, source path, and extraction logs
 - support termux-clipboard-get / termux-clipboard-set where available
 - keep user confirmation before executing generated scripts
+- push by default after a successful update so Windows can continue from remote
 ```
 
 Allowed source directories:
@@ -167,7 +193,48 @@ Do not scan all of `/sdcard`.
 
 ---
 
-## 3. Automation levels
+## 3. Command model
+
+Primary command:
+
+```bash
+tul update <repo>
+```
+
+`update` is the default full-loop command.
+
+Split/debug/recovery commands:
+
+```bash
+tul sync <repo>
+tul status <repo>
+tul report <repo>
+tul import [latest|path]
+tul apply <repo>
+tul check <repo>
+tul sweep <repo>
+tul publish <repo>
+tul rollback <repo>
+```
+
+Naming decisions:
+
+```text
+- update = default full-loop command
+- sync = platform handoff / remote alignment
+- check = verification
+- sweep = move artifacts out of repo, not delete
+- publish = commit + push + remote verification
+- rollback = revert + push
+- finish is not used because it is vague
+- highway is documentation metaphor only
+```
+
+See [`docs/commands.md`](commands.md).
+
+---
+
+## 4. Automation levels
 
 ### Level 0 — Manual human bridge
 
@@ -203,57 +270,27 @@ project-specific verify scripts
 D:\work\bin\ai helper commands
 ```
 
-Typical checks:
-
-```bash
-git status --short
-git diff --check
-git diff --stat
-python -m py_compile ...
-bash -n ...
-npm test
-```
-
-Automation scope:
-
-```text
-- project-specific install
-- project-specific validation
-- runtime deployment
-```
-
-Still manual:
-
-```text
-- artifact intake
-- package extraction
-- update state tracking
-- report generation
-- commit/push
-```
-
 Target completion criteria:
 
 ```text
-- each project can define its own install/deploy/verify commands
+- each project can define its own install/deploy/check commands
 - no project-specific logic is hardcoded into tul
 ```
 
 ---
 
-### Level 2 — Single `tul` CLI for status, verify, report, clean, import
+### Level 2 — Single `tul` CLI for status, sync, check, report, import
 
-Purpose: introduce one command-line entry point.
+Purpose: introduce one command-line entry point and support cross-platform continuation.
 
 Initial command set:
 
 ```bash
 tul help
 tul status <repo>
-tul verify <repo>
+tul sync <repo>
+tul check <repo>
 tul report <repo>
-tul clean <repo>
-tul inbox
 tul import latest
 ```
 
@@ -261,30 +298,24 @@ Expected behavior:
 
 ```text
 tul status:
-- show repo root
-- show branch
-- show HEAD
-- show upstream status if available
-- show git status --short
-- show recent commits
+- show repo root, branch, HEAD, upstream, dirty/ahead/behind/diverged state
 
-tul verify:
-- run repo-specific .tul.yml verification if present
+tul sync:
+- dirty check
+- git fetch
+- pull --ff-only when safe
+- stop on diverged state
+
+tul check:
+- run repo-specific .tul.yml checks if present
 - otherwise run safe fallback checks
-- show command results clearly
-- stop on failure unless --keep-going is explicitly provided later
 
 tul report:
 - generate assistant-ready markdown report
-- include repo, branch, HEAD, status, diff stat, validation summary, and active package
 
-tul clean:
-- move known temporary artifacts out of the repo
-- never delete by default
-
-tul inbox / tul import:
+tul import:
 - scan allowed source directories
-- copy candidate packages into tul-managed import storage
+- copy candidate packages into tul-managed work root
 - compute sha256
 - detect duplicates
 - extract archives into tul-managed staging
@@ -294,283 +325,106 @@ tul inbox / tul import:
 Target completion criteria:
 
 ```text
-- user can run `tul report <repo>` and paste the result into ChatGPT
-- user can run `tul import latest` instead of manual cp/tar/zip discovery
+- user can run `tul sync <repo>` when switching Windows/Termux
+- user can run `tul report <repo>` and paste the result into an LLM
 - no automatic patch execution yet
 ```
 
----
-
-### Level 3 — Import queue, active update state, and multi-project support
-
-Purpose: make update progress explicit and resumable.
-
-Cross-platform state root examples:
-
-```text
-Windows: D:\work\files\downloads\.tul
-Termux: /sdcard/termux/import/tul
-```
-
-Suggested state layout:
-
-```text
-tul/
-  inbox/
-    packages/
-    extracted/
-  projects/
-    <project-id>/
-      active.json
-      reports/
-      logs/
-      archive/
-        applied/
-        failed/
-        skipped/
-  index.json
-```
-
-Project identification:
-
-```text
-1. If repo has .tul.yml:name, use that.
-2. Else use git remote slug if available.
-3. Else use repo directory basename.
-4. If ambiguous, append a short hash of repo root path.
-```
-
-Examples:
-
-```text
-D:\work\prj\ai -> ai
-~/prj/ai -> ai
-```
-
-`active.json` example:
-
-```json
-{
-  "project": "ai",
-  "repo_path": "D:\\work\\prj\\ai",
-  "package_name": "ai_stage65_run_highlight.zip",
-  "sha256": "example",
-  "state": "imported",
-  "started_at": "2026-05-10T17:10:00+09:00",
-  "branch_at_start": "main",
-  "head_at_start": "example",
-  "apply_script": null
-}
-```
-
-State model v0.1:
-
-```text
-imported
-extracted
-active
-applied
-verified
-failed
-archived
-```
-
-Important behavior:
-
-```text
-- if active update exists, tul must not overwrite it silently
-- tul update should offer resume / archive / mark failed / abort
-- tul report should include active update state
-```
+Target automation level: **2 → 3**.
 
 ---
 
-### Level 4 — Confirmed apply with package manifest
+### Level 3 — `update` full-loop skeleton
 
-Purpose: let `tul` apply AI-generated packages safely.
+Purpose: make `tul update <repo>` the default command path.
 
-Preferred package format:
-
-```text
-package.zip or package.tar.gz
-  tul-package.yml
-  apply.ps1 or apply.sh
-  rollback.ps1 or rollback.sh    # optional
-  README.md                      # optional
-  files/                         # optional
-  patches/                       # optional
-```
-
-`tul-package.yml` example:
-
-```yaml
-name: ai-stage65-run-highlight
-version: 1
-target:
-  repo: humtr/ai
-  project: ai
-apply:
-  script: apply.ps1
-verify:
-  commands:
-    - git diff --check
-    - python -m py_compile lib/*.py
-forbidden:
-  - pattern: ai_registry
-    paths:
-      - bin
-      - lib
-      - config
-      - README.md
-```
-
-Fallback for legacy packages:
+Scope:
 
 ```text
-1. use tul-package.yml apply.script if present
-2. else find apply*.ps1 / apply*.sh
-3. else find install*.ps1 / install*.sh
-4. else find *patch*.py
-5. else report "no apply script found"
+- import latest package
+- identify target package
+- apply with confirmation when needed
+- check after apply
+- sweep repo-local artifacts
+- check before commit
+- report
+- stop before commit if commit files/message are missing
 ```
 
-Execution rule:
+Success criteria:
 
 ```text
-Never execute automatically by default.
+- `tul update <repo> --no-commit` can run import/apply/check/sweep/report
+- `tul update <repo>` stops safely before commit when commit metadata is missing
+- split commands exist for debugging but are not the default path
 ```
 
-Always show:
-
-```text
-- package name
-- sha256
-- target repo
-- target branch
-- apply script
-- changed/created files if known
-- confirmation prompt
-```
-
-Example confirmation:
-
-```text
-Package: ai-stage65-run-highlight
-Target: D:\work\prj\ai
-Branch: main
-Apply: apply.ps1
-
-Run this package? [y/N]
-```
-
-After apply:
-
-```text
-- run verify
-- generate report
-- preserve logs
-- mark active state as applied or failed
-```
+Target automation level: **3 → 4**.
 
 ---
 
-### Level 4.5 — Deploy, remote-check, and safe commit assistance
+### Level 4 — `update` commit/push path
 
-Purpose: automate surrounding tasks while preserving final control.
+Purpose: make `tul update <repo>` complete the cross-platform handoff.
 
-Commands:
-
-```bash
-tul deploy <repo>
-tul remote-check <repo>
-tul commit <repo> --files <file...> --message "<message>"
-```
-
-`tul deploy`:
+Scope:
 
 ```text
-- read .tul.yml deploy.command
-- show command before execution
-- ask for confirmation
+- commit metadata from tul-package.yml
+- CLI --files/--message fallback
+- explicit-file staging only
+- staged check
+- commit
+- push
+- fetch
+- local HEAD == origin/<branch> verification
+- rollback hint
 ```
 
-`tul remote-check`:
+Success criteria:
 
 ```text
-- git fetch origin
-- show local HEAD
-- show upstream HEAD
-- show whether local branch is ahead/behind/up-to-date
-- show untracked files
-- do not push
+- `tul update <repo> --files ... --message ...` commits and pushes by default
+- no `git add -A`
+- no force-push
+- rollback command is printed
+- another platform can immediately `tul sync <repo>` and continue
 ```
 
-`tul commit`:
-
-```text
-- never use git add -A by default
-- require explicit --files
-- run verify first unless --no-verify is explicitly provided later
-- show diff stat
-- show untracked warnings
-- ask before commit
-```
-
-Target completion criteria:
-
-```text
-- user no longer manually assembles push status reports
-- user can commit known files safely without accidentally committing backups
-- pushing remains explicit user action
-```
+Target automation level: **4 → 4.5**.
 
 ---
 
-### Level 5 — Watch mode and clipboard handoff
+### Level 5 — Cross-platform package/state stabilization
 
-Purpose: reduce user handoff cost further without crawling ChatGPT.
+Purpose: stabilize Windows/Termux continuation.
 
-Commands:
-
-```bash
-tul watch <repo>
-tul paste <repo>
-```
-
-`tul watch`:
+Scope:
 
 ```text
-- periodically scan allowed intake directories
-- detect new packages
-- import into tul queue
-- notify user
-- do not apply without confirmation
+- platform-specific intake/work/archive/backup roots
+- active update state
+- tul-package.yml package manifest
+- publish/rollback split commands
+- clipboard/report convenience
 ```
 
-`tul paste`:
+Success criteria:
 
 ```text
-- read clipboard when platform support exists
-- detect fenced code blocks
-- extract file path hints such as ```file:path/to/file
-- save to staging area, not directly over repo by default
-- show diff/apply instructions
+- Windows can update and push, Termux can sync and continue
+- Termux can update and push, Windows can sync and continue
+- active update state can be resumed or archived
+- rollback uses revert + push
 ```
 
-Safety notes:
-
-```text
-- no ChatGPT UI crawling
-- no cookie/session handling
-- no automatic execution from clipboard
-- large files should still use package handoff
-```
+Target automation level: **5**.
 
 ---
 
 ### Level 6 — API/backend runner, not ChatGPT web crawling
 
-Purpose: optional future automation for users who want API-based workflows.
+Purpose: optional future automation for API-based workflows.
 
 Allowed direction:
 
@@ -578,7 +432,7 @@ Allowed direction:
 local terminal or backend
 → model API
 → package generation
-→ tul package import/apply/verify/report loop
+→ tul package import/apply/check/publish/report loop
 ```
 
 Avoid:
@@ -590,220 +444,24 @@ Avoid:
 - bypassing rate limits or protection mechanisms
 ```
 
-Target completion criteria:
-
-```text
-- if model generation is automated, it happens through an API/backend path
-- tul remains local package/update orchestrator
-- secrets are never logged
-```
-
 ---
 
-## 4. Recommended milestone plan
-
-### v0.1 — Local status, verification, reporting, and import queue
-
-Scope:
-
-```text
-- bin/tul
-- status
-- verify
-- report
-- clean
-- inbox/import
-- basic project id
-- platform-aware intake directories
-- Windows download intake: D:\work\files\downloads
-- Windows package work root: D:\work\files\downloads\.tul\work
-- tul-managed staging
-- no automatic apply
-```
-
-Success criteria:
-
-```text
-- `tul status <repo>` works on Windows and Termux
-- `tul verify <repo>` works
-- `tul report <repo>` produces assistant-ready markdown
-- `tul import latest` copies and extracts latest package
-- no destructive operations by default
-```
-
-Target automation level: **2.5 → 3**.
-
----
-
-### v0.2 — Active update state and confirmed apply
-
-Scope:
-
-```text
-- projects/<project-id>/active.json
-- tul update <repo>
-- tul resume <repo>
-- manifest package support
-- legacy apply script detection
-- confirmation prompt
-- verify after apply
-- report after apply
-```
-
-Success criteria:
-
-```text
-- `tul update <repo>` can safely process an AI-generated package
-- active update is never overwritten silently
-- failed update can be resumed or archived
-```
-
-Target automation level: **3.5 → 4**.
-
----
-
-### v0.3 — Project configuration and deployment hooks
-
-Scope:
-
-```text
-- .tul.yml support
-- custom verify commands
-- forbidden grep rules
-- clean patterns
-- deploy command
-- tul deploy <repo>
-```
-
-`.tul.yml` candidate:
-
-```yaml
-name: ai
-repo: humtr/ai
-
-verify:
-  commands:
-    - git diff --check
-
-deploy:
-  command: ./scripts/install-termux.sh
-
-clean:
-  patterns:
-    - "*.bak"
-    - "*.diff"
-```
-
-Success criteria:
-
-```text
-- `.tul.yml` controls verification and deploy behavior
-- different repos can define different behavior
-- no project-specific logic is hardcoded in tul
-```
-
-Target automation level: **4**.
-
----
-
-### v0.4 — Remote check and safe commit helper
-
-Scope:
-
-```text
-- tul remote-check <repo>
-- tul commit <repo> --files ... --message ...
-- explicit file list required
-- verify before commit
-- untracked warnings
-```
-
-Success criteria:
-
-```text
-- user can check push status without asking assistant
-- user can commit only selected files
-- backups are not accidentally committed
-```
-
-Target automation level: **4.5**.
-
----
-
-### v0.5 — Watch and clipboard handoff
-
-Scope:
-
-```text
-- tul watch <repo>
-- tul paste <repo>
-- clipboard code block extraction
-- import/download polling
-- optional platform notification later
-```
-
-Success criteria:
-
-```text
-- user no longer manually moves files from downloads into a separate tmp directory
-- user can copy small code blocks into clipboard and stage them safely
-- tul still asks before applying or executing
-```
-
-Target automation level: **5**.
-
----
-
-### v1.0 — Stable multi-project update loop
-
-Scope:
-
-```text
-- package manifest stabilized
-- queue/state stable
-- report format stable
-- rollback hook supported
-- .tul.yml stable
-- docs complete
-- examples include Windows D:\work and Android Termux
-```
-
-Success criteria:
-
-```text
-- tul can support at least two different local repos
-- tul can recover from interrupted update
-- tul can generate reliable assistant-ready reports
-- user can complete an update with minimal manual shell work
-```
-
-Target automation level: **5**.
-
----
-
-## 5. What not to automate yet
+## 5. What not to automate by default
 
 Do not automate these by default:
 
 ```text
 - ChatGPT web UI crawling
-- automatic apply without confirmation
 - git add -A
-- automatic push
+- force push
 - deleting downloaded files
 - scanning all of /sdcard
-- executing unknown scripts
+- executing unknown scripts without confirmation
 - logging secrets
 - storing browser cookies
 ```
 
-These can be considered later only with explicit safeguards:
-
-```text
-- tul commit with explicit --files
-- tul watch with confirmation
-- API/backend integration
-```
+Commit/push is allowed as part of explicit `tul update <repo>` intent.
 
 ---
 
@@ -820,7 +478,7 @@ Use `humtr/ai` as an example and regression target.
 
 ## 7. Assistant handoff contract
 
-`tul report` should produce text that can be pasted directly into ChatGPT.
+`tul report` should produce text that can be pasted directly into an LLM.
 
 Required report sections:
 
@@ -837,6 +495,9 @@ Validation:
 Diff stat:
 Untracked files:
 Recent commits:
+Commit:
+Push verified:
+Rollback:
 Manual checks:
 Question:
 ```
@@ -852,26 +513,36 @@ Backup paths:
 Suggested next action:
 ```
 
-This keeps the loop structured and prevents long-context confusion.
-
 ---
 
 ## 8. Definition of done by milestone
 
 | Milestone | Done means |
 |---|---|
-| v0.1 | user can inspect, verify, report, clean, and import packages |
-| v0.2 | user can run confirmed apply/update and resume active state |
-| v0.3 | per-project `.tul.yml` controls verify/deploy/clean |
-| v0.4 | user can check remote and commit explicit files safely |
-| v0.5 | user can avoid manual download/import movement and stage clipboard snippets |
-| v1.0 | stable multi-project package/update loop with docs, examples, and recovery paths |
+| v0.1 | user can status/sync/check/report/import |
+| v0.2 | `update` can import/apply/check/sweep/report and stop safely |
+| v0.3 | `update` supports explicit files/message, staged check, commit |
+| v0.4 | `update` pushes by default and verifies remote HEAD |
+| v0.5 | Windows/Termux continuation is stable |
+| v1.0 | stable multi-project update loop with docs, examples, rollback, and recovery paths |
 
 ---
 
 ## 9. Summary
 
-`tul` should aim for **Level 3 in v0.1**, **Level 4 by v0.2/v0.3**, and **Level 5 by v1.0**.
+`tul` should aim for **a full-loop `update` command**.
 
 The goal is not full autonomy.
-The goal is a reliable, local, resumable, multi-project update loop where repetitive transport, verification, reporting, and state tracking are automated while risky decisions remain under user control.
+
+The goal is a reliable, local, resumable, multi-platform update loop where:
+
+```text
+AI artifact
+→ terminal apply/check
+→ commit
+→ push
+→ remote verification
+→ LLM report
+```
+
+is fast and hard to forget.
