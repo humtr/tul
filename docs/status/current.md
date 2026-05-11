@@ -72,3 +72,12 @@ Status: package prepared. Recovery/debug surface includes `tul import`, `tul sta
 ## Recovery state selection update
 
 `tul import <project> --latest` creates a validated/imported state without a commit. That state may become the newest state, but it is not rollbackable. `tul rollback <project>` now skips non-commit states and selects the newest rollbackable state with a commit. `tul state <project>` shows a latest rollbackable state hint when the newest state has no commit.
+
+
+## Stage 4 status
+
+Current next focus: init/config onboarding.
+
+The repo now expects `tul init` to become the canonical onboarding command for
+new environments and new projects. Manual `config.yml` edits should become a
+fallback, not the normal path.

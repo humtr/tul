@@ -113,3 +113,23 @@ Status: package prepared. Recovery/debug surface includes `tul import`, `tul sta
 ## Recovery state selection update
 
 `tul import <project> --latest` creates a validated/imported state without a commit. That state may become the newest state, but it is not rollbackable. `tul rollback <project>` now skips non-commit states and selects the newest rollbackable state with a commit. `tul state <project>` shows a latest rollbackable state hint when the newest state has no commit.
+
+
+## Stage 4 — Init/config onboarding
+
+Status: in progress in `tul_init_config_onboarding_v1`.
+
+Goal: make `tul init <alias|path|slug>` the standard way to put a repo under the
+loop. Init should register global aliases, create or repair `.tul.yml`, preserve
+existing config, warn on branch mismatch, and print an initial-review handoff.
+
+Acceptance:
+
+```bash
+tul init tul
+tul init ~/prj/tul
+tul init humtr/tul
+tul projects
+tul status tul
+tul handoff tul
+```

@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -53,10 +54,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"tul {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p = sub.add_parser("init", help="register or initialize a repo for tul")
-    p.add_argument("target")
-    p.add_argument("--branch")
-    p.add_argument("--handoff", action="store_true")
+    p = sub.add_parser("init", help="onboard a repo into the tul loop")
+    p.add_argument("target", help="project alias, GitHub slug, or local repo path")
+    p.add_argument("--branch", help="expected branch for .tul.yml and update guard")
+    p.add_argument("--project", help="project alias to register in global config")
+    p.add_argument("--no-handoff", action="store_true", help="do not print the initial-review handoff")
+    p.add_argument("--copy-handoff", action="store_true", help="copy handoff to clipboard command when configured")
 
     p = sub.add_parser("status", help="show repo status")
     p.add_argument("target")
@@ -161,11 +164,16 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         return 0
 
     if command == "init":
-        repo, project = init_project(args.target, branch=args.branch)
-        print(f"Initialized {project}: {repo}")
-        if args.handoff:
-            ctx = resolve_project(project)
-            print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="initial-review", expected_repo=ctx.expected_repo))
+        result = init_project(args.target, branch=args.branch, project=args.project)
+        print(result.summary())
+        if not args.no_handoff:
+            ctx = resolve_project(result.project_id)
+            handoff = generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="initial-review", expected_repo=ctx.expected_repo)
+            print("\n--- INITIAL REVIEW HANDOFF ---\n")
+            print(handoff)
+            if args.copy_handoff:
+                copied = copy_to_clipboard(handoff, ctx.global_config)
+                print(f"\nClipboard: {copied}")
         return 0
 
     if command == "install":
@@ -414,6 +422,24 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
     raise TulError(f"unknown command: {command}")
 
 
+
+
+def copy_to_clipboard(text: str, config: dict) -> str:
+    command = ((config.get("platform") or {}).get("clipboard_command") or "").strip()
+    if not command:
+        return "not configured"
+    try:
+        if command == "termux-clipboard-set":
+            proc = subprocess.run([command], input=text, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        elif command == "Set-Clipboard":
+            proc = subprocess.run(["powershell.exe", "-NoProfile", "-Command", "Set-Clipboard"], input=text, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            proc = subprocess.run(command, input=text, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        if proc.returncode == 0:
+            return "copied"
+        return f"failed: {proc.stderr.strip() or proc.stdout.strip()}"
+    except Exception as exc:
+        return f"failed: {exc}"
 
 def print_import_plan(ctx, *, package_path: str | None = None) -> None:
     branch = current_branch(ctx.repo_path)

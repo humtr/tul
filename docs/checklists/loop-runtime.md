@@ -99,3 +99,24 @@ Status: package prepared. Recovery/debug surface includes `tul import`, `tul sta
 ## Recovery state selection update
 
 `tul import <project> --latest` creates a validated/imported state without a commit. That state may become the newest state, but it is not rollbackable. `tul rollback <project>` now skips non-commit states and selects the newest rollbackable state with a commit. `tul state <project>` shows a latest rollbackable state hint when the newest state has no commit.
+
+
+## Init/config onboarding checklist
+
+```bash
+tul init tul
+tul projects
+tul status tul
+tul handoff tul
+
+tul init ~/prj/tul --no-handoff
+tul init humtr/tul --no-handoff
+```
+
+Expected:
+
+- global config exists and preserves existing keys.
+- `projects.tul.path` points to the repo.
+- `.tul.yml` exists and has version/name/repo/branch/track/check commands.
+- init does not switch branches or perform merge/rebase.
+- initial-review handoff points the next LLM to README and docs/llm/entrypoint.md.

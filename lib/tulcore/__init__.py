@@ -1,3 +1,4 @@
-"""Core modules for tul: Terminal Update Loop."""
+"""Terminal Update Loop core."""
+from __future__ import annotations
 
-__version__ = "0.5.1-recovery-state-selection"
+__version__ = "0.6.0-init-onboarding"

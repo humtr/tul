@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import re
+from datetime import datetime
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -261,7 +262,8 @@ def save_global_config(config: dict[str, Any], path: Path | None = None) -> None
     path = path or config_path()
     mkdirp(path.parent)
     if path.exists():
-        backup = path.with_suffix(path.suffix + ".bak")
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        backup = path.with_name(f"{path.name}.bak-{stamp}")
         backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
     path.write_text(dump_yaml(config) + "\n", encoding="utf-8", newline="\n")
 

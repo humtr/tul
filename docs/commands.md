@@ -102,3 +102,23 @@ tul apply tul --state <path>  # inspect-only helper; default workflow remains up
 ## Recovery state selection update
 
 `tul import <project> --latest` creates a validated/imported state without a commit. That state may become the newest state, but it is not rollbackable. `tul rollback <project>` now skips non-commit states and selects the newest rollbackable state with a commit. `tul state <project>` shows a latest rollbackable state hint when the newest state has no commit.
+
+
+## Init/onboarding commands
+
+`tul init <alias|path|github-slug>` registers or repairs a project for the
+Terminal Update Loop. It is conservative: it may create or fill missing config
+keys, but it does not delete existing values, switch branches, merge, or rebase.
+
+Examples:
+
+```bash
+tul init tul
+tul init ~/prj/tul
+tul init humtr/tul
+tul init ai --branch refactor/stage6-resource-split
+```
+
+By default `tul init` prints an initial-review handoff. Use `--no-handoff` for a
+quiet config-only run. Use `--copy-handoff` when the configured clipboard command
+is available.
