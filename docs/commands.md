@@ -138,3 +138,21 @@ tul verify tul --fresh-clone
 ```
 
 The command checks local/remote HEAD, clean working tree, Python syntax, `git diff --check`, and required LLM entrypoint documents.
+
+
+## Package discovery commands
+
+Use these commands before running `tul update --latest` when you want to see which package will be selected.
+
+```bash
+tul package list tul
+tul package latest tul
+tul package inspect /sdcard/Download/package.zip
+tul update tul --latest --dry-run
+```
+
+`package list` and `package latest` scan only configured `platform.inbox_roots`. They do not scan work/archive roots, because those directories contain copied, stale, or already-applied packages.
+
+Selection rule: newest matching archive by filesystem mtime, after matching `target.project`, `target.repo`, and `target.branch` from `tul-package.yml`.
+
+If multiple files share the same manifest package name, `tul package list` reports a duplicate-name warning so the user can remove stale downloads or use `--package PATH` explicitly.

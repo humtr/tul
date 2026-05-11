@@ -50,3 +50,16 @@ The apply step is intentionally stricter than normal file copying:
 ## Stage 3 recovery/debug commands
 
 Status: package prepared. Recovery/debug surface includes `tul import`, `tul state --all/--json`, `tul archive --all`, rollback-from-state, and conservative `resume/apply` guidance. Split commands remain recovery/debug tools; default workflow remains `tul update <project>`.
+
+
+## Package discovery visibility
+
+`--latest` uses configured inbox roots only. To inspect the selected package before applying, use:
+
+```bash
+tul package latest tul
+tul package list tul
+tul update tul --latest --dry-run
+```
+
+Dry-run imports, validates, and writes `apply-plan.json`, but does not modify repo files.

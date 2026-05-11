@@ -143,3 +143,21 @@ Expected result:
 - `py_compile` passes for `bin/tul` and `lib/tulcore/*.py`
 - `git diff --check` passes
 - README and LLM entrypoint/status/roadmap/checklist/protocol docs exist
+
+
+## Package discovery polish
+
+Before using `--latest`, verify candidate selection when needed:
+
+```bash
+tul package list tul
+tul package latest tul
+tul update tul --latest --dry-run
+```
+
+Acceptance checks:
+
+- `package latest` shows the selected package and selection reason.
+- `package list` reports duplicate package names when present.
+- `update --latest --dry-run` creates an apply plan without modifying repo files.
+- Work/archive roots are not used as latest-package sources.

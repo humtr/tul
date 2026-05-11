@@ -1,6 +1,6 @@
 # tul Roadmap
 
-Current verified stage: **Stage 5.1 — verify/fresh-clone acceleration**.
+Current verified stage: **Stage 5.2 — package discovery polish**.
 
 ## Completed
 
@@ -38,6 +38,15 @@ Improve `--latest` visibility:
 - warn about duplicate package names
 - avoid stale work/archive packages
 - keep inbox roots as the source of truth
+
+Implemented in Stage 5.2:
+
+```bash
+tul package list tul
+tul package latest tul
+tul package inspect /path/to/package.zip
+tul update tul --latest --dry-run
+```
 
 ### Stage 5.3 — State cleanup UX
 

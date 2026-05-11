@@ -30,7 +30,7 @@ from .gitops import (
 from .handoff import generate_handoff
 from .init import init_project
 from .manifest import validate_manifest
-from .package import import_package, select_package
+from .package import candidate_record, discover_candidates, import_package, manifest_data_from_archive, select_package, sha256_file
 from .pipeline import run_update
 from .report import build_report
 from .state import archive_latest_state, archive_states, iter_states, latest_state, latest_state_with_commit, state_commit, summarize_state, set_phase
@@ -107,10 +107,28 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-commit", action="store_true")
     p.add_argument("--no-push", action="store_true")
     p.add_argument("--allow-dirty", action="store_true")
+    p.add_argument("--dry-run", action="store_true", help="select/import/validate/plan the package without applying repo changes")
 
     p = sub.add_parser("publish", help="commit and push already-staged changes")
     p.add_argument("target")
     p.add_argument("-m", "--message", required=False)
+
+
+    p = sub.add_parser("package", help="inspect package discovery candidates")
+    package_sub = p.add_subparsers(dest="package_command", required=True)
+
+    p_list = package_sub.add_parser("list", help="list matching packages from configured inbox roots")
+    p_list.add_argument("target")
+    p_list.add_argument("--limit", type=int, default=20, help="maximum candidates to show")
+    p_list.add_argument("--json", action="store_true", help="print machine-readable candidate data")
+
+    p_latest = package_sub.add_parser("latest", help="show the newest matching package and selection reason")
+    p_latest.add_argument("target")
+    p_latest.add_argument("--json", action="store_true", help="print machine-readable selected candidate data")
+
+    p_inspect = package_sub.add_parser("inspect", help="inspect a package archive manifest without applying it")
+    p_inspect.add_argument("package_path")
+    p_inspect.add_argument("--json", action="store_true", help="print machine-readable package data")
 
     p = sub.add_parser("rollback", help="print a safe rollback command")
     p.add_argument("target")
@@ -275,6 +293,9 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         # that behavior. It does not scan work/archive roots, which may contain
         # stale or already-applied package copies.
         package_path = None if args.latest else args.package_path
+        if args.dry_run:
+            print_update_dry_run(ctx, package_path=package_path)
+            return 0
         result = run_update(
             ctx,
             package_path=package_path,
@@ -293,6 +314,19 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         print("Staged files:")
         print("\n".join(changed_files(ctx.repo_path, staged=True)) or "none")
         return 0
+
+
+    if command == "package":
+        if args.package_command == "inspect":
+            print_package_inspect(Path(args.package_path), as_json=args.json)
+            return 0
+        ctx = resolve_project(args.target)
+        if args.package_command == "list":
+            print_package_candidates(ctx, limit=args.limit, as_json=args.json, latest_only=False)
+            return 0
+        if args.package_command == "latest":
+            print_package_candidates(ctx, limit=1, as_json=args.json, latest_only=True)
+            return 0
 
     if command == "rollback":
         ctx = resolve_project(args.target)
@@ -443,6 +477,124 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
 
 
 
+
+
+def _candidate_records_for_context(ctx) -> list[dict]:
+    branch = current_branch(ctx.repo_path)
+    expected_branch = ctx.expected_branch or branch
+    candidates = discover_candidates(
+        ctx.global_config,
+        project=ctx.project_id,
+        repo=ctx.expected_repo,
+        branch=expected_branch,
+    )
+    return [candidate_record(item) for item in candidates]
+
+
+def _duplicate_package_names(records: list[dict]) -> dict[str, list[str]]:
+    seen: dict[str, list[str]] = {}
+    for item in records:
+        seen.setdefault(str(item.get("name") or ""), []).append(str(item.get("path") or ""))
+    return {name: paths for name, paths in seen.items() if name and len(paths) > 1}
+
+
+def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, latest_only: bool = False) -> None:
+    records = _candidate_records_for_context(ctx)
+    selected = records[0] if records else None
+    payload = {
+        "project": ctx.project_id,
+        "repo": ctx.expected_repo,
+        "branch": ctx.expected_branch or current_branch(ctx.repo_path),
+        "inbox_roots": [str(root) for root in (platform_paths(ctx.global_config).get("inbox_roots") or [])],
+        "selection_rule": "newest matching archive by filesystem mtime from configured inbox roots only",
+        "selected": selected,
+        "duplicates": _duplicate_package_names(records),
+        "candidates": records[: max(limit, 0)],
+        "total_candidates": len(records),
+    }
+    if as_json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    title = "# tul package latest" if latest_only else "# tul package list"
+    print(title)
+    print(f"Project: {ctx.project_id}")
+    print(f"Repo: {ctx.expected_repo or '(not configured)'}")
+    print(f"Branch: {payload['branch']}")
+    print("Selection rule: newest matching archive by mtime from configured inbox roots only")
+    print("Inbox roots:")
+    for root in payload["inbox_roots"]:
+        print(f"- {root}")
+    print()
+    if not records:
+        print("No matching packages found.")
+        return
+    print(f"Selected: {selected['path']}")
+    print(f"Reason: newest matching candidate; mtime={selected['mtime']}")
+    duplicates = payload["duplicates"]
+    if duplicates:
+        print()
+        print("Warnings:")
+        for name, paths in duplicates.items():
+            print(f"- duplicate package name: {name}")
+            for path in paths:
+                print(f"  - {path}")
+    if latest_only:
+        return
+    print()
+    print(f"Candidates shown: {min(limit, len(records))}/{len(records)}")
+    for index, item in enumerate(records[: max(limit, 0)], start=1):
+        marker = " selected" if index == 1 else ""
+        target = item.get("target") or {}
+        commit = item.get("commit") or {}
+        print(f"[{index}]{marker} {item.get('name')}  {item.get('mtime')}")
+        print(f"  path: {item.get('path')}")
+        print(f"  target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
+        if commit.get("message"):
+            print(f"  commit: {commit.get('message')}")
+
+
+def print_package_inspect(package_path: Path, *, as_json: bool = False) -> None:
+    path = package_path.expanduser().resolve()
+    data = manifest_data_from_archive(path)
+    target = data.get("target") or {}
+    commit = data.get("commit") or {}
+    apply = data.get("apply") or {}
+    payload = {
+        "path": str(path),
+        "sha256": sha256_file(path),
+        "name": data.get("name") or path.stem,
+        "version": data.get("version"),
+        "target": target,
+        "apply_mode": apply.get("mode"),
+        "apply_files": apply.get("files") or [],
+        "commit_message": commit.get("message"),
+        "commit_files": commit.get("files") or [],
+    }
+    if as_json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+    print("# tul package inspect")
+    print(f"Package: {payload['path']}")
+    print(f"Name: {payload['name']}")
+    print(f"Sha256: {payload['sha256']}")
+    print(f"Target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
+    print(f"Apply mode: {payload['apply_mode']}")
+    print(f"Apply files: {len(payload['apply_files'])}")
+    print(f"Commit message: {payload['commit_message']}")
+    print("Commit files:")
+    for item in payload["commit_files"]:
+        print(f"- {item}")
+
+
+def print_update_dry_run(ctx, *, package_path: str | None = None) -> None:
+    print("# tul update dry-run")
+    print("No repo files will be modified. This command imports, validates, and builds an apply plan only.")
+    print()
+    if package_path is None:
+        print_package_candidates(ctx, limit=5, as_json=False, latest_only=True)
+        print()
+    print_import_plan(ctx, package_path=package_path)
 
 def copy_to_clipboard(text: str, config: dict) -> str:
     command = ((config.get("platform") or {}).get("clipboard_command") or "").strip()

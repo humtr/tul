@@ -70,6 +70,43 @@ def _manifest_from_archive(path: Path) -> dict | None:
         return None
 
 
+
+def manifest_data_from_archive(path: Path) -> dict:
+    """Read tul-package.yml from an archive without extracting it."""
+    path = Path(path).expanduser().resolve()
+    if not path.exists():
+        raise PackageError(f"package does not exist: {path}")
+    data = _manifest_from_archive(path)
+    if data is None:
+        raise PackageError(f"package has no readable root tul-package.yml: {path}")
+    return data
+
+
+def candidate_record(candidate: PackageCandidate) -> dict:
+    """Return a stable, machine-readable summary for package discovery output."""
+    target = candidate.manifest_data.get("target") or {}
+    commit = candidate.manifest_data.get("commit") or {}
+    try:
+        size = candidate.source.stat().st_size
+    except OSError:
+        size = None
+    return {
+        "path": str(candidate.source),
+        "name": candidate.name,
+        "mtime": datetime.fromtimestamp(candidate.mtime).astimezone().isoformat(timespec="seconds"),
+        "mtime_epoch": candidate.mtime,
+        "size": size,
+        "target": {
+            "project": target.get("project"),
+            "repo": target.get("repo"),
+            "branch": target.get("branch"),
+        },
+        "commit": {
+            "message": commit.get("message"),
+            "files": commit.get("files") or [],
+        },
+    }
+
 def discover_candidates(global_config: dict, *, project: str, repo: str | None, branch: str | None) -> list[PackageCandidate]:
     paths = platform_paths(global_config)
     candidates: list[PackageCandidate] = []
