@@ -97,3 +97,8 @@ tul apply tul --state <path>  # inspect-only helper; default workflow remains up
 ```
 
 `import`, `apply`, and `resume` are intentionally conservative. They should not silently perform partial update steps that leave the repo dirty.
+
+
+## Recovery state selection update
+
+`tul import <project> --latest` creates a validated/imported state without a commit. That state may become the newest state, but it is not rollbackable. `tul rollback <project>` now skips non-commit states and selects the newest rollbackable state with a commit. `tul state <project>` shows a latest rollbackable state hint when the newest state has no commit.

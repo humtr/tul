@@ -97,6 +97,32 @@ def iter_states(work_root: Path, *, project: str | None = None) -> list[tuple[Pa
     return result
 
 
+
+
+def has_commit_state(data: dict[str, Any]) -> bool:
+    return bool(data.get("commit"))
+
+
+def latest_state_with_commit(work_root: Path, *, project: str | None = None) -> tuple[Path, dict[str, Any]] | None:
+    """Return newest matching state that contains a commit suitable for rollback.
+
+    Import/no-op/validated states can be newer than the latest published update.
+    Rollback should skip those by default so `tul import --latest` does not hide
+    the latest rollbackable commit.
+    """
+    for path, data in iter_states(work_root, project=project):
+        if has_commit_state(data):
+            return path, data
+    return None
+
+
+def rollbackable_state_hint(work_root: Path, *, project: str | None = None) -> str | None:
+    found = latest_state_with_commit(work_root, project=project)
+    if not found:
+        return None
+    path, data = found
+    return f"{data.get('commit')} from {path}"
+
 def archive_states(
     work_root: Path,
     archive_root: Path,

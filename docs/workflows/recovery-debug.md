@@ -50,3 +50,8 @@ Rollback prints a safe command sequence using `git revert` and `git push origin 
 ## Resume/apply stance
 
 `tul resume` and `tul apply` remain conservative. They inspect and suggest safe next commands rather than silently running partial updates.
+
+
+## Recovery state selection update
+
+`tul import <project> --latest` creates a validated/imported state without a commit. That state may become the newest state, but it is not rollbackable. `tul rollback <project>` now skips non-commit states and selects the newest rollbackable state with a commit. `tul state <project>` shows a latest rollbackable state hint when the newest state has no commit.

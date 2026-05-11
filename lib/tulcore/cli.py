@@ -32,7 +32,7 @@ from .manifest import validate_manifest
 from .package import import_package, select_package
 from .pipeline import run_update
 from .report import build_report
-from .state import archive_latest_state, archive_states, iter_states, latest_state, state_commit, summarize_state, set_phase
+from .state import archive_latest_state, archive_states, iter_states, latest_state, latest_state_with_commit, state_commit, summarize_state, set_phase
 from .sweep import sweep_repo
 
 
@@ -273,13 +273,13 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         work_root = paths.get("work_root")
         source = "argument"
         if not commit_id and work_root:
-            found = latest_state(work_root, project=ctx.project_id)
+            found = latest_state_with_commit(work_root, project=ctx.project_id)
             if found:
-                _state_path, data = found
+                state_path, data = found
                 commit_id = state_commit(data)
-                source = "latest state"
+                source = f"latest rollbackable state: {state_path}"
         if not commit_id:
-            raise TulError("rollback needs a commit argument or a latest state with a commit")
+            raise TulError("rollback needs a commit argument or at least one rollbackable state with a commit")
         branch = current_branch(ctx.repo_path)
         print("# safe rollback command")
         print(f"# source: {source}")
@@ -313,6 +313,15 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             if index:
                 print("\n---\n")
             print(summarize_state(path, data))
+            if not args.all and not data.get("commit"):
+                rollbackable = latest_state_with_commit(work_root, project=ctx.project_id)
+                if rollbackable:
+                    rollback_path, rollback_data = rollbackable
+                    print()
+                    print("Latest rollbackable state:")
+                    print(f"- commit: {rollback_data.get('commit')}")
+                    print(f"- state: {rollback_path}")
+                    print(f"- command: tul rollback {ctx.project_id}")
             if data.get("phase") == "failed":
                 print()
                 print("Repo status at inspection:")
@@ -389,8 +398,16 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if found:
             path, data = found
             print(summarize_state(path, data))
+        if work_root:
+            rollbackable = latest_state_with_commit(work_root, project=ctx.project_id)
+            if rollbackable:
+                rollback_path, rollback_data = rollbackable
+                print("Latest rollbackable state:")
+                print(f"- commit: {rollback_data.get('commit')}")
+                print(f"- state: {rollback_path}")
         print("Recommended safe commands:")
         print(f"  tul state {ctx.project_id}")
+        print(f"  tul rollback {ctx.project_id}")
         print(f"  tul update {ctx.project_id} --latest")
         return 0
 
