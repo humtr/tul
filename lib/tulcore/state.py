@@ -123,18 +123,79 @@ def rollbackable_state_hint(work_root: Path, *, project: str | None = None) -> s
     path, data = found
     return f"{data.get('commit')} from {path}"
 
+
+
+def is_noop_state(data: dict[str, Any]) -> bool:
+    return data.get("outcome") == "noop" or data.get("no_op") is True
+
+
+def is_imported_state(data: dict[str, Any]) -> bool:
+    if data.get("commit"):
+        return False
+    return data.get("outcome") == "imported" or data.get("phase") in {"imported", "validated"}
+
+
+def is_failed_state(data: dict[str, Any]) -> bool:
+    return data.get("phase") == "failed" or bool(data.get("error"))
+
+
+def select_archive_states(
+    work_root: Path,
+    *,
+    project: str | None = None,
+    all_states: bool = False,
+    noop: bool = False,
+    imported: bool = False,
+    failed: bool = False,
+    keep: int = 0,
+) -> list[tuple[Path, dict[str, Any]]]:
+    states = iter_states(work_root, project=project)
+    filter_mode = noop or imported or failed
+    if filter_mode:
+        selected: list[tuple[Path, dict[str, Any]]] = []
+        for path, data in states:
+            if noop and is_noop_state(data):
+                selected.append((path, data))
+                continue
+            if imported and is_imported_state(data):
+                selected.append((path, data))
+                continue
+            if failed and is_failed_state(data):
+                selected.append((path, data))
+                continue
+    elif all_states:
+        selected = states
+    else:
+        selected = states[:1]
+
+    if keep > 0:
+        selected = selected[keep:]
+    return selected
+
+
 def archive_states(
     work_root: Path,
     archive_root: Path,
     *,
     project: str | None = None,
     all_states: bool = False,
+    noop: bool = False,
+    imported: bool = False,
+    failed: bool = False,
+    keep: int = 0,
+    dry_run: bool = False,
 ) -> list[tuple[Path, Path, dict[str, Any]]]:
-    states = iter_states(work_root, project=project)
-    if not all_states:
-        states = states[:1]
+    states = select_archive_states(
+        work_root,
+        project=project,
+        all_states=all_states,
+        noop=noop,
+        imported=imported,
+        failed=failed,
+        keep=keep,
+    )
     archived_items: list[tuple[Path, Path, dict[str, Any]]] = []
-    for state_path, _data in states:
+    for state_path, data in states:
         state_dir = state_path.parent
         if not state_dir.exists():
             continue
@@ -142,6 +203,9 @@ def archive_states(
         dest = archive_root / state_dir.name
         if dest.exists():
             dest = archive_root / f"{state_dir.name}-archived-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        if dry_run:
+            archived_items.append((state_path, dest, data))
+            continue
         shutil.move(str(state_dir), str(dest))
         new_state = dest / "state.json"
         archived = set_phase(

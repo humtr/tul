@@ -137,6 +137,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("state", help="show local tul work state")
     p.add_argument("target")
     p.add_argument("--all", action="store_true", help="show all matching state files, newest first")
+    p.add_argument("--limit", type=int, help="limit displayed states when using --all")
     p.add_argument("--json", action="store_true", help="print state data as JSON")
 
     p = sub.add_parser("config", help="config helpers")
@@ -161,6 +162,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("archive", help="archive local tul work state")
     p.add_argument("target")
     p.add_argument("--all", action="store_true", help="archive all matching states, not just the latest")
+    p.add_argument("--noop", action="store_true", help="archive no-op states")
+    p.add_argument("--imported", action="store_true", help="archive import/validated states without commits")
+    p.add_argument("--failed", action="store_true", help="archive failed states")
+    p.add_argument("--keep", type=int, default=0, help="keep the newest N selected states and archive the rest")
+    p.add_argument("--dry-run", action="store_true", help="show what would be archived without moving files")
 
     # Friendly alias for users who type `tul help`.
     sub.add_parser("help", help="show this help message")
@@ -357,10 +363,15 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if not work_root:
             print("No platform.work_root configured.")
             return 0
-        states = iter_states(work_root, project=ctx.project_id) if args.all else []
-        if not args.all:
+        if args.all:
+            states = iter_states(work_root, project=ctx.project_id)
+            total_states = len(states)
+            if args.limit is not None:
+                states = states[: max(args.limit, 0)]
+        else:
             found = latest_state(work_root, project=ctx.project_id)
             states = [found] if found else []
+            total_states = len(states)
         if not states:
             print(f"No tul state found for project {ctx.project_id} under {work_root}")
             return 0
@@ -368,6 +379,9 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             payload = [{"state_file": str(path), **data} for path, data in states if path is not None]
             print(json.dumps(payload[0] if not args.all else payload, indent=2, ensure_ascii=False))
             return 0
+        if args.all and args.limit is not None:
+            print(f"Showing {len(states)}/{total_states} state(s) for {ctx.project_id}.")
+            print()
         for index, item in enumerate(states):
             if item is None:
                 continue
@@ -411,15 +425,36 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if not archive_root:
             print("No platform.archive_root or platform.backup_root configured.")
             return 0
-        archived = archive_states(work_root, archive_root, project=ctx.project_id, all_states=args.all)
+        archived = archive_states(
+            work_root,
+            archive_root,
+            project=ctx.project_id,
+            all_states=args.all,
+            noop=args.noop,
+            imported=args.imported,
+            failed=args.failed,
+            keep=max(args.keep or 0, 0),
+            dry_run=args.dry_run,
+        )
         if not archived:
-            print(f"No tul state found for project {ctx.project_id} under {work_root}")
+            print(f"No matching tul state found for project {ctx.project_id} under {work_root}")
+            print("Examples:")
+            print(f"  tul archive {ctx.project_id} --noop --dry-run")
+            print(f"  tul archive {ctx.project_id} --noop --keep 3")
+            print(f"  tul archive {ctx.project_id} --imported")
             return 0
-        print(f"Archived {len(archived)} state(s) for {ctx.project_id}:")
+        action = "Would archive" if args.dry_run else "Archived"
+        print(f"{action} {len(archived)} state(s) for {ctx.project_id}:")
         for state_path, dest, data in archived:
             print(f"- state: {state_path}")
             print(f"  dir: {dest}")
             print(f"  phase: {data.get('phase')}")
+            if data.get("outcome"):
+                print(f"  outcome: {data.get('outcome')}")
+            if data.get("commit"):
+                print(f"  commit: {data.get('commit')}")
+        if args.dry_run:
+            print("No files were moved. Re-run without --dry-run to archive.")
         return 0
 
     if command == "config":
@@ -448,7 +483,7 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if args.state:
             print(f"State hint: {args.state}")
         print("Recommended safe command:")
-        print(f"  tul update {ctx.project_id} --latest")
+        print(f"  tul update {ctx.project_id} -l")
         return 0
 
     if command == "resume":
@@ -470,7 +505,7 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         print("Recommended safe commands:")
         print(f"  tul state {ctx.project_id}")
         print(f"  tul rollback {ctx.project_id}")
-        print(f"  tul update {ctx.project_id} --latest")
+        print(f"  tul update {ctx.project_id} -l")
         return 0
 
     raise TulError(f"unknown command: {command}")

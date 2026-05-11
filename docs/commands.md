@@ -1,158 +1,47 @@
 # tul commands
 
-Primary loop. These commands are alias-first and should not require `cd` into the repo when global config is correct:
-
-```text
-tul install [project|path]
-tul init <id|repo|path>
-tul sync <project|path>
-tul update <project|path>
-tul update <project|path> --latest
-tul update <project|path> -l
-tul update <project|path> --package PATH
-tul handoff <project|path>
-```
-
-`--latest` / `-l` selects the newest matching package from configured `platform.inbox_roots`. Omitting `--package` already uses the same latest-candidate behavior; the flag exists to make the user's intent explicit and copy-friendly.
-
-`--latest` does not scan work/archive roots by default. Those locations can contain stale or already-applied copies.
-
-Status and visibility:
-
-```text
-tul status <project|path>
-tul report <project|path>
-tul check <project|path>
-tul doctor [project|path]
-tul state <project|path>
-tul instructions [project|path]
-```
-
-Recovery/debug commands:
-
-```text
-tul import [latest|path]
-tul apply <project|path>
-tul sweep <project|path>
-tul publish <project|path>
-tul rollback <project|path> [commit]
-tul resume <project|path>
-tul archive <project|path>
-```
-
-The default workflow remains `tul update <project>` or the explicit latest form `tul update <project> --latest`.
-Split commands exist for inspection, recovery, and future resume support; they must not replace the default full loop.
-
-`archive` currently archives the latest local tul work state for a project. It does not delete repo files or rewrite git history.
-A repeated/already-applied package update should exit as `noop` instead of attempting an empty commit.
-
-
-## Launcher sync
-
-`tul install [project|path]` installs or resyncs the user PATH launcher to the repo `bin/tul`.
-
-Use it when `python ~/prj/tul/bin/tul ...` works but `tul ...` does not recognize newer commands.
-
-Diagnostic commands:
+Primary full-loop command:
 
 ```bash
-tul doctor tul
-command -v tul
-tul --version
-python ~/prj/tul/bin/tul --version
+tul update <project> -l
+# equivalent: tul update <project> --latest
 ```
 
-On POSIX/Termux, the default install creates `~/bin/tul` as a symlink to the repo launcher. On Windows, it creates a `tul.cmd` shim under `%USERPROFILE%\bin`.
+Use `--package PATH` only when selecting an exact package manually.
 
-
-## Doctor/no-op output semantics
-
-`tul doctor [project]` must print diagnostics and exit normally. It must not
-execute nested `tul --version` subprocesses just to compare launchers; launcher
-sync is determined by resolved paths.
-
-For no-op updates, push verification is **not applicable**, not failed. A no-op
-means the package produced no repo changes after safe apply, usually because it
-was already applied.
-
-## Apply safety notes
-
-`tul update` now builds an apply plan before copying. Directory copy from a package is rejected unless the manifest item sets `allow_directory: true`, and every expanded destination must be included in `commit.files`.
-
-## Recovery/debug commands
-
-Split commands are for inspection and recovery. They do not replace the default `tul update <project>` loop.
-
-```bash
-tul import tul --latest        # import, validate, and create apply-plan.json without modifying repo files
-tul state tul                 # show latest state
-tul state tul --all           # show all matching states
-tul state tul --json          # machine-readable latest state
-tul archive tul               # archive latest state directory
-tul archive tul --all         # archive all matching state directories
-tul rollback tul              # print rollback command from latest state commit when available
-tul rollback tul <commit>     # print rollback command for an explicit commit
-tul resume tul                # inspect latest state and suggest safe next command
-tul apply tul --state <path>  # inspect-only helper; default workflow remains update
-```
-
-`import`, `apply`, and `resume` are intentionally conservative. They should not silently perform partial update steps that leave the repo dirty.
-
-
-## Recovery state selection update
-
-`tul import <project> --latest` creates a validated/imported state without a commit. That state may become the newest state, but it is not rollbackable. `tul rollback <project>` now skips non-commit states and selects the newest rollbackable state with a commit. `tul state <project>` shows a latest rollbackable state hint when the newest state has no commit.
-
-
-## Init/onboarding commands
-
-`tul init <alias|path|github-slug>` registers or repairs a project for the
-Terminal Update Loop. It is conservative: it may create or fill missing config
-keys, but it does not delete existing values, switch branches, merge, or rebase.
-
-Examples:
-
-```bash
-tul init tul
-tul init ~/prj/tul
-tul init humtr/tul
-tul init ai --branch refactor/stage6-resource-split
-```
-
-By default `tul init` prints an initial-review handoff. Use `--no-handoff` for a
-quiet config-only run. Use `--copy-handoff` when the configured clipboard command
-is available.
-
-## Verify commands
-
-`tul verify` is the preferred one-command verification surface during tul development.
-
-```bash
-tul verify tul
-```
-
-Use a fresh clone when remote/source integrity matters:
-
-```bash
-tul verify tul --fresh-clone
-```
-
-The command checks local/remote HEAD, clean working tree, Python syntax, `git diff --check`, and required LLM entrypoint documents.
-
-
-## Package discovery commands
-
-Use these commands before running `tul update --latest` when you want to see which package will be selected.
+## Package discovery
 
 ```bash
 tul package list tul
 tul package latest tul
 tul package inspect /sdcard/Download/package.zip
-tul update tul --latest --dry-run
+tul update tul -l --dry-run
 ```
 
-`package list` and `package latest` scan only configured `platform.inbox_roots`. They do not scan work/archive roots, because those directories contain copied, stale, or already-applied packages.
+## Verification
 
-Selection rule: newest matching archive by filesystem mtime, after matching `target.project`, `target.repo`, and `target.branch` from `tul-package.yml`.
+```bash
+tul verify tul
+tul verify tul --fresh-clone
+```
 
-If multiple files share the same manifest package name, `tul package list` reports a duplicate-name warning so the user can remove stale downloads or use `--package PATH` explicitly.
+## State cleanup
+
+```bash
+tul state tul
+tul state tul --all --limit 5
+tul archive tul --noop --dry-run
+tul archive tul --noop --keep 3
+tul archive tul --imported --dry-run
+```
+
+`archive` moves state directories to `platform.archive_root`; it does not delete them.
+
+## Recovery
+
+```bash
+tul rollback tul
+tul resume tul
+```
+
+Split commands remain recovery/debug tools. The default workflow is still `tul update <project>`.

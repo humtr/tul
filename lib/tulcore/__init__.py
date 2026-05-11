@@ -1,4 +1,3 @@
-"""Terminal Update Loop core."""
-from __future__ import annotations
+"""tul core package."""
 
-__version__ = "0.7.1-package-discovery"
+__version__ = "0.7.2-state-cleanup"
