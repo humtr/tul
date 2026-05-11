@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import sys
 from pathlib import Path
 
 from . import __version__
 from .checks import run_checks
-from .config import config_path, load_global_config, resolve_project
+from .config import config_path, load_global_config, platform_paths, resolve_project
 from .errors import TulError
 from .gitops import (
     changed_files,
@@ -25,6 +26,7 @@ from .handoff import generate_handoff
 from .init import init_project
 from .pipeline import run_update
 from .report import build_report
+from .state import latest_state, summarize_state
 from .sweep import sweep_repo
 
 
@@ -46,7 +48,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("check", help="run repo checks")
     p.add_argument("target")
-    sub.add_parser("doctor", help="show tul environment diagnostics")
+    p = sub.add_parser("doctor", help="show tul environment diagnostics")
+    p.add_argument("target", nargs="?")
 
     p = sub.add_parser("report", help="print a lightweight report")
     p.add_argument("target")
@@ -141,7 +144,7 @@ def dispatch(args: argparse.Namespace) -> int:
         print("Checks passed.")
         return 0
     if command == "doctor":
-        print_doctor()
+        print_doctor(getattr(args, "target", None))
         return 0
     if command == "report":
         ctx = resolve_project(args.target)
@@ -186,8 +189,17 @@ def dispatch(args: argparse.Namespace) -> int:
         return 0
     if command == "state":
         ctx = resolve_project(args.target)
-        print("State files live under the configured platform.work_root for imported packages.")
-        print(f"Config: {ctx.global_config_path}")
+        paths = platform_paths(ctx.global_config)
+        work_root = paths.get("work_root")
+        if not work_root:
+            print("No platform.work_root configured.")
+            return 0
+        found = latest_state(work_root, project=ctx.project_id)
+        if not found:
+            print(f"No tul state found for project {ctx.project_id} under {work_root}")
+            return 0
+        path, data = found
+        print(summarize_state(path, data))
         return 0
     if command == "config":
         if args.config_command == "path":
@@ -225,11 +237,32 @@ def print_status(ctx) -> None:
         print(f"- {item}")
 
 
-def print_doctor() -> None:
+def print_doctor(target: str | None = None) -> None:
     config, path = load_global_config()
+    paths = platform_paths(config)
     print(f"tul version: {__version__}")
+    print(f"python: {sys.executable}")
+    print(f"git: {shutil.which('git') or 'not found'}")
     print(f"config path: {path}")
     print(f"config exists: {path.exists()}")
+    print("platform paths:")
+    for key in ("work_root", "archive_root", "backup_root"):
+        value = paths.get(key)
+        print(f"- {key}: {value or '(not configured)'}")
+    print("inbox roots:")
+    roots = paths.get("inbox_roots") or []
+    if roots:
+        for root in roots:
+            print(f"- {root} exists={root.exists()} dir={root.is_dir()}")
+    else:
+        print("- (none)")
     print("projects:")
     for key, value in (config.get("projects") or {}).items():
         print(f"- {key}: {value.get('path') if isinstance(value, dict) else value}")
+    if target:
+        ctx = resolve_project(target)
+        print("target:")
+        print(f"- project: {ctx.project_id}")
+        print(f"- repo: {ctx.repo_path}")
+        print(f"- branch: {current_branch(ctx.repo_path)}")
+        print(f"- dirty: {is_dirty(ctx.repo_path)}")

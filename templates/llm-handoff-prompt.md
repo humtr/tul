@@ -1,20 +1,23 @@
 # tul LLM handoff prompt template
 
-You are receiving a tul handoff from a terminal session.
+You are receiving a `tul` handoff.
 
-Your tasks:
+Treat it as a remote-review request, not as proof that you have already verified the remote repo.
 
-1. Verify the remote repo, branch, and expected HEAD if remote access is available.
-2. If remote verification is unavailable, say so explicitly.
-3. Read current relevant repo files.
-4. Compare terminal-verified facts against remote state.
-5. Check invariants:
+Do these steps:
+
+1. Verify repo, branch, HEAD, and changed files when remote access is available.
+2. If remote access is unavailable, state that explicitly.
+3. Read current relevant files before proposing implementation.
+4. Check invariants:
    - `tul update` pushes by default.
-   - `--no-push` is an exception.
-   - no `git add -A` in the default path.
+   - `--no-push` and `--no-commit` are exceptions.
+   - default staging is explicit only.
    - no force push.
-   - project-specific policy belongs in `.tul.yml`.
-   - environment paths belong in global config.
-6. Identify remaining debt.
-7. Propose the next package.
-8. Provide short-term and long-term roadmap.
+   - config/policy are separated from engine code.
+5. Separate:
+   - user-stated goals
+   - terminal-verified facts
+   - assistant interpretation
+   - unresolved uncertainty
+6. Propose the next package boundary and roadmap.

@@ -1,12 +1,18 @@
 # loop-runtime track
 
-Current track goal:
+This track implements `tul` as a config-driven, manifest-driven, cross-platform self-hosting loop runtime.
 
-Implement a config-driven, manifest-driven, cross-platform self-hosting loop runtime where `tul update <project>` applies a standardized package, checks, sweeps, commits, pushes, verifies remote HEAD, prints rollback instructions, and outputs an LLM-ready handoff automatically.
+Current invariants:
 
-Current hotfix priority:
+- `tul update <project>` is the full-loop command.
+- Commit and push are included by default after validation.
+- `--no-commit` and `--no-push` are explicit recovery/debug exceptions.
+- Remote HEAD verification is required for successful update when push is enabled.
+- Default staging must use `git add -- <explicit files>` only.
+- `git add -A`, `git add .`, and force push are forbidden in the normal path.
+- Project-specific policy belongs in `.tul.yml`.
+- Environment paths belong in global config.
+- LLM-to-terminal packages converge on `tul-package.yml` plus `files/`.
+- Successful update must write report/state/handoff and print the LLM handoff.
 
-- restore valid newlines and Python syntax
-- make `python -m py_compile bin/tul` pass
-- make `python -m py_compile lib/tulcore/*.py` pass
-- make `tul status`, `tul check`, and `tul handoff` smoke tests possible
+`runtime_restructure_v1` splits precheck, publish, and state responsibilities while preserving update semantics.

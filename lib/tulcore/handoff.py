@@ -31,6 +31,7 @@ def generate_handoff(
     validation: list[str] | None = None,
     rollback_command: str | None = None,
     state_file: Path | None = None,
+    report_file: Path | None = None,
 ) -> str:
     branch = current_branch(repo)
     remote = None
@@ -65,6 +66,8 @@ def generate_handoff(
         lines.append("Push verified: not available for this session")
     if state_file:
         lines.append(f"State file: {state_file}")
+    if report_file:
+        lines.append(f"Report file: {report_file}")
     if rollback_command:
         lines.extend(["", "## Rollback command", "", f"    {rollback_command}"])
     if changed_files:

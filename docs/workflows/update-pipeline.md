@@ -1,22 +1,23 @@
 # update pipeline
 
-`tul update <project>` performs the full loop:
+`tul update <project>` remains the default full-loop command.
 
-1. resolve target from alias or path
-2. load global config and repo `.tul.yml`
-3. enforce branch guard
-4. refuse dirty working tree unless recovery mode is explicit
-5. fetch and fast-forward when safe
-6. discover/import/extract the matching package
-7. validate `tul-package.yml`
-8. apply files using safe copy only
-9. run repo checks and forbidden-pattern checks
-10. sweep repo-local backups out to backup storage
-11. verify changed files are within manifest `commit.files`
-12. stage only explicit manifest files
-13. run staged diff check
-14. commit
-15. push by default
-16. fetch and verify local HEAD equals `origin/<branch>`
-17. write report and handoff
-18. print rollback instructions and handoff
+The runtime boundary is now split into policy modules:
+
+1. `precheck.py` resolves whether the repo may be updated.
+   - enforce branch guard
+   - refuse dirty working tree unless explicit recovery mode is used
+   - fetch origin
+   - detect ahead/behind/diverged state
+   - fast-forward with `pull --ff-only` when safe
+2. `package.py` discovers, imports, hashes, and safely extracts the package.
+3. `manifest.py` validates `tul-package.yml` target, copy mode, and commit metadata.
+4. `apply.py` performs safe copy only and writes `apply.log`.
+5. `checks.py` runs repo-configured checks and forbidden-pattern checks.
+6. `sweep.py` moves repo-local tul backup directories out of the repo.
+7. `publish.py` owns changed-file allowlist checks, explicit staging, commit, push, remote HEAD verification, and rollback hint generation.
+8. `state.py` records phase transitions and failures.
+9. `report.py` and `handoff.py` render the human/LLM outputs.
+
+Successful update still requires remote HEAD verification when commit/push is enabled.
+`--no-commit` and `--no-push` are recovery/debug exceptions, not the default workflow.

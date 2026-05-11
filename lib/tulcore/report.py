@@ -16,6 +16,7 @@ def build_report(
     rollback_command: str | None = None,
     changed_files: list[str] | None = None,
     checks: list[str] | None = None,
+    state_file: Path | None = None,
 ) -> str:
     lines = [
         "# tul update report",
@@ -27,6 +28,8 @@ def build_report(
     ]
     if package_name:
         lines.append(f"Package: {package_name}")
+    if state_file:
+        lines.append(f"State file: {state_file}")
     if commit_hash:
         lines.append(f"Commit: {commit_hash}")
     if push_verified is not None:

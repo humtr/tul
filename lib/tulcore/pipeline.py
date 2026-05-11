@@ -1,4 +1,4 @@
-"""Full update pipeline."""
+"""Full update pipeline orchestration."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,27 +6,14 @@ from pathlib import Path
 
 from .apply import apply_copy
 from .checks import run_checks
-from .config import ProjectContext, platform_paths
-from .errors import CheckError, GitError, ManifestError, PackageError, SafetyError, TulError
-from .gitops import (
-    ahead_behind,
-    changed_files,
-    commit,
-    current_branch,
-    diff_check,
-    fetch,
-    head,
-    is_dirty,
-    pull_ff_only,
-    push_verify,
-    stage_files,
-)
+from .config import ProjectContext
 from .handoff import generate_handoff
 from .manifest import validate_manifest
 from .package import import_package, select_package
-from .paths import mkdirp
+from .precheck import run_precheck
+from .publish import publish_manifest_changes
 from .report import build_report, write_report
-from .state import write_state
+from .state import record_error, set_phase
 from .sweep import sweep_repo
 
 
@@ -37,6 +24,7 @@ class UpdateResult:
     work_dir: Path
     commit_hash: str | None
     push_verified: bool
+    state_file: Path
 
 
 def run_update(
@@ -48,110 +36,123 @@ def run_update(
     allow_dirty: bool = False,
 ) -> UpdateResult:
     repo = ctx.repo_path
-    branch = current_branch(repo)
-    expected_branch = ctx.expected_branch
-    if expected_branch and branch != expected_branch:
-        raise SafetyError(f"branch mismatch: expected {expected_branch}, current {branch}")
+    state_file: Path | None = None
+    failed_at = "precheck"
+    try:
+        precheck = run_precheck(ctx, allow_dirty=allow_dirty)
+        branch = precheck.branch
+        expected_branch = ctx.expected_branch or branch
 
-    if is_dirty(repo) and not allow_dirty:
-        raise SafetyError(
-            "working tree is dirty; refusing to apply a package over uncommitted changes.\n"
-            "Use 'git status --short' and commit/stash/revert first, or pass --allow-dirty only for recovery."
+        failed_at = "package-select"
+        source = select_package(
+            ctx.global_config,
+            explicit=package_path,
+            project=ctx.project_id,
+            repo=ctx.expected_repo,
+            branch=expected_branch,
         )
 
-    if not is_dirty(repo):
-        fetch(repo, branch)
-        counts = ahead_behind(repo, branch)
-        if counts:
-            ahead, behind = counts
-            if ahead and behind:
-                raise GitError(f"local and origin/{branch} diverged: ahead={ahead}, behind={behind}")
-            if behind:
-                pull_ff_only(repo)
+        failed_at = "import"
+        imported = import_package(source, ctx.global_config)
+        state_file = imported.work_dir / "state.json"
+        set_phase(
+            state_file,
+            "imported",
+            project=ctx.project_id,
+            repo=str(repo),
+            branch=branch,
+            package=str(source),
+            package_name=imported.manifest.name,
+            sha256=imported.sha256,
+            precheck={
+                "dirty": precheck.dirty,
+                "ahead": precheck.ahead,
+                "behind": precheck.behind,
+                "pulled": precheck.pulled,
+            },
+        )
 
-    source = select_package(
-        ctx.global_config,
-        explicit=package_path,
-        project=ctx.project_id,
-        repo=ctx.expected_repo,
-        branch=expected_branch or branch,
-    )
-    imported = import_package(source, ctx.global_config)
-    state_file = imported.work_dir / "state.json"
-    write_state(state_file, phase="imported", package=str(source), sha256=imported.sha256)
+        failed_at = "manifest-validation"
+        validate_manifest(imported.manifest, project=ctx.project_id, repo=ctx.expected_repo, branch=expected_branch)
+        set_phase(state_file, "validated", manifest=imported.manifest.data)
 
-    validate_manifest(imported.manifest, project=ctx.project_id, repo=ctx.expected_repo, branch=expected_branch or branch)
-    write_state(state_file, phase="validated", manifest=imported.manifest.data)
+        failed_at = "apply"
+        backup_dir = imported.work_dir / "backups"
+        applied_files = apply_copy(
+            imported.manifest,
+            extracted_dir=imported.extracted_dir,
+            repo_path=repo,
+            backup_dir=backup_dir,
+            log_path=imported.work_dir / "apply.log",
+        )
+        set_phase(state_file, "applied", applied_files=applied_files)
 
-    backup_dir = imported.work_dir / "backups"
-    applied_files = apply_copy(
-        imported.manifest,
-        extracted_dir=imported.extracted_dir,
-        repo_path=repo,
-        backup_dir=backup_dir,
-        log_path=imported.work_dir / "apply.log",
-    )
-    write_state(state_file, phase="applied", applied_files=applied_files)
+        failed_at = "checks"
+        checks = run_checks(repo, ctx.repo_config, log_path=imported.work_dir / "check.log")
+        set_phase(state_file, "checked", checks_count=len(checks))
 
-    checks = run_checks(repo, ctx.repo_config, log_path=imported.work_dir / "check.log")
-    write_state(state_file, phase="checked")
+        failed_at = "sweep"
+        moved = sweep_repo(repo, ctx.global_config)
+        set_phase(state_file, "swept", swept=moved)
 
-    moved = sweep_repo(repo, ctx.global_config)
-    write_state(state_file, phase="swept", swept=moved)
+        failed_at = "publish"
+        publish = publish_manifest_changes(
+            repo=repo,
+            branch=branch,
+            files=imported.manifest.commit_files,
+            message=imported.manifest.commit_message,
+            no_commit=no_commit,
+            no_push=no_push,
+            state_file=state_file,
+        )
 
-    allowed = set(imported.manifest.commit_files)
-    actual = set(changed_files(repo))
-    unexpected = sorted(actual - allowed)
-    if unexpected:
-        raise SafetyError("changed files outside manifest commit.files:\n" + "\n".join(unexpected))
+        push_value = publish.push_verified if publish.commit_hash and not no_push else None
+        report = build_report(
+            repo=repo,
+            project=ctx.project_id,
+            package_name=imported.manifest.name,
+            commit_hash=publish.commit_hash,
+            push_verified=push_value,
+            rollback_command=publish.rollback_command,
+            changed_files=imported.manifest.commit_files,
+            checks=checks,
+            state_file=state_file,
+        )
+        report_path = imported.work_dir / "report.md"
+        write_report(report_path, report)
 
-    commit_hash: str | None = None
-    push_verified = False
-    rollback_command: str | None = None
-    if no_commit:
-        write_state(state_file, phase="checked-no-commit")
-    else:
-        stage_files(repo, imported.manifest.commit_files)
-        staged = set(changed_files(repo, staged=True))
-        unexpected_staged = sorted(staged - allowed)
-        if unexpected_staged:
-            raise SafetyError("staged files outside manifest commit.files:\n" + "\n".join(unexpected_staged))
-        diff_check(repo, staged=True)
-        write_state(state_file, phase="staged", staged_files=sorted(staged))
-        commit_hash = commit(repo, imported.manifest.commit_message)
-        write_state(state_file, phase="committed", commit=commit_hash)
-        rollback_command = f"git revert {commit_hash} && git push origin {branch}"
-        if no_push:
-            write_state(state_file, phase="committed-no-push")
-        else:
-            push_verify(repo, branch)
-            push_verified = True
-            write_state(state_file, phase="verified", local=head(repo), branch=branch)
-
-    report = build_report(
-        repo=repo,
-        project=ctx.project_id,
-        package_name=imported.manifest.name,
-        commit_hash=commit_hash,
-        push_verified=push_verified if commit_hash and not no_push else None,
-        rollback_command=rollback_command,
-        changed_files=imported.manifest.commit_files,
-        checks=checks,
-    )
-    write_report(imported.work_dir / "report.md", report)
-    handoff = generate_handoff(
-        repo=repo,
-        project=ctx.project_id,
-        mode="post-update" if commit_hash else "update-no-commit",
-        expected_repo=ctx.expected_repo,
-        package_name=imported.manifest.name,
-        commit_hash=commit_hash,
-        push_verified=push_verified if commit_hash and not no_push else None,
-        changed_files=imported.manifest.commit_files,
-        validation=checks,
-        rollback_command=rollback_command,
-        state_file=state_file,
-    )
-    (imported.work_dir / "handoff.md").write_text(handoff, encoding="utf-8", newline="\n")
-    write_state(state_file, phase="handoff-ready", report=str(imported.work_dir / "report.md"), handoff=str(imported.work_dir / "handoff.md"))
-    return UpdateResult(report=report, handoff=handoff, work_dir=imported.work_dir, commit_hash=commit_hash, push_verified=push_verified)
+        handoff = generate_handoff(
+            repo=repo,
+            project=ctx.project_id,
+            mode="post-update" if publish.commit_hash else "update-no-commit",
+            expected_repo=ctx.expected_repo,
+            package_name=imported.manifest.name,
+            commit_hash=publish.commit_hash,
+            push_verified=push_value,
+            changed_files=imported.manifest.commit_files,
+            validation=checks,
+            rollback_command=publish.rollback_command,
+            state_file=state_file,
+            report_file=report_path,
+        )
+        handoff_path = imported.work_dir / "handoff.md"
+        handoff_path.write_text(handoff, encoding="utf-8", newline="\n")
+        set_phase(
+            state_file,
+            "handoff-ready",
+            report=str(report_path),
+            handoff=str(handoff_path),
+            commit=publish.commit_hash,
+            push_verified=publish.push_verified,
+        )
+        return UpdateResult(
+            report=report,
+            handoff=handoff,
+            work_dir=imported.work_dir,
+            commit_hash=publish.commit_hash,
+            push_verified=publish.push_verified,
+            state_file=state_file,
+        )
+    except Exception as exc:
+        record_error(state_file, exc, failed_at=failed_at)
+        raise
