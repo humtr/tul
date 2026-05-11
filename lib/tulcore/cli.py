@@ -35,6 +35,7 @@ from .pipeline import run_update
 from .report import build_report
 from .state import archive_latest_state, archive_states, iter_states, latest_state, latest_state_with_commit, state_commit, summarize_state, set_phase
 from .sweep import sweep_repo
+from .verify import run_verify
 
 
 def repo_root_from_module() -> Path:
@@ -69,6 +70,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("check", help="run repo checks")
     p.add_argument("target")
+
+    p = sub.add_parser("verify", help="verify repo status, checks, docs, and optional fresh clone")
+    p.add_argument("target")
+    p.add_argument("--fresh-clone", action="store_true", help="clone the remote repo into ~/tmp and verify the clone too")
+    p.add_argument("--clone-root", help="directory for fresh clone verification; defaults to ~/tmp/tul-verify-fresh")
+    p.add_argument("--json", action="store_true", help="print machine-readable verification result")
 
     p = sub.add_parser("doctor", help="show tul environment diagnostics")
     p.add_argument("target", nargs="?")
@@ -206,6 +213,19 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             print()
         print("Checks passed.")
         return 0
+
+    if command == "verify":
+        ctx = resolve_project(args.target)
+        result = run_verify(
+            ctx,
+            fresh_clone=args.fresh_clone,
+            clone_root=Path(args.clone_root).expanduser() if args.clone_root else None,
+        )
+        if args.json:
+            print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False))
+        else:
+            print(result.to_text())
+        return 0 if result.ok else 1
 
     if command == "doctor":
         print_doctor(getattr(args, "target", None))

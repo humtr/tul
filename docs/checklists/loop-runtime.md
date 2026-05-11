@@ -120,3 +120,26 @@ Expected:
 - `.tul.yml` exists and has version/name/repo/branch/track/check commands.
 - init does not switch branches or perform merge/rebase.
 - initial-review handoff points the next LLM to README and docs/llm/entrypoint.md.
+
+## Verification acceleration checklist
+
+Use this instead of manual repeated command blocks:
+
+```bash
+tul verify tul
+```
+
+For fresh clone verification:
+
+```bash
+tul verify tul --fresh-clone
+```
+
+Expected result:
+
+- Result: pass
+- local HEAD matches remote HEAD
+- working tree clean
+- `py_compile` passes for `bin/tul` and `lib/tulcore/*.py`
+- `git diff --check` passes
+- README and LLM entrypoint/status/roadmap/checklist/protocol docs exist

@@ -1,135 +1,56 @@
-# tul roadmap
+# tul Roadmap
 
-## Stage 0 — Syntax/runtime recovery
+Current verified stage: **Stage 5.1 — verify/fresh-clone acceleration**.
 
-Status: done.
+## Completed
 
-Related commit: `d79f288 Hotfix tul runtime syntax and newlines`.
+- Stage 0 — Syntax/runtime recovery
+- Stage 1 — Runtime boundary restructure
+- Stage 1.5 — No-op/state cleanup
+- Stage 2 — LLM loop contract and compact README entrypoint
+- Stage 2.1 — Launcher/install sync
+- Stage 2.1.1 — Doctor/no-op output polish
+- Stage 2.5 — Apply safety audit
+- Stage 3 — Recovery/debug commands
+- Stage 3.1 — Recovery state selection
+- Stage 4 — Init/config onboarding
 
-## Stage 1 — Runtime boundary restructure
+## Stage 5 — tul development acceleration
 
-Status: done.
+Goal: reduce manual bridge work during tul self-hosting before onboarding other target repos.
 
-Related commit: `86fa990 Restructure tul update runtime boundaries`.
+### Stage 5.1 — Verify/fresh-clone acceleration
 
-## Stage 1.5 — No-op/state cleanup
-
-Status: done.
-
-Related commit: `42c77b0 Handle no-op updates and archive state`.
-
-## Stage 2 — LLM loop contract
-
-Status: done candidate.
-
-Related commits:
-
-- `de13ecd Stabilize tul LLM loop contract`
-- `df84b64 Add LLM entrypoint strategy test`
-
-## Stage 2 adoption — Compact README entrypoint strategy
-
-Status: active.
-
-Goals:
-
-- Adopt Option 2: README brief + durable docs + dedicated handoff.
-- Keep README short enough to be a reliable first-contact surface.
-- Keep runtime facts in `tul handoff` output.
-- Keep mutable planning in `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
-- Add explicit `tul update <project> --latest` / `-l` command syntax for newest matching package selection.
-
-## Stage 2.1 — Launcher/install sync
-
-Status: active.
-
-Goals:
-
-- Detect when PATH `tul` is stale relative to repo `bin/tul`.
-- Provide `tul install [project|path]` for user launcher resync.
-- Keep operational examples alias-first and `cd`-free.
-
-## Stage 2.1.1 — Doctor/no-op output polish
-
-Status: active.
-
-Goals:
-
-- Ensure `tul doctor tul` exits cleanly without shell-level abort messages.
-- Avoid nested launcher subprocess checks in doctor output.
-- Represent no-op push verification as not applicable.
-
-## Stage 2.5 — Apply safety audit
-
-Status: active.
-
-Goals:
-
-- Restrict or explicitly gate directory copy.
-- Record apply plans before copying.
-- Compare apply destinations with manifest `commit.files` before staging.
-- Preserve path traversal protections.
-
-Acceptance:
-
-- Directory copy without `allow_directory: true` is rejected before copying.
-- Directory copy with `allow_directory: true` still requires every expanded destination in `commit.files`.
-- `apply-plan.json` and `apply.log` are recorded in state/report output.
-
-## Stage 3 — Recovery/debug commands
-
-Goals:
-
-- Improve `state`, `archive`, `rollback`, `import`, and `apply` for recovery.
-- Keep split commands out of the default workflow.
-
-## Stage 4 — Init/config onboarding
-
-Goals:
-
-- Make `tul init tul` and `tul init ai` create or repair global config.
-- Register aliases.
-- Generate or patch `.tul.yml`.
-- Generate initial-review handoff.
-
-## Stage 5 — `humtr/ai` onboarding
-
-Goals:
-
-- Bring `humtr/ai` under tul loop control.
-- Define branch policy, checks, and forbidden patterns in the target repo's `.tul.yml`.
-
-## Stage 6 — Self-host loop hardening
-
-Goals:
-
-- Make repeated `tul update tul` and `tul update ai` safe, inspectable, and recoverable across Windows and Termux.
-
-## Stage 3 recovery/debug commands
-
-Status: package prepared. Recovery/debug surface includes `tul import`, `tul state --all/--json`, `tul archive --all`, rollback-from-state, and conservative `resume/apply` guidance. Split commands remain recovery/debug tools; default workflow remains `tul update <project>`.
-
-
-## Recovery state selection update
-
-`tul import <project> --latest` creates a validated/imported state without a commit. That state may become the newest state, but it is not rollbackable. `tul rollback <project>` now skips non-commit states and selects the newest rollbackable state with a commit. `tul state <project>` shows a latest rollbackable state hint when the newest state has no commit.
-
-
-## Stage 4 — Init/config onboarding
-
-Status: in progress in `tul_init_config_onboarding_v1`.
-
-Goal: make `tul init <alias|path|slug>` the standard way to put a repo under the
-loop. Init should register global aliases, create or repair `.tul.yml`, preserve
-existing config, warn on branch mismatch, and print an initial-review handoff.
-
-Acceptance:
+Add:
 
 ```bash
-tul init tul
-tul init ~/prj/tul
-tul init humtr/tul
-tul projects
-tul status tul
-tul handoff tul
+tul verify tul
+tul verify tul --fresh-clone
 ```
+
+This replaces repeated manual command blocks for fetch, HEAD comparison, `py_compile`, `git diff --check`, and required document checks.
+
+### Stage 5.2 — Package discovery polish
+
+Improve `--latest` visibility:
+
+- show selected package and candidate reason
+- warn about duplicate package names
+- avoid stale work/archive packages
+- keep inbox roots as the source of truth
+
+### Stage 5.3 — State cleanup UX
+
+Improve routine cleanup:
+
+- archive old no-op states
+- keep published states by default
+- make cleanup non-destructive and reversible
+
+### Stage 5.4 — Package authoring helper
+
+Explore package creation helpers for standardized `tul-package.yml + files/ + README.md` packages.
+
+## Stage X — future target onboarding
+
+`humtr/ai` onboarding is intentionally parked as Stage X. It should happen after tul self-hosting and package/debug UX are smoother.

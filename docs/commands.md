@@ -122,3 +122,19 @@ tul init ai --branch refactor/stage6-resource-split
 By default `tul init` prints an initial-review handoff. Use `--no-handoff` for a
 quiet config-only run. Use `--copy-handoff` when the configured clipboard command
 is available.
+
+## Verify commands
+
+`tul verify` is the preferred one-command verification surface during tul development.
+
+```bash
+tul verify tul
+```
+
+Use a fresh clone when remote/source integrity matters:
+
+```bash
+tul verify tul --fresh-clone
+```
+
+The command checks local/remote HEAD, clean working tree, Python syntax, `git diff --check`, and required LLM entrypoint documents.
