@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,7 @@ PHASES = [
     "committed-no-push",
     "checked-no-commit",
     "verified",
+    "noop",
     "handoff-ready",
     "failed",
     "archived",
@@ -85,22 +87,59 @@ def latest_state(work_root: Path, *, project: str | None = None) -> tuple[Path, 
     return None
 
 
+def archive_latest_state(work_root: Path, archive_root: Path, *, project: str | None = None) -> tuple[Path, Path, dict[str, Any]] | None:
+    found = latest_state(work_root, project=project)
+    if not found:
+        return None
+    state_path, _data = found
+    state_dir = state_path.parent
+    archive_root.mkdir(parents=True, exist_ok=True)
+    dest = archive_root / state_dir.name
+    if dest.exists():
+        dest = archive_root / f"{state_dir.name}-archived-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    shutil.move(str(state_dir), str(dest))
+    new_state = dest / "state.json"
+    archived = set_phase(
+        new_state,
+        "archived",
+        archived_from=str(state_dir),
+        archived_to=str(dest),
+    )
+    return new_state, dest, archived
+
+
 def summarize_state(path: Path, data: dict[str, Any]) -> str:
     lines = [
         f"State file: {path}",
         f"Phase: {data.get('phase', 'unknown')}",
     ]
+    if data.get("outcome"):
+        lines.append(f"Outcome: {data['outcome']}")
+    if data.get("no_op") is not None:
+        lines.append(f"No-op: {str(data.get('no_op')).lower()}")
+    if data.get("reason"):
+        lines.append(f"Reason: {data['reason']}")
     for key in ("project", "package_name", "package", "sha256", "commit", "branch", "report", "handoff"):
         if data.get(key):
             lines.append(f"{key.replace('_', ' ').title()}: {data[key]}")
     if data.get("push_verified") is not None:
         lines.append(f"Push verified: {str(data.get('push_verified')).lower()}")
+    if data.get("changed_files") is not None:
+        files = data.get("changed_files") or []
+        lines.extend(["", "Changed files:"])
+        if files:
+            lines.extend(f"- {item}" for item in files)
+        else:
+            lines.append("- none")
     if data.get("error"):
         lines.extend([
             "",
             "Failure:",
             f"- failed_at: {data.get('failed_at') or 'unknown'}",
+            f"- last_successful_phase: {data.get('last_successful_phase') or 'unknown'}",
             f"- error_type: {data.get('error_type') or 'unknown'}",
             f"- error: {data.get('error')}",
         ])
+    if data.get("archived_to"):
+        lines.extend(["", "Archive:", f"- archived_to: {data.get('archived_to')}"])
     return "\n".join(lines)

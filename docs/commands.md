@@ -33,3 +33,6 @@ tul archive <project|path>
 
 The default workflow remains `tul update <project>`.
 Split commands exist for inspection, recovery, and future resume support; they must not replace the default full loop.
+
+`archive` currently archives the latest local tul work state for a project. It does not delete repo files or rewrite git history.
+A repeated/already-applied package update should exit as `noop` instead of attempting an empty commit.

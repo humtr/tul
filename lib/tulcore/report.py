@@ -17,6 +17,7 @@ def build_report(
     changed_files: list[str] | None = None,
     checks: list[str] | None = None,
     state_file: Path | None = None,
+    outcome: str | None = None,
 ) -> str:
     lines = [
         "# tul update report",
@@ -28,6 +29,8 @@ def build_report(
     ]
     if package_name:
         lines.append(f"Package: {package_name}")
+    if outcome:
+        lines.append(f"Outcome: {outcome}")
     if state_file:
         lines.append(f"State file: {state_file}")
     if commit_hash:
@@ -36,9 +39,12 @@ def build_report(
         lines.append(f"Push verified: {str(push_verified).lower()}")
     if rollback_command:
         lines.extend(["", "## Rollback", "", f"    {rollback_command}"])
-    if changed_files:
+    if changed_files is not None:
         lines.extend(["", "## Changed files", ""])
-        lines.extend(f"- {item}" for item in changed_files)
+        if changed_files:
+            lines.extend(f"- {item}" for item in changed_files)
+        else:
+            lines.append("- none")
     if checks:
         lines.extend(["", "## Checks", ""])
         for item in checks:

@@ -107,6 +107,7 @@ def run_update(
         )
 
         push_value = publish.push_verified if publish.commit_hash and not no_push else None
+        visible_changed_files = publish.changed_files or publish.staged_files
         report = build_report(
             repo=repo,
             project=ctx.project_id,
@@ -114,26 +115,34 @@ def run_update(
             commit_hash=publish.commit_hash,
             push_verified=push_value,
             rollback_command=publish.rollback_command,
-            changed_files=imported.manifest.commit_files,
+            changed_files=visible_changed_files,
             checks=checks,
             state_file=state_file,
+            outcome=publish.outcome,
         )
         report_path = imported.work_dir / "report.md"
         write_report(report_path, report)
 
+        if publish.no_op:
+            handoff_mode = "update-noop"
+        elif publish.commit_hash:
+            handoff_mode = "post-update"
+        else:
+            handoff_mode = "update-no-commit"
         handoff = generate_handoff(
             repo=repo,
             project=ctx.project_id,
-            mode="post-update" if publish.commit_hash else "update-no-commit",
+            mode=handoff_mode,
             expected_repo=ctx.expected_repo,
             package_name=imported.manifest.name,
             commit_hash=publish.commit_hash,
             push_verified=push_value,
-            changed_files=imported.manifest.commit_files,
+            changed_files=visible_changed_files,
             validation=checks,
             rollback_command=publish.rollback_command,
             state_file=state_file,
             report_file=report_path,
+            outcome=publish.outcome,
         )
         handoff_path = imported.work_dir / "handoff.md"
         handoff_path.write_text(handoff, encoding="utf-8", newline="\n")
@@ -144,6 +153,9 @@ def run_update(
             handoff=str(handoff_path),
             commit=publish.commit_hash,
             push_verified=publish.push_verified,
+            outcome=publish.outcome,
+            no_op=publish.no_op,
+            changed_files=visible_changed_files,
         )
         return UpdateResult(
             report=report,

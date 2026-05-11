@@ -26,7 +26,7 @@ from .handoff import generate_handoff
 from .init import init_project
 from .pipeline import run_update
 from .report import build_report
-from .state import latest_state, summarize_state
+from .state import archive_latest_state, latest_state, summarize_state
 from .sweep import sweep_repo
 
 
@@ -92,7 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("target")
     p = sub.add_parser("resume", help="scaffold: resume is not yet fully implemented")
     p.add_argument("target")
-    p = sub.add_parser("archive", help="scaffold: archive is not yet fully implemented")
+    p = sub.add_parser("archive", help="archive latest local tul work state")
     p.add_argument("target")
 
     return parser
@@ -200,6 +200,41 @@ def dispatch(args: argparse.Namespace) -> int:
             return 0
         path, data = found
         print(summarize_state(path, data))
+        if data.get("phase") == "failed":
+            print()
+            print("Repo status at inspection:")
+            branch = current_branch(ctx.repo_path)
+            try:
+                fetch(ctx.repo_path, branch)
+            except Exception:
+                pass
+            print(f"- HEAD: {head(ctx.repo_path)}")
+            print(f"- Remote HEAD: {remote_head(ctx.repo_path, branch) or 'unavailable'}")
+            clean = not is_dirty(ctx.repo_path)
+            print(f"- Working tree: {'clean' if clean else 'dirty'}")
+            if clean:
+                print("- Note: the latest failed state may be stale or from a repeated/no-op update attempt.")
+        return 0
+    if command == "archive":
+        ctx = resolve_project(args.target)
+        paths = platform_paths(ctx.global_config)
+        work_root = paths.get("work_root")
+        archive_root = paths.get("archive_root") or paths.get("backup_root")
+        if not work_root:
+            print("No platform.work_root configured.")
+            return 0
+        if not archive_root:
+            print("No platform.archive_root or platform.backup_root configured.")
+            return 0
+        archived = archive_latest_state(work_root, archive_root, project=ctx.project_id)
+        if not archived:
+            print(f"No tul state found for project {ctx.project_id} under {work_root}")
+            return 0
+        state_path, dest, data = archived
+        print(f"Archived latest state for {ctx.project_id}:")
+        print(f"- state: {state_path}")
+        print(f"- dir: {dest}")
+        print(f"- phase: {data.get('phase')}")
         return 0
     if command == "config":
         if args.config_command == "path":
@@ -211,7 +246,7 @@ def dispatch(args: argparse.Namespace) -> int:
         for key, value in (config.get("projects") or {}).items():
             print(f"{key}: {value.get('path') if isinstance(value, dict) else value}")
         return 0
-    if command in {"import", "apply", "resume", "archive"}:
+    if command in {"import", "apply", "resume"}:
         print(f"'{command}' is scaffolded for recovery/debug. The default workflow is 'tul update <project>'.")
         return 0
     raise TulError(f"unknown command: {command}")

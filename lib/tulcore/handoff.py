@@ -32,6 +32,7 @@ def generate_handoff(
     rollback_command: str | None = None,
     state_file: Path | None = None,
     report_file: Path | None = None,
+    outcome: str | None = None,
 ) -> str:
     branch = current_branch(repo)
     remote = None
@@ -58,6 +59,8 @@ def generate_handoff(
         lines.append(f"Active package: {package_name}")
     else:
         lines.append("Active package: none")
+    if outcome:
+        lines.append(f"Outcome: {outcome}")
     if commit_hash:
         lines.append(f"Commit hash: {commit_hash}")
     if push_verified is not None:

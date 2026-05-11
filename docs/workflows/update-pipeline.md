@@ -15,9 +15,11 @@ The runtime boundary is now split into policy modules:
 4. `apply.py` performs safe copy only and writes `apply.log`.
 5. `checks.py` runs repo-configured checks and forbidden-pattern checks.
 6. `sweep.py` moves repo-local tul backup directories out of the repo.
-7. `publish.py` owns changed-file allowlist checks, explicit staging, commit, push, remote HEAD verification, and rollback hint generation.
-8. `state.py` records phase transitions and failures.
+7. `publish.py` owns changed-file allowlist checks, explicit staging, commit, push, remote HEAD verification, rollback hint generation, and no-op detection.
+8. `state.py` records phase transitions, failures, no-op outcomes, and archive metadata.
 9. `report.py` and `handoff.py` render the human/LLM outputs.
 
 Successful update still requires remote HEAD verification when commit/push is enabled.
 `--no-commit` and `--no-push` are recovery/debug exceptions, not the default workflow.
+
+If applying a package produces no repository changes, update must not attempt an empty commit. It should record `outcome: noop`, produce a report/handoff, and exit successfully.
