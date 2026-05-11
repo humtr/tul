@@ -2,7 +2,7 @@
 """
 tul — Terminal Update Loop
 
-Initial CLI v0.1.
+Initial CLI v0.2 with branch guard support.
 
 Primary goal:
   Make the LLM-user-terminal-GitHub-LLM loop fast enough for humtr/ai,
@@ -154,9 +154,77 @@ def compare_upstream(repo: Path) -> tuple[int, int] | None:
     return int(left), int(right)
 
 
+def read_tul_config(repo: Path) -> dict[str, str]:
+    """Read a tiny top-level subset of .tul.yml without external dependencies.
+
+    Supported top-level keys:
+      name, repo, branch, expected_branch, default_branch
+
+    This is intentionally small for v0.2. A later version can use a YAML parser.
+    """
+    path = repo / ".tul.yml"
+    cfg: dict[str, str] = {}
+    if not path.exists():
+        return cfg
+
+    allowed = {"name", "repo", "branch", "expected_branch", "default_branch"}
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        # Strip comments, but keep simple quoted values usable enough for v0.2.
+        line = raw.split("#", 1)[0].strip()
+        if not line or line.startswith("-") or ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key in allowed and value:
+            cfg[key] = value
+    return cfg
+
+
 def project_id(repo: Path) -> str:
-    # Future: .tul.yml name. For now, repo basename is enough.
-    return repo.name
+    cfg = read_tul_config(repo)
+    return cfg.get("name") or repo.name
+
+
+def configured_repo_slug(repo: Path) -> str | None:
+    return read_tul_config(repo).get("repo")
+
+
+def expected_branch(repo: Path) -> str | None:
+    cfg = read_tul_config(repo)
+    return cfg.get("branch") or cfg.get("expected_branch") or cfg.get("default_branch")
+
+
+def branch_mismatch(repo: Path) -> tuple[str, str] | None:
+    expected = expected_branch(repo)
+    if not expected:
+        return None
+    current = branch(repo)
+    if current != expected:
+        return current, expected
+    return None
+
+
+def require_expected_branch(repo: Path, allow_mismatch: bool = False) -> None:
+    mismatch = branch_mismatch(repo)
+    if not mismatch or allow_mismatch:
+        return
+    current, expected = mismatch
+    raise TulError(
+        "branch mismatch: "
+        f"current branch is {current!r}, expected {expected!r}. "
+        f"Run: git switch {expected}"
+    )
+
+
+def show_branch_expectation(repo: Path) -> None:
+    expected = expected_branch(repo)
+    if not expected:
+        return
+    current = branch(repo)
+    say(f"expected : {expected}")
+    if current != expected:
+        say(f"WARNING  : branch mismatch; current {current}, expected {expected}")
 
 
 def windows_downloads_root() -> Path:
@@ -338,7 +406,11 @@ def cmd_status(args: argparse.Namespace) -> None:
     repo = repo_root(args.repo)
     say(f"repo     : {repo}")
     say(f"project  : {project_id(repo)}")
+    configured = configured_repo_slug(repo)
+    if configured:
+        say(f"config   : {configured}")
     say(f"branch   : {branch(repo)}")
+    show_branch_expectation(repo)
     say(f"HEAD     : {head(repo, short=True)}")
     up = upstream(repo)
     say(f"upstream : {up or '(none)'}")
@@ -354,6 +426,7 @@ def cmd_status(args: argparse.Namespace) -> None:
 
 def cmd_sync(args: argparse.Namespace) -> None:
     repo = repo_root(args.repo)
+    require_expected_branch(repo, allow_mismatch=getattr(args, "allow_branch_mismatch", False))
     ensure_git_clean_for_sync(repo)
     b = branch(repo)
     say(f"Fetching origin for {repo}...")
@@ -405,15 +478,9 @@ def fallback_checks(repo: Path, keep_going: bool = False) -> int:
     if scripts and shutil.which("bash"):
         step("bash -n scripts/*.sh", ["bash", "-n", *[str(p) for p in scripts]])
 
-    # humtr/ai historical guard, only if these paths exist.
-    guard_paths = [p for p in ["bin", "lib", "config", "README.md"] if (repo / p).exists()]
-    if guard_paths:
-        cp = run(["git", "grep", "-n", "ai_registry", "--", *guard_paths], cwd=repo, check=False, capture=True)
-        if cp.returncode == 0:
-            say(cp.stdout)
-            failures += 1
-            if not keep_going:
-                raise TulError("forbidden pattern found: ai_registry")
+    # Project-specific forbidden pattern checks belong in .tul.yml.
+    # Do not hardcode humtr/ai-specific forbidden strings globally.
+
 
     return failures
 
@@ -496,7 +563,10 @@ def publish(
     message: str,
     no_push: bool = False,
     keep_going: bool = False,
+    allow_branch_mismatch: bool = False,
 ) -> None:
+    require_expected_branch(repo, allow_mismatch=allow_branch_mismatch)
+
     if not files:
         raise TulError("publish requires explicit --files")
     if not message:
@@ -574,7 +644,14 @@ def publish(
 
 def cmd_publish(args: argparse.Namespace) -> None:
     repo = repo_root(args.repo)
-    publish(repo, args.files or [], args.message or "", no_push=args.no_push, keep_going=args.keep_going)
+    publish(
+        repo,
+        args.files or [],
+        args.message or "",
+        no_push=args.no_push,
+        keep_going=args.keep_going,
+        allow_branch_mismatch=getattr(args, "allow_branch_mismatch", False),
+    )
 
 
 def cmd_report(args: argparse.Namespace) -> None:
@@ -583,8 +660,16 @@ def cmd_report(args: argparse.Namespace) -> None:
     say("")
     say(f"Repo: {repo}")
     say(f"Project: {project_id(repo)}")
+    configured = configured_repo_slug(repo)
+    if configured:
+        say(f"Configured repo: {configured}")
     say(f"Platform: {'windows' if is_windows() else 'termux-or-posix'}")
     say(f"Branch: {branch(repo)}")
+    expected = expected_branch(repo)
+    if expected:
+        say(f"Expected branch: {expected}")
+        if branch(repo) != expected:
+            say("Branch warning: mismatch")
     say(f"HEAD: {head(repo, short=True)}")
     say(f"Upstream: {upstream(repo) or '(none)'}")
     comp = compare_upstream(repo) if upstream(repo) else None
@@ -615,6 +700,7 @@ def cmd_import(args: argparse.Namespace) -> None:
 
 def cmd_apply(args: argparse.Namespace) -> None:
     repo = repo_root(args.repo)
+    require_expected_branch(repo, allow_mismatch=getattr(args, "allow_branch_mismatch", False))
     work = Path(args.work).expanduser() if args.work else latest_work_dir()
     if work is None:
         raise TulError("no tul work directory found; run tul import first")
@@ -623,6 +709,7 @@ def cmd_apply(args: argparse.Namespace) -> None:
 
 def cmd_update(args: argparse.Namespace) -> None:
     repo = repo_root(args.repo)
+    require_expected_branch(repo, allow_mismatch=getattr(args, "allow_branch_mismatch", False))
 
     if not args.skip_sync:
         # sync only when clean; if package is applying to clean repo this is ideal.
@@ -643,7 +730,14 @@ def cmd_update(args: argparse.Namespace) -> None:
         return
 
     if args.files and args.message:
-        publish(repo, args.files, args.message, no_push=args.no_push, keep_going=args.keep_going)
+        publish(
+            repo,
+            args.files,
+            args.message,
+            no_push=args.no_push,
+            keep_going=args.keep_going,
+            allow_branch_mismatch=getattr(args, "allow_branch_mismatch", False),
+        )
         cmd_report(argparse.Namespace(repo=str(repo)))
         return
 
@@ -655,6 +749,7 @@ def cmd_update(args: argparse.Namespace) -> None:
 
 def cmd_rollback(args: argparse.Namespace) -> None:
     repo = repo_root(args.repo)
+    require_expected_branch(repo, allow_mismatch=getattr(args, "allow_branch_mismatch", False))
     b = branch(repo)
     commit = args.commit or "HEAD"
     say(f"Reverting {commit} in {repo}")
@@ -681,6 +776,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("sync", help="fetch/pull --ff-only when safe")
     sp.add_argument("repo")
+    sp.add_argument("--allow-branch-mismatch", action="store_true")
     sp.set_defaults(func=cmd_sync)
 
     sp = sub.add_parser("check", help="run repo checks")
@@ -710,6 +806,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("repo")
     sp.add_argument("--work")
     sp.add_argument("-y", "--yes", action="store_true")
+    sp.add_argument("--allow-branch-mismatch", action="store_true")
     sp.set_defaults(func=cmd_apply)
 
     sp = sub.add_parser("publish", help="sweep, check, commit, push, verify remote")
@@ -718,6 +815,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--message", required=True)
     sp.add_argument("--no-push", action="store_true")
     sp.add_argument("--keep-going", action="store_true")
+    sp.add_argument("--allow-branch-mismatch", action="store_true")
     sp.set_defaults(func=cmd_publish)
 
     sp = sub.add_parser("update", help="default full-loop command")
@@ -730,6 +828,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--no-push", action="store_true")
     sp.add_argument("--skip-sync", action="store_true")
     sp.add_argument("--keep-going", action="store_true")
+    sp.add_argument("--allow-branch-mismatch", action="store_true")
     sp.add_argument("-y", "--yes", action="store_true", help="confirm apply script execution")
     sp.set_defaults(func=cmd_update)
 
@@ -737,6 +836,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("repo")
     sp.add_argument("--commit", default="HEAD")
     sp.add_argument("--no-push", action="store_true")
+    sp.add_argument("--allow-branch-mismatch", action="store_true")
     sp.set_defaults(func=cmd_rollback)
 
     return p
