@@ -12,6 +12,7 @@ from pathlib import Path
 
 from . import __version__
 from .apply import build_apply_plan, write_apply_plan
+from .authoring import check_package_archive, format_package_check, scaffold_package_dir, zip_package_dir
 from .checks import run_checks
 from .config import config_path, load_global_config, platform_paths, resolve_project
 from .errors import TulError
@@ -129,6 +130,26 @@ def build_parser() -> argparse.ArgumentParser:
     p_inspect = package_sub.add_parser("inspect", help="inspect a package archive manifest without applying it")
     p_inspect.add_argument("package_path")
     p_inspect.add_argument("--json", action="store_true", help="print machine-readable package data")
+
+    p_check = package_sub.add_parser("check", help="validate package root layout, manifest, and optional target apply plan")
+    p_check.add_argument("package_path")
+    p_check.add_argument("--target", help="optional project/path alias to validate target and build apply plan")
+    p_check.add_argument("--json", action="store_true", help="print machine-readable check result")
+
+    p_scaffold = package_sub.add_parser("scaffold", help="create a package source directory skeleton")
+    p_scaffold.add_argument("name")
+    p_scaffold.add_argument("--target", help="project/path alias to infer project/repo/branch")
+    p_scaffold.add_argument("--project", help="target project id when --target is not used")
+    p_scaffold.add_argument("--repo", help="target repo slug when --target is not used")
+    p_scaffold.add_argument("--branch", help="target branch when --target is not used")
+    p_scaffold.add_argument("--message", required=True, help="commit message for the package manifest")
+    p_scaffold.add_argument("--out", help="output parent directory or package directory; default: current directory")
+    p_scaffold.add_argument("--force", action="store_true", help="allow writing into a non-empty package directory")
+
+    p_zip = package_sub.add_parser("zip", help="zip a package source directory with tul-package.yml at archive root")
+    p_zip.add_argument("package_dir")
+    p_zip.add_argument("--out", help="output zip path; default: <package_dir>.zip")
+    p_zip.add_argument("--force", action="store_true", help="replace an existing output zip")
 
     p = sub.add_parser("rollback", help="print a safe rollback command")
     p.add_argument("target")
@@ -325,6 +346,49 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
     if command == "package":
         if args.package_command == "inspect":
             print_package_inspect(Path(args.package_path), as_json=args.json)
+            return 0
+        if args.package_command == "check":
+            ctx = resolve_project(args.target) if args.target else None
+            result = check_package_archive(Path(args.package_path), ctx=ctx)
+            if args.json:
+                print(json.dumps(result.as_dict(), indent=2, ensure_ascii=False))
+            else:
+                print(format_package_check(result))
+            return 0 if result.ok else 2
+        if args.package_command == "scaffold":
+            ctx = resolve_project(args.target) if args.target else None
+            project = args.project or (ctx.project_id if ctx else None)
+            repo = args.repo or (ctx.expected_repo if ctx else None)
+            branch = args.branch or (ctx.expected_branch if ctx else None)
+            if not project or not repo or not branch:
+                raise TulError("package scaffold needs --target or explicit --project --repo --branch")
+            out_dir = Path(args.out).expanduser() if args.out else Path.cwd()
+            created = scaffold_package_dir(
+                args.name,
+                out_dir=out_dir,
+                project=project,
+                repo=repo,
+                branch=branch,
+                message=args.message,
+                force=args.force,
+            )
+            print("# tul package scaffold")
+            print(f"Created: {created}")
+            print("Next:")
+            print(f"- edit {created / 'tul-package.yml'}")
+            print(f"- add files under {created / 'files'}")
+            print(f"- tul package zip {created}")
+            return 0
+        if args.package_command == "zip":
+            out = Path(args.out).expanduser() if args.out else None
+            archive = zip_package_dir(Path(args.package_dir), out_path=out, force=args.force)
+            result = check_package_archive(archive)
+            print("# tul package zip")
+            print(f"Archive: {archive}")
+            print(f"Sha256: {result.sha256}")
+            print("Package root: ok")
+            print("Next:")
+            print(f"- tul package check {archive}")
             return 0
         ctx = resolve_project(args.target)
         if args.package_command == "list":

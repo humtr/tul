@@ -1,19 +1,21 @@
 # Current status
 
-Latest verified stage: **Stage 5.3 — state cleanup UX**.
+Latest stage: **Stage 5.4 — package authoring helper**.
 
-The current focus is `tul` development acceleration, not `/ai` onboarding. `/ai` remains **Stage X — future target onboarding**.
+Current focus:
 
-Recent completed stages:
+- Keep `/ai` as **Stage X — future target onboarding**.
+- Accelerate tul self-development before expanding to other repos.
+- Make package authoring, checking, and zipping deterministic.
+
+Recently completed:
 
 - Stage 5.1: `tul verify tul` and `tul verify tul --fresh-clone`.
-- Stage 5.2: package discovery polish with `tul package list/latest/inspect` and `tul update -l --dry-run`.
-- Stage 5.3: state cleanup commands for no-op/imported state clutter.
+- Stage 5.2: package discovery polish.
+- Stage 5.3: state cleanup UX.
+- Stage 5.4: package authoring helpers.
 
-Preferred update command:
+Next likely stage:
 
-```bash
-tul update tul -l
-```
-
-Use `--package PATH` only when deliberately selecting an exact package.
+- Stage 5.5: package authoring polish or package metadata/report improvements.
+- Stage 6: self-host loop hardening.

@@ -1,47 +1,53 @@
 # tul commands
 
-Primary full-loop command:
+Default workflow:
 
 ```bash
 tul update <project> -l
-# equivalent: tul update <project> --latest
 ```
 
-Use `--package PATH` only when selecting an exact package manually.
+`-l` is the short form of `--latest`; it selects the newest matching package from configured inbox roots.
 
-## Package discovery
+## Core loop
+
+```bash
+tul status tul
+tul verify tul
+tul verify tul --fresh-clone
+tul package latest tul
+tul update tul -l
+tul state tul
+```
+
+## Package discovery and authoring
 
 ```bash
 tul package list tul
 tul package latest tul
 tul package inspect /sdcard/Download/package.zip
-tul update tul -l --dry-run
+tul package check /sdcard/Download/package.zip --target tul
 ```
 
-## Verification
+Create a package skeleton:
 
 ```bash
-tul verify tul
-tul verify tul --fresh-clone
+tul package scaffold tul_example_v1 --target tul --message "Example package"
 ```
 
-## State cleanup
+Create a root-correct zip:
 
 ```bash
-tul state tul
+tul package zip tul_example_v1 --out /sdcard/Download/tul_example_v1.zip
+```
+
+## Recovery/debug
+
+Split commands are recovery/debug tools, not the default workflow:
+
+```bash
+tul import tul -l
 tul state tul --all --limit 5
 tul archive tul --noop --dry-run
-tul archive tul --noop --keep 3
-tul archive tul --imported --dry-run
-```
-
-`archive` moves state directories to `platform.archive_root`; it does not delete them.
-
-## Recovery
-
-```bash
 tul rollback tul
 tul resume tul
 ```
-
-Split commands remain recovery/debug tools. The default workflow is still `tul update <project>`.
