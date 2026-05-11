@@ -42,6 +42,16 @@ Required package shape:
   apply.ps1      # fallback during transition
 ```
 
+When giving the user the execution command, prefer the explicit latest form if the package will be saved to a configured inbox root:
+
+```bash
+tul update <project> --latest
+# or
+tul update <project> -l
+```
+
+Use `--package PATH` only for an exact file.
+
 ## `/tul roadmap <project>`
 
 Update or review durable planning surfaces:

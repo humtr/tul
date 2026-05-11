@@ -2,7 +2,20 @@
 
 `tul update <project>` remains the default full-loop command.
 
-The runtime boundary is now split into policy modules:
+Package source selection has two explicit forms:
+
+```bash
+tul update <project> --latest
+# shorthand
+tul update <project> -l
+
+# exact file
+tul update <project> --package /path/to/package.zip
+```
+
+`--latest` scans configured `platform.inbox_roots` and chooses the newest package whose `tul-package.yml` target matches the project/repo/branch. It does not scan work/archive roots by default.
+
+The runtime boundary is split into policy modules:
 
 1. `precheck.py` resolves whether the repo may be updated.
    - enforce branch guard

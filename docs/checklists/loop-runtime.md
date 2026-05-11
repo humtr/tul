@@ -1,28 +1,49 @@
 # Loop runtime checklist
 
-## Invariants
+Use this checklist when reviewing a package, handoff, or next-stage proposal.
+
+## Required invariants
 
 - [ ] `tul update <project>` remains the default full-loop command.
-- [ ] Push is included by default after a successful commit.
-- [ ] `--no-push` and `--no-commit` are exceptions.
-- [ ] Remote HEAD verification is performed after push.
-- [ ] No `git add -A` or `git add .` in the normal path.
-- [ ] No force push in the normal path.
+- [ ] Push is included by default after successful validation and commit.
+- [ ] `--no-push` and `--no-commit` remain exceptions.
+- [ ] `git add -A` and `git add .` are not used in the normal path.
+- [ ] Force push is not used in the normal path.
+- [ ] Remote HEAD verification remains part of successful update when push is enabled.
 - [ ] Project-specific policy remains in `.tul.yml`.
 - [ ] Environment paths and aliases remain in global config.
-- [ ] Successful update writes report/state/handoff and prints compact handoff.
+- [ ] Packages remain cross-platform `tul-package.yml + files/ + README.md` archives.
 
-## Stage 2 acceptance
+## Entrypoint strategy
 
-- [ ] `python -m py_compile bin/tul`
-- [ ] `python -m py_compile lib/tulcore/*.py`
-- [ ] `python bin/tul handoff tul` prints compact handoff.
-- [ ] `python bin/tul handoff tul --full` prints full loop contract.
-- [ ] `python bin/tul handoff tul --instructions` prints project instructions.
-- [ ] `python bin/tul instructions` prints project instructions.
-- [ ] `docs/llm/entrypoint.md` exists.
-- [ ] `docs/llm/commands.md` exists.
-- [ ] `docs/status/current.md` exists.
-- [ ] `docs/roadmap.md` exists.
-- [ ] `docs/checklists/loop-runtime.md` exists.
-- [ ] `git diff --check` passes.
+- [ ] README is a concise LLM entrypoint, not the whole protocol.
+- [ ] README links to `docs/llm/entrypoint.md`.
+- [ ] README links to `docs/status/current.md`.
+- [ ] README links to `docs/roadmap.md`.
+- [ ] README links to `docs/checklists/loop-runtime.md`.
+- [ ] Runtime facts are kept in handoff output, not hardcoded into README.
+- [ ] `tul handoff <project>` is compact by default.
+- [ ] `tul handoff <project> --full` includes the full protocol.
+- [ ] `tul instructions` prints copy-ready project instructions.
+
+## Package selection
+
+- [ ] `tul update <project> --package PATH` applies an exact package.
+- [ ] `tul update <project> --latest` selects the newest matching package from configured inbox roots.
+- [ ] `tul update <project> -l` is accepted as shorthand for `--latest`.
+- [ ] Latest selection does not scan work/archive roots by default.
+
+## Validation commands
+
+```bash
+python -m py_compile bin/tul
+python -m py_compile lib/tulcore/*.py
+python bin/tul --version
+python bin/tul handoff tul
+python bin/tul handoff tul --full
+python bin/tul handoff tul --instructions
+python bin/tul instructions
+python bin/tul update tul --latest --no-commit --no-push
+python scripts/evaluate-entrypoint-strategy.py
+git diff --check
+```

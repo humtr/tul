@@ -1,50 +1,45 @@
 # tul command grammar
 
-This document defines LLM-side command phrases for the loop. These are prompts a user may give to an LLM, not necessarily terminal commands.
+This document defines the user-facing LLM command grammar and the terminal command forms that support it.
 
-## Grammar
+## Terminal package application
 
-```text
-/tul next <project>
-/tul review <project>
-/tul package <project>
-/tul roadmap <project>
-/tul verify <project>
-/tul init-review <project>
+Preferred forms:
+
+```bash
+tul update <project> --latest
+tul update <project> -l
 ```
 
-## Meanings
+These scan configured inbox roots and use the newest matching package by manifest target.
 
-### `/tul next <project>`
+Exact path form:
 
-Inspect the repo and propose the next package boundary.
+```bash
+tul update <project> --package /path/to/package.zip
+```
 
-### `/tul review <project>`
+Default form:
 
-Review the latest pushed commit and handoff output.
+```bash
+tul update <project>
+```
 
-### `/tul package <project>`
+This also selects the newest matching package when no explicit package path is provided. `--latest` exists to make that behavior explicit in handoff and LLM-generated instructions.
 
-Create a cross-platform tul package for the agreed next scope.
+Invalid combination:
 
-### `/tul roadmap <project>`
+```bash
+tul update <project> --latest --package /path/to/package.zip
+```
 
-Review or update durable roadmap/status/checklist documents.
+Use either exact path or latest discovery, not both.
 
-### `/tul verify <project>`
+## LLM-side phrases
 
-Verify that the repo state matches the handoff, protocol, roadmap, checklist, and invariants.
-
-### `/tul init-review <project>`
-
-Perform first review after clone or init.
-
-## Output requirements
-
-Responses should separate:
-
-- user-stated goals
-- terminal-verified facts
-- repo/source-backed facts
-- assistant interpretation
-- unresolved uncertainty
+- `/tul next <project>` — read repo and propose next package scope.
+- `/tul review <project>` — review pushed commit and handoff.
+- `/tul package <project>` — generate a cross-platform tul package.
+- `/tul roadmap <project>` — update status/roadmap/checklist.
+- `/tul verify <project>` — verify repo consistency.
+- `/tul init-review <project>` — perform first review after clone/init.

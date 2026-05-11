@@ -1,49 +1,21 @@
-# Recommendation
+# Entrypoint strategy recommendation
 
-Adopt Option 2 for the production LLM loop contract.
+Result: **Adopt Option 2 — README brief + dedicated handoff**.
 
-## Why
+The user-verified test commit showed:
 
-Option 2 best preserves the separation needed by tul:
+- Option 1: 74 lines, required-term score 6/7, missing `roadmap`.
+- Option 2: 66 lines, required-term score 7/7, missing none.
+- Option 3: 106 lines, required-term score 7/7, missing none.
 
-- README is a stable first-contact surface.
-- Durable documents carry status, roadmap, checklist, command grammar, and project instructions.
-- Runtime handoff carries commit hash, push verification, rollback command, state path, and report path.
-- The default handoff stays compact.
-- Full protocol remains available through `tul handoff --full`.
-- Project instructions remain available through `tul instructions` or `tul handoff --instructions`.
+Option 2 is the production strategy because it keeps README small enough for first contact while preserving durable status, roadmap, checklist, command grammar, and project instructions in dedicated repo documents.
 
-## Production package after this experiment
+Production adoption adds an explicit newest-package command form:
 
-Package name:
-
-```text
-tul_llm_loop_contract_v1.zip
+```bash
+tul update <project> --latest
+# or
+tul update <project> -l
 ```
 
-Production changes:
-
-```text
-README.md
-docs/llm/entrypoint.md
-docs/llm/commands.md
-docs/llm/project-instructions.md
-docs/status/current.md
-docs/roadmap.md
-docs/checklists/loop-runtime.md
-docs/protocols/command-grammar.md
-docs/protocols/llm-handoff-protocol.md
-docs/tracks/loop-runtime.md
-docs/handoff.md
-templates/project-instructions.md
-templates/llm-initial-review-prompt.md
-templates/llm-post-update-review-prompt.md
-lib/tulcore/handoff.py
-lib/tulcore/cli.py
-```
-
-## Non-goals
-
-Do not implement apply safety changes in the same package.
-Do not change push-by-default semantics.
-Do not create a handoff-only commit after every update.
+This scans configured inbox roots and selects the newest matching package by manifest target.

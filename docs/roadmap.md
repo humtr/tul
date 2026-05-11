@@ -4,40 +4,47 @@
 
 Status: done.
 
-Related commit: `d79f288 Hotfix tul runtime syntax and newlines`
+Related commit: `d79f288 Hotfix tul runtime syntax and newlines`.
 
 ## Stage 1 — Runtime boundary restructure
 
 Status: done.
 
-Related commit: `86fa990 Restructure tul update runtime boundaries`
+Related commit: `86fa990 Restructure tul update runtime boundaries`.
 
 ## Stage 1.5 — No-op/state cleanup
 
 Status: done.
 
-Related commit: `42c77b0 Handle no-op updates and archive state`
+Related commit: `42c77b0 Handle no-op updates and archive state`.
 
 ## Stage 2 — LLM loop contract
+
+Status: done candidate.
+
+Related commits:
+
+- `de13ecd Stabilize tul LLM loop contract`
+- `df84b64 Add LLM entrypoint strategy test`
+
+## Stage 2 adoption — Compact README entrypoint strategy
 
 Status: active.
 
 Goals:
 
-- Add `docs/llm/entrypoint.md`.
-- Add LLM-side command grammar.
-- Add durable status, roadmap, and checklist documents.
-- Make compact handoff the default.
-- Add `tul handoff --full`.
-- Add `tul handoff --instructions` and `tul instructions`.
-- Keep update-success auto handoff compact.
+- Adopt Option 2: README brief + durable docs + dedicated handoff.
+- Keep README short enough to be a reliable first-contact surface.
+- Keep runtime facts in `tul handoff` output.
+- Keep mutable planning in `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
+- Add explicit `tul update <project> --latest` / `-l` command syntax for newest matching package selection.
 
 ## Stage 2.5 — Apply safety audit
 
 Goals:
 
 - Restrict or explicitly gate directory copy.
-- Record apply plans.
+- Record apply plans before copying.
 - Compare apply destinations with manifest `commit.files` before staging.
 - Preserve path traversal protections.
 

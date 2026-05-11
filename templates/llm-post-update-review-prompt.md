@@ -1,26 +1,10 @@
 # tul post-update review prompt
 
-You are receiving a post-update handoff from `tul update`.
+Review the latest tul handoff and remote repo state.
 
-Tasks:
-
-1. Verify remote HEAD equals the expected pushed HEAD if remote access is available.
-2. Read the state/report paths if available locally; otherwise use the handoff facts.
-3. Read changed files and relevant repo documents.
-4. Check invariants:
-   - push-by-default was preserved
-   - no broad staging was introduced
-   - no force push was introduced
-   - project policy remains in `.tul.yml`
-   - environment paths remain in global config
-5. Identify defects, regressions, and next package boundary.
-6. Provide short/medium/long roadmap updates.
-
-Output:
-
-- remote verification
-- changed-files review
-- invariant regression check
-- defects/risks
-- next package recommendation
-- source separation
+1. Verify remote HEAD when possible.
+2. Read compact handoff runtime facts.
+3. Read `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
+4. Check for invariant regressions.
+5. Propose the next package boundary.
+6. If generating a package, use `tul-package.yml + files/ + README.md` and advise `tul update <project> --latest` when saved in inbox roots.

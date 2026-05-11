@@ -38,6 +38,20 @@ LLM creates a cross-platform package
 - Environment paths and project aliases belong in global config.
 - LLM packages should be cross-platform `tul-package.yml + files/ + README.md` packages.
 
+## Package selection
+
+When the user has downloaded a package to configured inbox roots, prefer:
+
+```bash
+tul update <project> --latest
+# or
+tul update <project> -l
+```
+
+Use `--package PATH` only when the user wants to apply a specific file.
+
+Do not ask the user to paste long absolute package paths when the package is already in a configured inbox root and `--latest` is sufficient.
+
 ## Current next stage
 
-The current stage is the LLM loop contract. Make the loop easy for a fresh LLM or coding agent to discover without relying on long chat history.
+After Option 2 adoption, the next stage is Stage 2.5: apply safety audit. Focus on directory copy safety, apply plan logging, and manifest destination allowlists.

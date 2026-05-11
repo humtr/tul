@@ -1,56 +1,60 @@
-# Project instructions: tul Terminal Update Loop
+# tul project instructions
 
-You are working on `humtr/tul`, the Terminal Update Loop runtime.
+You are working with `humtr/tul`, the Terminal Update Loop runtime.
 
-## Goal
+## Start here
 
-Maintain a config-driven, manifest-driven, cross-platform loop where:
-
-```text
-LLM creates package
-→ user downloads package
-→ tul update <project>
-→ tul applies/checks/sweeps/commits/pushes/verifies
-→ tul prints rollback instructions and compact handoff
-→ next LLM verifies remote state and proposes the next package
-```
-
-## Required invariants
-
-- `tul update <project>` is the default full-loop command.
-- Push is included by default after successful commit.
-- `--no-push` and `--no-commit` are exceptions.
-- Remote HEAD verification is required after push.
-- Do not use `git add -A` or `git add .` in the normal path.
-- Do not force push.
-- Keep project policy in `.tul.yml`.
-- Keep environment paths and aliases in global config.
-- Generate cross-platform packages unless there is an explicit reason not to.
-
-## Before proposing work
-
-1. Verify remote repo/branch/HEAD when possible.
+1. Read `README.md`.
 2. Read `docs/llm/entrypoint.md`.
 3. Read `docs/status/current.md`.
 4. Read `docs/roadmap.md`.
 5. Read `docs/checklists/loop-runtime.md`.
-6. Inspect relevant code before proposing implementation.
+6. Read `docs/protocols/llm-handoff-protocol.md` when handling a handoff.
+7. Read `docs/protocols/command-grammar.md` when interpreting `/tul ...` commands.
+
+## Invariants
+
+- `tul update <project>` is the default full-loop command.
+- Push is included by default after successful validation and commit.
+- `--no-push` and `--no-commit` are exceptions.
+- Remote HEAD verification is part of successful update when push is enabled.
+- Do not use `git add -A` or `git add .` in the normal path.
+- Do not force push in the normal path.
+- Project policy belongs in `.tul.yml`.
+- Environment paths and aliases belong in global config.
+- LLM packages should use `tul-package.yml + files/ + README.md`.
+
+## Package command guidance
+
+If the user has saved a package into configured inbox roots, prefer:
+
+```bash
+tul update <project> --latest
+# or
+tul update <project> -l
+```
+
+Use exact package paths only when needed:
+
+```bash
+tul update <project> --package /path/to/package.zip
+```
 
 ## Source separation
 
 Separate:
 
-- user-stated goals
-- terminal-verified facts
-- repo/source-backed facts
-- assistant interpretation
-- unresolved uncertainty
+- user-stated goals;
+- terminal-verified facts;
+- repo-documented facts;
+- assistant interpretation;
+- unresolved uncertainty.
 
-Do not attribute assistant-created framing to the user unless the user explicitly accepts it.
+Do not treat raw web preview anomalies as proof of broken files. Use GitHub file/blob view or fresh clone checks for line counts and syntax.
 
 ## Package output
 
-When creating files, produce a single cross-platform package:
+When producing a package, create one cross-platform zip:
 
 ```text
 <package>.zip
@@ -61,4 +65,4 @@ When creating files, produce a single cross-platform package:
   apply.ps1
 ```
 
-The manifest should list explicit `commit.files`. Do not rely on broad staging.
+The zip root must contain `tul-package.yml` directly.

@@ -82,6 +82,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("update", help="run the full package update loop")
     p.add_argument("target")
     p.add_argument("--package", dest="package_path")
+    p.add_argument("-l", "--latest", action="store_true", help="use the newest matching package from configured inbox roots")
     p.add_argument("--no-commit", action="store_true")
     p.add_argument("--no-push", action="store_true")
     p.add_argument("--allow-dirty", action="store_true")
@@ -214,9 +215,16 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
 
     if command == "update":
         ctx = resolve_project(args.target)
+        if args.latest and args.package_path:
+            raise TulError("use either --package PATH or --latest, not both")
+        # Omitting --package already selects the newest matching package from
+        # configured inbox roots. --latest/-l is an explicit, readable alias for
+        # that behavior. It does not scan work/archive roots, which may contain
+        # stale or already-applied package copies.
+        package_path = None if args.latest else args.package_path
         result = run_update(
             ctx,
-            package_path=args.package_path,
+            package_path=package_path,
             no_commit=args.no_commit,
             no_push=args.no_push,
             allow_dirty=args.allow_dirty,

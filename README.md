@@ -2,52 +2,70 @@
 
 `tul` means **Terminal Update Loop**.
 
-`tul` is a local, human-controlled automation toolkit for safely moving AI-generated work across this loop:
+`tul` is a local, human-controlled runtime for safely moving AI-generated work through this loop:
 
 ```text
-LLM / assistant → user → terminal environment → local repo / runtime → commit + push → report back to LLM / assistant
+LLM / assistant → user → terminal environment → local repo/runtime → commit + push → remote verification → LLM handoff
 ```
 
-The first operational target is **`humtr/ai`**. `tul` itself is the tooling and self-hosting repo, but the primary reason for `tul` is to make `humtr/ai` updates fast across Windows, Termux, and LLM-assisted sessions.
+The first operational target is **`humtr/ai`**. This repo, **`humtr/tul`**, is the self-hosting tooling repo that makes the loop reliable across Windows, Termux, GitHub, and LLM-assisted sessions.
 
-## Start here
+## LLM entrypoint
 
-For a new LLM, coding agent, or review session, read:
+If you are an LLM, coding agent, or a new session reviewing this repo, start here:
 
-1. [`docs/llm/entrypoint.md`](docs/llm/entrypoint.md)
-2. [`docs/status/current.md`](docs/status/current.md)
-3. [`docs/roadmap.md`](docs/roadmap.md)
-4. [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md)
+1. Read [`docs/llm/entrypoint.md`](docs/llm/entrypoint.md).
+2. Read [`docs/status/current.md`](docs/status/current.md).
+3. Read [`docs/roadmap.md`](docs/roadmap.md).
+4. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md).
+5. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md) if handling a terminal handoff.
+6. Read [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md) if interpreting `/tul ...` commands.
 
-Terminal handoffs are compact by default and point to these repo-resident documents.
+Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
-```bash
-tul handoff tul
-```
+## Project identity
 
-Use full mode only when the receiving LLM needs the protocol inline:
+`tul` applies standardized LLM-generated packages, validates them, commits them, pushes them, verifies remote HEAD, prints rollback guidance, and generates an LLM-ready handoff.
 
-```bash
-tul handoff tul --full
-```
+The durable project contract lives in repo documents. Runtime facts live in terminal handoff output.
 
-Print copy-ready project instructions with:
+## Non-negotiable invariants
 
-```bash
-tul instructions
-# or
-tul handoff tul --instructions
-```
+- `tul update <project>` is the default full-loop command.
+- Push is included by default after successful validation and commit.
+- `--no-push` and `--no-commit` are exceptions for debugging or recovery.
+- Remote HEAD verification is part of successful update when push is enabled.
+- Do not use `git add -A` or `git add .` in the normal update path.
+- Do not force push in the normal path.
+- Project policy belongs in `.tul.yml`.
+- Environment paths and aliases belong in global config.
+- LLM packages should use `tul-package.yml + files/ + README.md`.
 
 ## Default command model
 
-The default loop command is:
+Use the full-loop command:
 
 ```bash
 tul update <project>
 ```
 
-`update` is the full-loop command. It is expected to:
+When the package has already been downloaded into a configured inbox root, use the explicit latest form:
+
+```bash
+tul update <project> --latest
+# or
+tul update <project> -l
+```
+
+`--latest` scans configured `platform.inbox_roots` and selects the newest package whose manifest matches the target project/repo/branch. It does **not** scan work/archive roots, because those can contain stale or already-applied copies.
+
+For an exact file path, use:
+
+```bash
+tul update <project> --package /path/to/package.zip
+```
+
+The update loop is expected to:
 
 ```text
 sync precheck
@@ -69,38 +87,41 @@ sync precheck
 
 Split commands exist for debugging, recovery, and manual intervention. They must not replace the default full loop.
 
-See:
+## Runtime facts
 
-- [`docs/commands.md`](docs/commands.md)
-- [`docs/workflows/update-pipeline.md`](docs/workflows/update-pipeline.md)
-- [`docs/llm/commands.md`](docs/llm/commands.md)
-- [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md)
+Do not treat README text as proof that a package was applied or pushed. Runtime facts belong in `tul handoff` output:
 
-## Safety defaults
+- commit hash;
+- push verified;
+- remote HEAD after fetch;
+- rollback command;
+- state path;
+- report path;
+- working tree status.
 
-`tul` should reduce repetitive work, not remove human control.
+Use compact handoff by default:
 
-```text
-Automate repetition.
-Ask before risky execution.
-Never delete when moving is safer.
-Never use git add -A by default.
-Never use git add . by default.
-Never force-push by default.
-Keep every update resumable and reportable.
+```bash
+tul handoff tul
 ```
 
-Important clarification:
+Use full handoff only when the receiving LLM needs the protocol inline:
 
-```text
-`tul update <project>` is explicit update intent.
-After a successful commit, it should push by default so another platform can continue from the same remote state.
-Use --no-commit or --no-push only for debugging/manual intervention.
+```bash
+tul handoff tul --full
+```
+
+Print copy-ready project instructions with:
+
+```bash
+tul instructions
+# or
+tul handoff tul --instructions
 ```
 
 ## Package contract
 
-LLM-generated packages should converge on a single cross-platform zip:
+LLM-generated packages should converge on one cross-platform zip:
 
 ```text
 <package>.zip
@@ -118,13 +139,3 @@ apply.ps1
 ```
 
 Normal operation should use `tul-package.yml`, not arbitrary script execution.
-
-## First-class loop
-
-`tul` treats the human as the explicit approval and execution boundary.
-
-```text
-LLM proposes → user reviews/chooses → terminal applies/verifies → tul commits/pushes → tul reports → LLM reviews next step
-```
-
-Runtime facts such as commit hash, push result, remote HEAD verification, state path, and rollback command belong in terminal handoff output. Durable planning knowledge belongs in repo documents under `docs/` and `templates/`.
