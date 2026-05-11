@@ -152,7 +152,7 @@ def run_update(
             report=str(report_path),
             handoff=str(handoff_path),
             commit=publish.commit_hash,
-            push_verified=publish.push_verified,
+            push_verified=push_value,
             outcome=publish.outcome,
             no_op=publish.no_op,
             changed_files=visible_changed_files,

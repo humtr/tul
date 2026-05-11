@@ -49,3 +49,11 @@ This package teaches `tul doctor` to detect stale PATH launchers and adds `tul i
 - `tul init` should eventually generate or repair global config and aliases.
 - Recovery/debug commands need deeper implementation after the LLM loop surface is stable.
 - `humtr/ai` onboarding remains the first major external repo target.
+
+
+## Stage 2.1.1 — doctor/no-op output fix
+
+This patch makes launcher diagnostics non-recursive so `tul doctor tul` prints
+its report and exits cleanly. It also normalizes no-op push verification wording:
+no-op updates do not push, so push verification is `not applicable for no-op`
+rather than false or unavailable.

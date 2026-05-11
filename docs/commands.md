@@ -63,3 +63,14 @@ python ~/prj/tul/bin/tul --version
 ```
 
 On POSIX/Termux, the default install creates `~/bin/tul` as a symlink to the repo launcher. On Windows, it creates a `tul.cmd` shim under `%USERPROFILE%\bin`.
+
+
+## Doctor/no-op output semantics
+
+`tul doctor [project]` must print diagnostics and exit normally. It must not
+execute nested `tul --version` subprocesses just to compare launchers; launcher
+sync is determined by resolved paths.
+
+For no-op updates, push verification is **not applicable**, not failed. A no-op
+means the package produced no repo changes after safe apply, usually because it
+was already applied.

@@ -49,6 +49,16 @@ Goals:
 - Provide `tul install [project|path]` for user launcher resync.
 - Keep operational examples alias-first and `cd`-free.
 
+## Stage 2.1.1 — Doctor/no-op output polish
+
+Status: active.
+
+Goals:
+
+- Ensure `tul doctor tul` exits cleanly without shell-level abort messages.
+- Avoid nested launcher subprocess checks in doctor output.
+- Represent no-op push verification as not applicable.
+
 ## Stage 2.5 — Apply safety audit
 
 Goals:

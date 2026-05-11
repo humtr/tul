@@ -35,7 +35,9 @@ def build_report(
         lines.append(f"State file: {state_file}")
     if commit_hash:
         lines.append(f"Commit: {commit_hash}")
-    if push_verified is not None:
+    if outcome == "noop":
+        lines.append("Push verified: not applicable for no-op")
+    elif push_verified is not None:
         lines.append(f"Push verified: {str(push_verified).lower()}")
     if rollback_command:
         lines.extend(["", "## Rollback", "", f"    {rollback_command}"])

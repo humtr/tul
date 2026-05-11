@@ -35,7 +35,7 @@ Use this checklist when reviewing a package, handoff, or next-stage proposal.
 
 ## Launcher sync
 
-- [ ] `tul doctor tul` reports whether PATH `tul` is synced with repo `bin/tul`.
+- [ ] `tul doctor tul` reports whether PATH `tul` is synced with repo `bin/tul` and exits with status 0.
 - [ ] `tul install tul` can resync a stale launcher.
 - [ ] Operational commands work from outside the repo directory.
 
@@ -63,3 +63,20 @@ python bin/tul update tul --latest --no-commit --no-push
 python scripts/evaluate-entrypoint-strategy.py
 git diff --check
 ```
+
+
+## Doctor/no-op output
+
+```bash
+cd ~
+tul doctor tul
+echo $?
+tul update tul --latest
+tul state tul
+```
+
+Expected:
+
+- `tul doctor tul` has no shell-level `Aborted` message.
+- exit code is `0`.
+- no-op handoff/report/state say `Push verified: not applicable for no-op`.

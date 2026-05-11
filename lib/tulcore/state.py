@@ -122,7 +122,9 @@ def summarize_state(path: Path, data: dict[str, Any]) -> str:
     for key in ("project", "package_name", "package", "sha256", "commit", "branch", "report", "handoff"):
         if data.get(key):
             lines.append(f"{key.replace('_', ' ').title()}: {data[key]}")
-    if data.get("push_verified") is not None:
+    if data.get("outcome") == "noop" or data.get("no_op") is True:
+        lines.append("Push verified: not applicable for no-op")
+    elif data.get("push_verified") is not None:
         lines.append(f"Push verified: {str(data.get('push_verified')).lower()}")
     if data.get("changed_files") is not None:
         files = data.get("changed_files") or []

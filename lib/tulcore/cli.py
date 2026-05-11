@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
-import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -363,16 +362,18 @@ def backup_path(path: Path) -> Path:
     return path.with_name(f"{path.name}.bak-{stamp}")
 
 
-def run_launcher_version(path: Path) -> str:
-    try:
-        if os.name == "nt" and path.suffix.lower() in {".cmd", ".bat"}:
-            proc = subprocess.run(f'"{path}" --version', shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
-        else:
-            proc = subprocess.run([str(path), "--version"], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
-        text = (proc.stdout or proc.stderr).strip()
-        return text or f"exit {proc.returncode}"
-    except Exception as exc:
-        return f"unavailable ({type(exc).__name__}: {exc})"
+def launcher_version_label(path: Path, *, repo_bin: Path | None = None) -> str:
+    """Return a safe launcher version label without spawning nested tul.
+
+    `tul doctor` should not execute `tul --version` recursively. On some
+    mobile/Termux environments nested launcher execution can produce confusing
+    shell-level abort messages even after diagnostics are printed. If the PATH
+    launcher resolves to the target repo launcher, the current module version is
+    authoritative. If it does not, report the drift and ask the user to resync.
+    """
+    if repo_bin is not None and same_resolved(path, repo_bin):
+        return f"tul {__version__}"
+    return "not checked (launcher is stale, copied, or outside target repo)"
 
 
 def same_resolved(a: Path | None, b: Path | None) -> bool:
@@ -395,10 +396,10 @@ def path_launcher_info(repo: Path | None = None) -> list[str]:
             lines.append(f"- PATH tul resolved: {found_path.resolve()}")
         except Exception:
             lines.append("- PATH tul resolved: unavailable")
-        lines.append(f"- PATH tul version: {run_launcher_version(found_path)}")
+        lines.append(f"- PATH tul version: {launcher_version_label(found_path, repo_bin=repo_bin)}")
     if repo_bin:
         lines.append(f"- repo bin/tul: {repo_bin}")
-        lines.append(f"- repo bin/tul version: {run_launcher_version(repo_bin)}")
+        lines.append(f"- repo bin/tul version: {launcher_version_label(repo_bin, repo_bin=repo_bin)}")
         if found:
             status = "synced" if same_resolved(Path(found), repo_bin) else "stale-or-copy"
             lines.append(f"- launcher status: {status}")
