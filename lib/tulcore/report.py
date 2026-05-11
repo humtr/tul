@@ -1,50 +1,52 @@
+"""Report generation."""
 from __future__ import annotations
 
 from pathlib import Path
 
-from . import platform
-from .gitops import branch, compare_upstream, head, recent, remote_url, status, upstream
+from .gitops import current_branch, head, recent_commits, status_porcelain
 
 
-def status_text(repo: Path, project: str | None, repo_config: dict) -> str:
+def build_report(
+    *,
+    repo: Path,
+    project: str,
+    package_name: str | None = None,
+    commit_hash: str | None = None,
+    push_verified: bool | None = None,
+    rollback_command: str | None = None,
+    changed_files: list[str] | None = None,
+    checks: list[str] | None = None,
+) -> str:
     lines = [
-        f"repo     : {repo}",
-        f"project  : {project or repo.name}",
-    ]
-    if repo_config.get("repo"):
-        lines.append(f"config   : {repo_config.get('repo')}")
-    lines.extend([
-        f"branch   : {branch(repo)}",
-        f"expected : {repo_config.get('branch') or '(none)'}",
-        f"HEAD     : {head(repo, short=True)}",
-        f"upstream : {upstream(repo) or '(none)'}",
-    ])
-    comp = compare_upstream(repo) if upstream(repo) else None
-    if comp:
-        lines.append(f"remote   : ahead {comp[0]}, behind {comp[1]}")
-    st = status(repo)
-    lines.append("status   : clean" if not st else "status   : dirty")
-    lines.extend(f"  {x}" for x in st)
-    return "\n".join(lines)
-
-
-def report_text(repo: Path, project: str | None, repo_config: dict) -> str:
-    return "\n".join([
-        "# tul report",
+        "# tul update report",
         "",
-        f"Repo: {repo}",
-        f"Project: {project or repo.name}",
-        f"Platform: {platform.name()}",
-        f"Remote URL: {remote_url(repo) or '(none)'}",
-        f"Branch: {branch(repo)}",
-        f"Expected branch: {repo_config.get('branch') or '(none)'}",
+        f"Project: {project}",
+        f"Repo path: {repo}",
+        f"Branch: {current_branch(repo)}",
         f"HEAD: {head(repo)}",
-        f"Upstream: {upstream(repo) or '(none)'}",
-        "",
-        "Status:",
-        *(f"  {x}" for x in (status(repo) or ["clean"])),
-        "",
-        "Recent commits:",
-        recent(repo),
-        "",
-    ])
+    ]
+    if package_name:
+        lines.append(f"Package: {package_name}")
+    if commit_hash:
+        lines.append(f"Commit: {commit_hash}")
+    if push_verified is not None:
+        lines.append(f"Push verified: {str(push_verified).lower()}")
+    if rollback_command:
+        lines.extend(["", "## Rollback", "", f"    {rollback_command}"])
+    if changed_files:
+        lines.extend(["", "## Changed files", ""])
+        lines.extend(f"- {item}" for item in changed_files)
+    if checks:
+        lines.extend(["", "## Checks", ""])
+        for item in checks:
+            first = item.splitlines()[0] if item else "check"
+            lines.append(f"- {first}")
+    status = status_porcelain(repo)
+    lines.extend(["", "## Working tree", "", "clean" if not status else status])
+    lines.extend(["", "## Recent commits", ""])
+    lines.extend(f"- {line}" for line in recent_commits(repo))
+    return "\n".join(lines) + "\n"
+
+
+def write_report(path: Path, text: str) -> None:
+    path.write_text(text, encoding="utf-8", newline="\n")

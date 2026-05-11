@@ -1,143 +1,235 @@
+"""Command-line interface for tul."""
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
+from pathlib import Path
 
+from . import __version__
 from .checks import run_checks
-from .config import load_global, load_repo
+from .config import config_path, load_global_config, resolve_project
 from .errors import TulError
-from .gitops import sync
-from .handoff import build as build_handoff
+from .gitops import (
+    changed_files,
+    current_branch,
+    fetch,
+    head,
+    is_dirty,
+    pull_ff_only,
+    recent_commits,
+    remote_head,
+    remote_url,
+    status_porcelain,
+)
+from .handoff import generate_handoff
 from .init import init_project
-from .pipeline import resolve, run_publish, run_update
-from .report import report_text, status_text
-from .sweep import sweep
+from .pipeline import run_update
+from .report import build_report
+from .sweep import sweep_repo
 
 
-def repo_cfg(target: str):
-    cfg = load_global()
-    repo = resolve(target, cfg)
-    rcfg = load_repo(repo)
-    return cfg, repo, rcfg
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="tul", description="Terminal Update Loop")
+    parser.add_argument("--version", action="version", version=f"tul {__version__}")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("init", help="register or initialize a repo for tul")
+    p.add_argument("target")
+    p.add_argument("--branch")
+    p.add_argument("--handoff", action="store_true")
+
+    p = sub.add_parser("status", help="show repo status")
+    p.add_argument("target")
+
+    p = sub.add_parser("sync", help="fetch and pull --ff-only when safe")
+    p.add_argument("target")
+
+    p = sub.add_parser("check", help="run repo checks")
+    p.add_argument("target")
+    sub.add_parser("doctor", help="show tul environment diagnostics")
+
+    p = sub.add_parser("report", help="print a lightweight report")
+    p.add_argument("target")
+
+    p = sub.add_parser("handoff", help="print an LLM handoff")
+    p.add_argument("target")
+    p.add_argument("--mode", default="initial-review")
+
+    p = sub.add_parser("sweep", help="move repo-local tul backups out of the repo")
+    p.add_argument("target")
+
+    p = sub.add_parser("update", help="run the full package update loop")
+    p.add_argument("target")
+    p.add_argument("--package", dest="package_path")
+    p.add_argument("--no-commit", action="store_true")
+    p.add_argument("--no-push", action="store_true")
+    p.add_argument("--allow-dirty", action="store_true")
+
+    p = sub.add_parser("publish", help="commit and push already-staged changes")
+    p.add_argument("target")
+    p.add_argument("-m", "--message", required=False)
+
+    p = sub.add_parser("rollback", help="print a safe rollback command")
+    p.add_argument("target")
+    p.add_argument("commit", nargs="?")
+
+    p = sub.add_parser("state", help="show latest local tul work state hint")
+    p.add_argument("target")
+
+    p = sub.add_parser("config", help="config helpers")
+    config_sub = p.add_subparsers(dest="config_command", required=True)
+    config_sub.add_parser("path")
+
+    sub.add_parser("projects", help="list configured projects")
+
+    # Scaffolds kept explicit so split commands do not become the default loop.
+    p = sub.add_parser("import", help="scaffold: package import is normally part of update")
+    p.add_argument("package", nargs="?")
+    p = sub.add_parser("apply", help="scaffold: package apply is normally part of update")
+    p.add_argument("target")
+    p = sub.add_parser("resume", help="scaffold: resume is not yet fully implemented")
+    p.add_argument("target")
+    p = sub.add_parser("archive", help="scaffold: archive is not yet fully implemented")
+    p.add_argument("target")
+
+    return parser
 
 
-def cmd_init(args):
-    init_project(args.target, branch=args.branch, handoff=args.handoff)
-
-
-def cmd_status(args):
-    _cfg, repo, rcfg = repo_cfg(args.target)
-    print(status_text(repo, rcfg.get("name"), rcfg))
-
-
-def cmd_sync(args):
-    _cfg, repo, _rcfg = repo_cfg(args.target)
-    print(sync(repo))
-
-
-def cmd_check(args):
-    _cfg, repo, rcfg = repo_cfg(args.target)
-    run_checks(repo, rcfg)
-    print("Checks passed.")
-
-
-def cmd_report(args):
-    _cfg, repo, rcfg = repo_cfg(args.target)
-    print(report_text(repo, rcfg.get("name"), rcfg))
-
-
-def cmd_handoff(args):
-    _cfg, repo, rcfg = repo_cfg(args.target)
-    print(build_handoff(repo, rcfg.get("name"), rcfg))
-
-
-def cmd_update(args):
-    run_update(args.target, args.package, args.no_commit, args.no_push)
-
-
-def cmd_publish(args):
-    run_publish(args.target, args.files, args.message, args.no_push)
-
-
-def cmd_sweep(args):
-    cfg, repo, rcfg = repo_cfg(args.target)
-    sweep(repo, cfg, rcfg.get("name") or repo.name)
-
-
-def cmd_projects(args):
-    cfg = load_global()
-    if not cfg.projects:
-        print("No projects registered.")
-    for name, entry in cfg.projects.items():
-        print(f"{name}: {entry.get('path') if isinstance(entry, dict) else entry}")
-
-
-def cmd_config_path(args):
-    print(load_global().path)
-
-
-def parser():
-    p = argparse.ArgumentParser(prog="tul")
-    sub = p.add_subparsers(dest="cmd", required=True)
-
-    s = sub.add_parser("init")
-    s.add_argument("target")
-    s.add_argument("--branch")
-    s.add_argument("--handoff", action="store_true")
-    s.set_defaults(func=cmd_init)
-
-    for name, func in [
-        ("status", cmd_status),
-        ("sync", cmd_sync),
-        ("check", cmd_check),
-        ("verify", cmd_check),
-        ("report", cmd_report),
-        ("handoff", cmd_handoff),
-        ("sweep", cmd_sweep),
-    ]:
-        sp = sub.add_parser(name)
-        sp.add_argument("target")
-        sp.set_defaults(func=func)
-
-    s = sub.add_parser("update")
-    s.add_argument("target")
-    s.add_argument("--package", default="latest")
-    s.add_argument("--no-commit", action="store_true")
-    s.add_argument("--no-push", action="store_true")
-    s.set_defaults(func=cmd_update)
-
-    s = sub.add_parser("publish")
-    s.add_argument("target")
-    s.add_argument("--files", nargs="+", required=True)
-    s.add_argument("--message", required=True)
-    s.add_argument("--no-push", action="store_true")
-    s.set_defaults(func=cmd_publish)
-
-    s = sub.add_parser("projects")
-    s.set_defaults(func=cmd_projects)
-
-    s = sub.add_parser("config")
-    csub = s.add_subparsers(dest="config_cmd", required=True)
-    sp = csub.add_parser("path")
-    sp.set_defaults(func=cmd_config_path)
-
-    return p
-
-
-def main(argv=None) -> int:
-    p = parser()
-    args = p.parse_args(argv)
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
     try:
-        args.func(args)
-        return 0
+        return dispatch(args)
     except TulError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        print(f"tul: error: {exc}", file=sys.stderr)
         return 2
-    except subprocess.CalledProcessError as exc:
-        print(f"ERROR: command failed with exit code {exc.returncode}: {exc.cmd}", file=sys.stderr)
-        if exc.stdout:
-            print(exc.stdout, file=sys.stderr)
-        if exc.stderr:
-            print(exc.stderr, file=sys.stderr)
-        return exc.returncode or 1
+    except KeyboardInterrupt:
+        print("tul: interrupted", file=sys.stderr)
+        return 130
+
+
+def dispatch(args: argparse.Namespace) -> int:
+    command = args.command
+    if command == "init":
+        repo, project = init_project(args.target, branch=args.branch)
+        print(f"Initialized {project}: {repo}")
+        if args.handoff:
+            ctx = resolve_project(project)
+            print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="initial-review", expected_repo=ctx.expected_repo))
+        return 0
+    if command == "status":
+        ctx = resolve_project(args.target)
+        print_status(ctx)
+        return 0
+    if command == "sync":
+        ctx = resolve_project(args.target)
+        branch = current_branch(ctx.repo_path)
+        if is_dirty(ctx.repo_path):
+            print("Working tree dirty; fetch only, no pull.")
+            fetch(ctx.repo_path, branch)
+        else:
+            fetch(ctx.repo_path, branch)
+            pull_ff_only(ctx.repo_path)
+        print_status(ctx)
+        return 0
+    if command == "check":
+        ctx = resolve_project(args.target)
+        outputs = run_checks(ctx.repo_path, ctx.repo_config)
+        for item in outputs:
+            print(item)
+            print()
+        print("Checks passed.")
+        return 0
+    if command == "doctor":
+        print_doctor()
+        return 0
+    if command == "report":
+        ctx = resolve_project(args.target)
+        print(build_report(repo=ctx.repo_path, project=ctx.project_id))
+        return 0
+    if command == "handoff":
+        ctx = resolve_project(args.target)
+        print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode=args.mode, expected_repo=ctx.expected_repo))
+        return 0
+    if command == "sweep":
+        ctx = resolve_project(args.target)
+        moved = sweep_repo(ctx.repo_path, ctx.global_config)
+        print("Sweep moved:")
+        print("\n".join(moved) if moved else "nothing")
+        return 0
+    if command == "update":
+        ctx = resolve_project(args.target)
+        result = run_update(
+            ctx,
+            package_path=args.package_path,
+            no_commit=args.no_commit,
+            no_push=args.no_push,
+            allow_dirty=args.allow_dirty,
+        )
+        print(result.report)
+        print("\n--- LLM HANDOFF ---\n")
+        print(result.handoff)
+        return 0
+    if command == "publish":
+        ctx = resolve_project(args.target)
+        print("publish is recovery/debug only. Use 'tul update' for the default loop.")
+        print("Staged files:")
+        print("\n".join(changed_files(ctx.repo_path, staged=True)) or "none")
+        return 0
+    if command == "rollback":
+        ctx = resolve_project(args.target)
+        commit_id = args.commit or "<commit>"
+        branch = current_branch(ctx.repo_path)
+        print(f"cd {ctx.repo_path}")
+        print(f"git revert {commit_id}")
+        print(f"git push origin {branch}")
+        return 0
+    if command == "state":
+        ctx = resolve_project(args.target)
+        print("State files live under the configured platform.work_root for imported packages.")
+        print(f"Config: {ctx.global_config_path}")
+        return 0
+    if command == "config":
+        if args.config_command == "path":
+            print(config_path())
+            return 0
+    if command == "projects":
+        config, path = load_global_config()
+        print(f"Config: {path}")
+        for key, value in (config.get("projects") or {}).items():
+            print(f"{key}: {value.get('path') if isinstance(value, dict) else value}")
+        return 0
+    if command in {"import", "apply", "resume", "archive"}:
+        print(f"'{command}' is scaffolded for recovery/debug. The default workflow is 'tul update <project>'.")
+        return 0
+    raise TulError(f"unknown command: {command}")
+
+
+def print_status(ctx) -> None:
+    repo = ctx.repo_path
+    branch = current_branch(repo)
+    try:
+        fetch(repo, branch)
+    except Exception:
+        pass
+    print(f"Project: {ctx.project_id}")
+    print(f"Repo: {repo}")
+    print(f"Remote: {remote_url(repo) or 'unknown'}")
+    print(f"Branch: {branch}")
+    print(f"HEAD: {head(repo)}")
+    print(f"Remote HEAD: {remote_head(repo, branch) or 'unavailable'}")
+    status = status_porcelain(repo)
+    print("Working tree: clean" if not status else "Working tree:\n" + status)
+    print("Recent commits:")
+    for item in recent_commits(repo):
+        print(f"- {item}")
+
+
+def print_doctor() -> None:
+    config, path = load_global_config()
+    print(f"tul version: {__version__}")
+    print(f"config path: {path}")
+    print(f"config exists: {path.exists()}")
+    print("projects:")
+    for key, value in (config.get("projects") or {}).items():
+        print(f"- {key}: {value.get('path') if isinstance(value, dict) else value}")

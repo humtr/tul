@@ -1,15 +1,12 @@
-# Track: tul Loop Runtime
+# loop-runtime track
 
-Active objective:
+Current track goal:
 
-```text
-`tul update <project>` should complete package apply, validation, commit,
-push, remote verification, rollback hint, and LLM handoff output.
-```
+Implement a config-driven, manifest-driven, cross-platform self-hosting loop runtime where `tul update <project>` applies a standardized package, checks, sweeps, commits, pushes, verifies remote HEAD, prints rollback instructions, and outputs an LLM-ready handoff automatically.
 
-Known next work after this package:
+Current hotfix priority:
 
-- improve config editing UX
-- add state/resume commands
-- harden manifest parser
-- add tests/fixtures
+- restore valid newlines and Python syntax
+- make `python -m py_compile bin/tul` pass
+- make `python -m py_compile lib/tulcore/*.py` pass
+- make `tul status`, `tul check`, and `tul handoff` smoke tests possible

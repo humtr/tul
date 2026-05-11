@@ -1,27 +1,23 @@
 #!/usr/bin/env python3
+"""Terminal Update Loop launcher."""
 from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
 
+# tul should not leave __pycache__ noise in target repositories.
+os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+sys.dont_write_bytecode = True
 
-def _bootstrap() -> None:
-    here = Path(__file__).resolve()
-    candidates = []
-    if os.environ.get("TUL_LIB_DIR"):
-        candidates.append(Path(os.environ["TUL_LIB_DIR"]).expanduser())
-    candidates.append(here.parent.parent / "lib")
-    candidates.append(Path.home() / ".config" / "tul" / "lib")
-
-    for candidate in candidates:
-        if (candidate / "tulcore" / "__init__.py").exists():
-            sys.path.insert(0, str(candidate))
-            return
-
-
-_bootstrap()
+# When this script is run directly from the repository, make lib/ importable.
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_LIB = _REPO_ROOT / "lib"
+if str(_LIB) not in sys.path:
+    sys.path.insert(0, str(_LIB))
 
 from tulcore.cli import main
 
-raise SystemExit(main())
+
+if __name__ == "__main__":
+    raise SystemExit(main())

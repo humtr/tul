@@ -2,19 +2,18 @@
 set -euo pipefail
 
 REPO="${1:-$HOME/prj/tul}"
-DEST="${TUL_BIN_DEST:-$HOME/bin/tul}"
-LIB_DEST="${TUL_LIB_DEST:-$HOME/.config/tul/lib}"
+REPO="$(cd "$REPO" && pwd)"
+TUL="$REPO/bin/tul"
 
-cd "$REPO"
-python -m py_compile bin/tul
-python -m py_compile lib/tulcore/*.py
+mkdir -p "$HOME/bin"
+cat > "$HOME/bin/tul" <<EOF
+#!/usr/bin/env bash
+exec python "$TUL" "\$@"
+EOF
+chmod +x "$HOME/bin/tul"
+chmod +x "$TUL"
 
-mkdir -p "$(dirname "$DEST")" "$LIB_DEST"
-cp -f bin/tul "$DEST"
-chmod +x "$DEST"
-rm -rf "$LIB_DEST/tulcore"
-cp -a lib/tulcore "$LIB_DEST/"
-
-echo "Installed tul:"
-echo "  $DEST"
-echo "  $LIB_DEST/tulcore"
+echo "Installed tul launcher at $HOME/bin/tul"
+echo "Next:"
+echo "  cd $REPO"
+echo "  tul status ."

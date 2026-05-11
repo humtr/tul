@@ -1,28 +1,19 @@
 param(
-  [string]$Repo = "D:\work\prj\tul",
-  [string]$Dest = "D:\work\bin\tul.cmd",
-  [string]$LibDest = "D:\work\home\.config\tul\lib"
+    [string]$Repo = "D:\work\prj\tul"
 )
 
 $ErrorActionPreference = "Stop"
-
 $Repo = (Resolve-Path $Repo).Path
-Set-Location $Repo
+$Tul = Join-Path $Repo "bin\tul"
+$Bin = Join-Path $HOME "bin"
+New-Item -ItemType Directory -Force -Path $Bin | Out-Null
+$Launcher = Join-Path $Bin "tul.ps1"
+@"
+param([Parameter(ValueFromRemainingArguments=`$true)][string[]]`$Args)
+python "$Tul" @Args
+"@ | Set-Content -Encoding UTF8 -Path $Launcher
 
-python -m py_compile .\bin\tul
-python -m py_compile (Get-ChildItem .\lib\tulcore -Filter "*.py" | ForEach-Object { $_.FullName })
-
-New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Dest) | Out-Null
-New-Item -ItemType Directory -Force -Path $LibDest | Out-Null
-
-$TulPath = Join-Path $Repo "bin\tul"
-$Wrapper = "@echo off`r`npython `"$TulPath`" %*`r`n"
-[System.IO.File]::WriteAllText($Dest, $Wrapper, [System.Text.UTF8Encoding]::new($false))
-
-$TargetCore = Join-Path $LibDest "tulcore"
-if (Test-Path $TargetCore) { Remove-Item $TargetCore -Recurse -Force }
-Copy-Item -LiteralPath (Join-Path $Repo "lib\tulcore") -Destination $LibDest -Recurse -Force
-
-Write-Host "Installed tul:"
-Write-Host "  $Dest"
-Write-Host "  $TargetCore"
+Write-Host "Installed tul launcher at $Launcher"
+Write-Host "Next:"
+Write-Host "  Set-Location $Repo"
+Write-Host "  python $Tul status ."

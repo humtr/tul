@@ -1,130 +1,149 @@
+"""Package discovery, import, and safe extraction."""
 from __future__ import annotations
 
 import hashlib
-import json
 import shutil
 import tarfile
-import tempfile
 import zipfile
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
-from .config import GlobalConfig
-from .errors import TulError
-from .manifest import Manifest, find, load
-from .paths import ensure_inside
+from .config import platform_paths
+from .errors import PackageError, SafetyError
+from .manifest import Manifest, load_manifest
+from .paths import ensure_inside, mkdirp, safe_join
+
+
+@dataclass
+class PackageCandidate:
+    source: Path
+    manifest_data: dict
+    mtime: float
+
+    @property
+    def name(self) -> str:
+        return str(self.manifest_data.get("name") or self.source.stem)
 
 
 @dataclass
 class ImportedPackage:
     source: Path
     work_dir: Path
-    extract_dir: Path
-    sha256: str
+    extracted_dir: Path
     manifest: Manifest
+    sha256: str
 
 
-def sha256(path: Path) -> str:
+def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
 
 
-def safe_extract(src: Path, dest: Path) -> None:
-    dest.mkdir(parents=True, exist_ok=True)
-    if src.name.endswith(".zip"):
-        with zipfile.ZipFile(src) as z:
-            for info in z.infolist():
-                ensure_inside(dest, dest / info.filename)
-            z.extractall(dest)
-    elif src.name.endswith(".tar.gz") or src.name.endswith(".tgz"):
-        with tarfile.open(src) as t:
-            for member in t.getmembers():
-                ensure_inside(dest, dest / member.name)
-            t.extractall(dest)
-    else:
-        raise TulError(f"unsupported package type: {src}")
-
-
-def candidates(cfg: GlobalConfig) -> list[Path]:
-    out = []
-    for root in cfg.inbox_roots():
-        if root.exists():
-            for pat in ("*.zip", "*.tar.gz", "*.tgz"):
-                out.extend(root.glob(pat))
-    return sorted(set(out), key=lambda p: p.stat().st_mtime, reverse=True)
-
-
-def manifest_from_archive(path: Path) -> Manifest | None:
-    with tempfile.TemporaryDirectory(prefix="tul-manifest-") as tmp:
-        root = Path(tmp)
-        try:
-            safe_extract(path, root)
-        except Exception:
+def _manifest_from_archive(path: Path) -> dict | None:
+    try:
+        if zipfile.is_zipfile(path):
+            with zipfile.ZipFile(path) as zf:
+                try:
+                    raw = zf.read("tul-package.yml").decode("utf-8")
+                except KeyError:
+                    return None
+        elif tarfile.is_tarfile(path):
+            with tarfile.open(path) as tf:
+                member = tf.getmember("tul-package.yml")
+                extracted = tf.extractfile(member)
+                if extracted is None:
+                    return None
+                raw = extracted.read().decode("utf-8")
+        else:
             return None
-        m = find(root)
-        return load(m) if m else None
+    except Exception:
+        return None
+    from .config import load_yaml_text
+
+    try:
+        return load_yaml_text(raw)
+    except Exception:
+        return None
 
 
-def select(cfg: GlobalConfig, project: str | None, package_arg: str = "latest") -> Path:
-    if package_arg != "latest":
-        p = Path(package_arg).expanduser()
-        if not p.exists():
-            raise TulError(f"package not found: {p}")
-        return p
-
-    scored = []
-    for p in candidates(cfg):
-        m = manifest_from_archive(p)
-        score = 0
-        if m:
-            score += 10
-            if project and m.target_project() == project:
-                score += 100
-        scored.append((score, p.stat().st_mtime, p))
-
-    if not scored:
-        raise TulError("no package candidates found")
-
-    scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
-    best_score = scored[0][0]
-    best = [p for score, _, p in scored if score == best_score]
-    if len(best) == 1:
-        return best[0]
-
-    print("Package candidates:")
-    for i, p in enumerate(best, 1):
-        print(f"{i}. {p}")
-    choice = input("Select package [1]: ").strip() or "1"
-    return best[int(choice) - 1]
+def discover_candidates(global_config: dict, *, project: str, repo: str | None, branch: str | None) -> list[PackageCandidate]:
+    paths = platform_paths(global_config)
+    candidates: list[PackageCandidate] = []
+    for root in paths.get("inbox_roots") or []:
+        if not root.exists() or not root.is_dir():
+            continue
+        for path in sorted(root.glob("*")):
+            if path.suffix.lower() != ".zip" and not path.name.lower().endswith(".tar.gz"):
+                continue
+            data = _manifest_from_archive(path)
+            if not data:
+                continue
+            target = data.get("target") or {}
+            if str(target.get("project")) != str(project):
+                continue
+            if repo and str(target.get("repo")) != str(repo):
+                continue
+            if branch and str(target.get("branch")) != str(branch):
+                continue
+            candidates.append(PackageCandidate(source=path, manifest_data=data, mtime=path.stat().st_mtime))
+    return sorted(candidates, key=lambda item: item.mtime, reverse=True)
 
 
-def import_package(cfg: GlobalConfig, source: Path) -> ImportedPackage:
-    import datetime as dt
+def select_package(global_config: dict, *, explicit: str | None, project: str, repo: str | None, branch: str | None) -> Path:
+    if explicit:
+        path = Path(explicit).expanduser().resolve()
+        if not path.exists():
+            raise PackageError(f"package does not exist: {path}")
+        return path
+    candidates = discover_candidates(global_config, project=project, repo=repo, branch=branch)
+    if not candidates:
+        roots = platform_paths(global_config).get("inbox_roots") or []
+        root_list = "\n".join(f"- {root}" for root in roots)
+        raise PackageError(f"no matching package found in inbox roots:\n{root_list}")
+    return candidates[0].source
 
-    safe = "".join(ch if ch.isalnum() or ch in "-_." else "-" for ch in source.stem)
-    work = cfg.work_root() / f"{safe}-{dt.datetime.now().strftime('%Y%m%d-%H%M%S')}"
-    extract = work / "extracted"
-    work.mkdir(parents=True, exist_ok=True)
 
-    copied = work / source.name
+def import_package(source: Path, global_config: dict) -> ImportedPackage:
+    paths = platform_paths(global_config)
+    work_root = mkdirp(paths.get("work_root") or (Path.home() / ".cache" / "tul" / "work"))
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    package_id = f"{source.stem}-{stamp}"
+    work_dir = mkdirp(work_root / package_id)
+    copied = work_dir / source.name
     shutil.copy2(source, copied)
-    digest = sha256(copied)
-    safe_extract(copied, extract)
+    digest = sha256_file(copied)
+    (work_dir / "source.sha256").write_text(digest + "  " + copied.name + "\n", encoding="utf-8")
+    extracted = mkdirp(work_dir / "extracted")
+    safe_extract(copied, extracted)
+    manifest = load_manifest(extracted / "tul-package.yml")
+    return ImportedPackage(source=copied, work_dir=work_dir, extracted_dir=extracted, manifest=manifest, sha256=digest)
 
-    mf = find(extract)
-    if not mf:
-        raise TulError("tul-package.yml not found in package")
-    manifest = load(mf)
 
-    (work / "state.json").write_text(json.dumps({
-        "source": str(source),
-        "copied": str(copied),
-        "sha256": digest,
-        "extract_dir": str(extract),
-        "state": "extracted",
-    }, indent=2), encoding="utf-8")
+def safe_extract(archive: Path, dest: Path) -> None:
+    dest = dest.resolve()
+    mkdirp(dest)
+    if zipfile.is_zipfile(archive):
+        with zipfile.ZipFile(archive) as zf:
+            for member in zf.infolist():
+                _validate_archive_member(dest, member.filename)
+            zf.extractall(dest)
+        return
+    if tarfile.is_tarfile(archive):
+        with tarfile.open(archive) as tf:
+            for member in tf.getmembers():
+                _validate_archive_member(dest, member.name)
+            tf.extractall(dest)
+        return
+    raise PackageError(f"unsupported package archive: {archive}")
 
-    return ImportedPackage(copied, work, extract, digest, manifest)
+
+def _validate_archive_member(dest: Path, name: str) -> None:
+    raw = name.replace("\\", "/")
+    if raw.startswith("/") or raw.startswith("~/") or (len(raw) >= 2 and raw[1] == ":"):
+        raise SafetyError(f"archive member uses absolute path: {name}")
+    candidate = safe_join(dest, raw)
+    ensure_inside(dest, candidate)

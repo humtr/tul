@@ -1,37 +1,66 @@
+"""Path helpers and safety checks."""
 from __future__ import annotations
 
-from pathlib import Path
+import os
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
-from .errors import TulError
-
-
-def repo_rel(path: str) -> str:
-    text = path.replace("\\", "/")
-    p = Path(text)
-    if p.is_absolute():
-        raise TulError(f"absolute path forbidden: {path}")
-    parts = [x for x in text.split("/") if x not in ("", ".")]
-    if any(x == ".." for x in parts):
-        raise TulError(f"path traversal forbidden: {path}")
-    return "/".join(parts)
+from .errors import SafetyError
 
 
-def safe_join(root: Path, rel: str) -> Path:
-    clean = repo_rel(rel)
-    target = (root / clean).resolve()
-    root_resolved = root.resolve()
+def expand_path(value: str | os.PathLike[str]) -> Path:
+    return Path(os.path.expandvars(os.path.expanduser(str(value))))
+
+
+def mkdirp(path: Path) -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def is_absolute_or_drive_path(value: str) -> bool:
+    text = str(value).replace("\\", "/")
+    return (
+        Path(value).is_absolute()
+        or PureWindowsPath(value).is_absolute()
+        or text.startswith("/")
+        or text.startswith("~/")
+        or (len(text) >= 2 and text[1] == ":")
+    )
+
+
+def normalize_repo_relative(value: str) -> str:
+    if not value or str(value).strip() == "":
+        raise SafetyError("empty relative path is not allowed")
+    raw = str(value).replace("\\", "/")
+    if is_absolute_or_drive_path(raw):
+        raise SafetyError(f"absolute destination paths are forbidden: {value}")
+    pure = PurePosixPath(raw)
+    if any(part in ("", ".", "..") for part in pure.parts):
+        if ".." in pure.parts:
+            raise SafetyError(f"path traversal is forbidden: {value}")
+        # Ignore benign '.' by normalizing through PurePosixPath.
+    normalized = str(pure)
+    if normalized == "." or normalized.startswith("../") or "/../" in normalized:
+        raise SafetyError(f"path traversal is forbidden: {value}")
+    return normalized
+
+
+def safe_join(base: Path, relative: str) -> Path:
+    rel = normalize_repo_relative(relative)
+    candidate = (base / rel).resolve()
+    ensure_inside(base, candidate)
+    return candidate
+
+
+def ensure_inside(base: Path, candidate: Path) -> None:
+    base_resolved = base.resolve()
+    candidate_resolved = candidate.resolve()
     try:
-        target.relative_to(root_resolved)
+        common = os.path.commonpath([str(base_resolved), str(candidate_resolved)])
     except ValueError as exc:
-        raise TulError(f"path escapes root: {rel}") from exc
-    return target
+        raise SafetyError(f"path escapes base: {candidate}") from exc
+    if common != str(base_resolved):
+        raise SafetyError(f"path escapes base: {candidate}")
 
 
-def ensure_inside(root: Path, target: Path) -> Path:
-    resolved = target.resolve()
-    root_resolved = root.resolve()
-    try:
-        resolved.relative_to(root_resolved)
-    except ValueError as exc:
-        raise TulError(f"path escapes root: {target}") from exc
-    return resolved
+def repo_relative(repo_root: Path, path: Path) -> str:
+    return path.resolve().relative_to(repo_root.resolve()).as_posix()

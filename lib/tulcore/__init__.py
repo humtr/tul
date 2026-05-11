@@ -1,2 +1,3 @@
-"""tulcore: Terminal Update Loop runtime."""
-__version__ = "0.9.0-loop-runtime-core"
+"""Core modules for tul: Terminal Update Loop."""
+
+__version__ = "0.2.1-hotfix-syntax"

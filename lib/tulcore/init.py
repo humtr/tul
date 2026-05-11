@@ -1,69 +1,62 @@
+"""Project onboarding for tul."""
 from __future__ import annotations
 
 from pathlib import Path
 
-from . import platform
-from .config import load_global, repo_name_from_slug, save_global, save_repo, slug_from_remote
-from .errors import TulError
-from .gitops import git, remote_url, repo_root, sync
-from .handoff import build
+from .config import dump_yaml, load_global_config, load_repo_config, repo_config_path, save_global_config
+from .gitops import clone, current_branch, remote_url, repo_root
+from .paths import expand_path
 
 
-def init_project(target: str, branch: str | None = None, handoff: bool = False) -> None:
-    cfg = load_global(create=True)
-    raw = Path(target).expanduser()
+def init_project(target: str, *, branch: str | None = None) -> tuple[Path, str]:
+    global_config, global_path = load_global_config()
+    projects = global_config.setdefault("projects", {})
 
-    if raw.exists():
-        repo = repo_root(raw)
-    elif "/" in target and not target.startswith((".", "~", "/")):
-        name = repo_name_from_slug(target)
-        repo = platform.default_project_root() / name
-        if not repo.exists():
-            repo.parent.mkdir(parents=True, exist_ok=True)
-            git_url = f"git@github.com:{target.removesuffix('.git')}.git"
-            git(repo.parent, "clone", git_url, str(repo))
-        repo = repo_root(repo)
+    if "/" in target and not target.startswith((".", "~", "/")) and ":" not in target:
+        project_id = target.split("/")[-1]
+        existing = projects.get(project_id, {}) if isinstance(projects.get(project_id), dict) else {}
+        repo_path = expand_path(existing.get("path") or f"~/prj/{project_id}")
+        if not repo_path.exists():
+            clone(target, repo_path)
+        expected_repo = target
     else:
-        entry = cfg.projects.get(target)
-        if not entry:
-            raise TulError(f"unknown project alias: {target}")
-        repo = repo_root(Path(str(entry["path"])).expanduser())
+        repo_path = expand_path(target if _looks_like_path(target) else (projects.get(target, {}) or {}).get("path", f"~/prj/{target}"))
+        project_id = repo_path.name if _looks_like_path(target) else target
+        expected_repo = None
 
-    try:
-        print(sync(repo))
-    except Exception as exc:
-        print(f"WARNING: init sync skipped: {exc}")
+    repo_path = repo_root(repo_path)
+    branch = branch or current_branch(repo_path)
+    url = remote_url(repo_path)
+    if not expected_repo and url:
+        expected_repo = _slug_from_remote(url)
 
-    slug = slug_from_remote(remote_url(repo) or "")
-    name = repo.name
-    cfg.projects.setdefault(name, {})
-    cfg.projects[name]["path"] = str(repo)
-    save_global(cfg)
+    projects[project_id] = {"path": str(repo_path)}
+    save_global_config(global_config, global_path)
 
-    repo_cfg = {
-        "version": 1,
-        "name": name,
-        "repo": slug,
-        "branch": branch or __import__("subprocess").check_output(["git", "branch", "--show-current"], cwd=repo, text=True).strip(),
-        "track": "loop-runtime",
-        "check": {
-            "commands": [
-                "python -m py_compile bin/tul",
-                "python -m py_compile lib/tulcore/*.py",
-                "git diff --check",
-            ]
-        },
-    }
+    repo_config = load_repo_config(repo_path)
+    if not repo_config:
+        repo_config = {
+            "version": 1,
+            "name": project_id,
+            "repo": expected_repo or "unknown/unknown",
+            "branch": branch,
+            "track": "loop-runtime",
+            "check": {"commands": ["python -m py_compile bin/tul", "python -m py_compile lib/tulcore/*.py", "git diff --check"]},
+        }
+        repo_config_path(repo_path).write_text(dump_yaml(repo_config) + "\n", encoding="utf-8", newline="\n")
+    return repo_path, project_id
 
-    if not (repo / ".tul.yml").exists():
-        save_repo(repo, repo_cfg)
-        print(f"Created {repo / '.tul.yml'}")
-    else:
-        print(f"Existing {repo / '.tul.yml'} left in place")
 
-    print(f"Registered project alias: {name} -> {repo}")
+def _looks_like_path(target: str) -> bool:
+    return any(sep in target for sep in ("/", "\\")) or target.startswith((".", "~")) or (len(target) > 1 and target[1] == ":")
 
-    if handoff:
-        print(build(repo, name, repo_cfg))
-    else:
-        print(f"Initial handoff: tul handoff {name}")
+
+def _slug_from_remote(url: str) -> str | None:
+    text = url.strip()
+    if text.endswith(".git"):
+        text = text[:-4]
+    if text.startswith("git@github.com:"):
+        return text.split(":", 1)[1]
+    if "github.com/" in text:
+        return text.split("github.com/", 1)[1]
+    return None

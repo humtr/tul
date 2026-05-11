@@ -1,36 +1,26 @@
+"""Move repo-local tul backup directories out of the repo."""
 from __future__ import annotations
 
 import shutil
+from datetime import datetime
 from pathlib import Path
 
-from .config import GlobalConfig
+from .config import platform_paths
+from .paths import mkdirp
 
 
-PATTERNS = [
-    ".tul-*-backup-*",
-    ".tul-apply-backup-*",
-    ".tul-loop-runtime-core-backup-*",
-    "*.stage*.bak",
-    "*_stage*.diff",
-]
-
-
-def sweep(repo: Path, cfg: GlobalConfig, project: str) -> Path | None:
-    import datetime as dt
-
-    dest = cfg.backup_root() / project / dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-    moved = []
-    for pat in PATTERNS:
-        for item in repo.glob(pat):
-            if item.exists():
-                dest.mkdir(parents=True, exist_ok=True)
-                target = dest / item.name
-                shutil.move(str(item), str(target))
-                moved.append(target)
-    if moved:
-        print(f"Moved {len(moved)} artifact(s) to {dest}")
-        for item in moved:
-            print(f"  {item}")
-        return dest
-    print("No repo-local tul artifacts to sweep.")
-    return None
+def sweep_repo(repo: Path, global_config: dict) -> list[str]:
+    paths = platform_paths(global_config)
+    backup_root = mkdirp(paths.get("backup_root") or (Path.home() / ".cache" / "tul" / "backups"))
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    moved: list[str] = []
+    for item in sorted(repo.glob(".tul-*-backup-*")):
+        dest_dir = mkdirp(backup_root / repo.name / stamp)
+        dest = dest_dir / item.name
+        counter = 1
+        while dest.exists():
+            dest = dest_dir / f"{item.name}-{counter}"
+            counter += 1
+        shutil.move(str(item), str(dest))
+        moved.append(f"{item} -> {dest}")
+    return moved

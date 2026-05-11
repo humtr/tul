@@ -1,74 +1,72 @@
+"""Platform detection and platform defaults."""
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 
 def is_windows() -> bool:
-    return os.name == "nt"
+    return os.name == "nt" or sys.platform.startswith("win")
 
 
 def is_termux() -> bool:
-    return Path("/data/data/com.termux/files/home").exists()
+    prefix = os.environ.get("PREFIX", "")
+    return "com.termux" in prefix or Path("/data/data/com.termux").exists()
 
 
-def name() -> str:
+def default_config_path() -> Path:
+    override = os.environ.get("TUL_CONFIG")
+    if override:
+        return Path(os.path.expandvars(os.path.expanduser(override)))
     if is_windows():
-        return "windows"
-    if is_termux():
-        return "termux"
-    return "posix"
-
-
-def config_path() -> Path:
-    if os.environ.get("TUL_CONFIG"):
-        return Path(os.environ["TUL_CONFIG"]).expanduser()
+        home = Path(os.environ.get("USERPROFILE") or Path.home())
+        candidate_home = Path("D:/work/home")
+        if candidate_home.exists():
+            home = candidate_home
+        return home / ".config" / "tul" / "config.yml"
     return Path.home() / ".config" / "tul" / "config.yml"
 
 
-def default_project_root() -> Path:
-    if os.environ.get("TUL_PROJECT_ROOT"):
-        return Path(os.environ["TUL_PROJECT_ROOT"]).expanduser()
-    return Path.home() / "prj"
-
-
-def default_inbox_roots() -> list[Path]:
-    if os.environ.get("TUL_INBOX"):
-        return [Path(x).expanduser() for x in os.environ["TUL_INBOX"].split(os.pathsep) if x]
-    if is_termux():
-        return [
-            Path("/sdcard/Download"),
-            Path("/sdcard/termux/import"),
-            Path("/sdcard/termux/import/tul/inbox"),
-        ]
-    return [Path.home() / "Downloads"]
-
-
-def default_work_root() -> Path:
-    if os.environ.get("TUL_WORK_ROOT"):
-        return Path(os.environ["TUL_WORK_ROOT"]).expanduser()
-    if is_termux():
-        return Path("/sdcard/termux/import/tul/work")
-    return Path.home() / ".cache" / "tul" / "work"
-
-
-def default_archive_root() -> Path:
-    if os.environ.get("TUL_ARCHIVE_ROOT"):
-        return Path(os.environ["TUL_ARCHIVE_ROOT"]).expanduser()
-    if is_termux():
-        return Path("/sdcard/termux/import/tul/archive")
-    return Path.home() / ".cache" / "tul" / "archive"
-
-
-def default_backup_root() -> Path:
-    if os.environ.get("TUL_BACKUP_ROOT"):
-        return Path(os.environ["TUL_BACKUP_ROOT"]).expanduser()
-    return Path.home() / ".cache" / "tul" / "backups"
-
-
-def default_clipboard_command() -> str | None:
-    if is_termux():
-        return "termux-clipboard-set"
+def default_global_config() -> dict:
     if is_windows():
-        return "Set-Clipboard"
-    return None
+        return {
+            "version": 1,
+            "platform": {
+                "inbox_roots": [
+                    "D:/work/files/downloads",
+                    "D:/work/files/downloads/.tul/inbox",
+                ],
+                "work_root": "D:/work/files/downloads/.tul/work",
+                "archive_root": "D:/work/files/downloads/.tul/archive",
+                "backup_root": "D:/work/var/backup/tul",
+                "clipboard_command": "Set-Clipboard",
+            },
+            "projects": {},
+        }
+    if is_termux():
+        return {
+            "version": 1,
+            "platform": {
+                "inbox_roots": [
+                    "/sdcard/Download",
+                    "/sdcard/termux/import",
+                    "/sdcard/termux/import/tul/inbox",
+                ],
+                "work_root": "/sdcard/termux/import/tul/work",
+                "archive_root": "/sdcard/termux/import/tul/archive",
+                "backup_root": "~/tmp/tul-backups",
+                "clipboard_command": "termux-clipboard-set",
+            },
+            "projects": {},
+        }
+    return {
+        "version": 1,
+        "platform": {
+            "inbox_roots": [str(Path.home() / "Downloads")],
+            "work_root": str(Path.home() / ".cache" / "tul" / "work"),
+            "archive_root": str(Path.home() / ".cache" / "tul" / "archive"),
+            "backup_root": str(Path.home() / ".cache" / "tul" / "backups"),
+        },
+        "projects": {},
+    }

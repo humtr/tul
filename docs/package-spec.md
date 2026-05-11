@@ -1,15 +1,36 @@
-# tul Package Spec
+# tul package spec
 
-A standard tul package is a single cross-platform archive:
+A normal LLM-to-terminal package is a cross-platform archive with this structure:
 
 ```text
-package.zip
+<package>.zip
   tul-package.yml
   files/
-    ...
+    ... repo-relative files ...
   README.md
 ```
 
-`apply.mode: copy` is the default safe path.
+The manifest must include:
 
-Bootstrap-only packages may include both `apply.sh` and `apply.ps1`.
+```yaml
+version: 1
+name: example-package
+
+target:
+  project: tul
+  repo: humtr/tul
+  branch: main
+
+apply:
+  mode: copy
+  files:
+    - from: files/bin/tul
+      to: bin/tul
+
+commit:
+  files:
+    - bin/tul
+  message: Example package
+```
+
+Only `apply.mode: copy` is supported by the safe default runtime.

@@ -1,127 +1,147 @@
+"""Git command wrappers."""
 from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import Sequence
+from typing import Iterable
 
-from .errors import TulError
+from .errors import GitError
 
 
-def run(args: Sequence[str], cwd: Path | None = None, check: bool = True, capture: bool = False):
-    return subprocess.run(
-        list(args),
+def run(cmd: list[str] | str, cwd: Path | None = None, *, shell: bool = False, check: bool = True) -> subprocess.CompletedProcess[str]:
+    proc = subprocess.run(
+        cmd,
         cwd=str(cwd) if cwd else None,
+        shell=shell,
         text=True,
-        check=check,
-        stdout=subprocess.PIPE if capture else None,
-        stderr=subprocess.PIPE if capture else None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
+    if check and proc.returncode != 0:
+        command = cmd if isinstance(cmd, str) else " ".join(cmd)
+        raise GitError(
+            f"command failed ({proc.returncode}): {command}\n"
+            f"stdout:\n{proc.stdout}\n"
+            f"stderr:\n{proc.stderr}"
+        )
+    return proc
 
 
-def out(args: Sequence[str], cwd: Path | None = None, check: bool = True) -> str:
-    cp = run(args, cwd=cwd, check=check, capture=True)
-    return cp.stdout.strip()
+def git(repo: Path, args: Iterable[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return run(["git", *args], repo, check=check)
 
 
-def git(repo: Path, *args: str, check: bool = True, capture: bool = False):
-    return run(["git", *args], cwd=repo, check=check, capture=capture)
+def repo_root(path: Path) -> Path:
+    proc = git(path, ["rev-parse", "--show-toplevel"])
+    return Path(proc.stdout.strip()).resolve()
 
 
-def gout(repo: Path, *args: str, check: bool = True) -> str:
-    return out(["git", *args], cwd=repo, check=check)
+def current_branch(repo: Path) -> str:
+    return git(repo, ["branch", "--show-current"]).stdout.strip()
 
 
-def repo_root(path: str | Path) -> Path:
-    p = Path(str(path)).expanduser()
-    if not p.exists():
-        raise TulError(f"path does not exist: {p}")
-    return Path(out(["git", "-C", str(p), "rev-parse", "--show-toplevel"]))
+def head(repo: Path) -> str:
+    return git(repo, ["rev-parse", "HEAD"]).stdout.strip()
 
 
-def is_repo(path: Path) -> bool:
-    return run(["git", "-C", str(path), "rev-parse", "--show-toplevel"], check=False, capture=True).returncode == 0
+def short_head(repo: Path) -> str:
+    return git(repo, ["rev-parse", "--short", "HEAD"]).stdout.strip()
 
 
-def branch(repo: Path) -> str:
-    return gout(repo, "branch", "--show-current")
+def status_porcelain(repo: Path) -> str:
+    return git(repo, ["status", "--porcelain"], check=False).stdout.rstrip()
 
 
-def head(repo: Path, short: bool = False) -> str:
-    if short:
-        return gout(repo, "rev-parse", "--short", "HEAD")
-    return gout(repo, "rev-parse", "HEAD")
-
-
-def upstream(repo: Path) -> str | None:
-    cp = git(repo, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}", check=False, capture=True)
-    return cp.stdout.strip() if cp.returncode == 0 and cp.stdout.strip() else None
+def is_dirty(repo: Path) -> bool:
+    return bool(status_porcelain(repo).strip())
 
 
 def remote_url(repo: Path) -> str | None:
-    cp = git(repo, "remote", "get-url", "origin", check=False, capture=True)
-    return cp.stdout.strip() if cp.returncode == 0 and cp.stdout.strip() else None
+    proc = git(repo, ["config", "--get", "remote.origin.url"], check=False)
+    value = proc.stdout.strip()
+    return value or None
 
 
-def status(repo: Path) -> list[str]:
-    return [x for x in gout(repo, "status", "--porcelain").splitlines() if x.strip()]
+def fetch(repo: Path, branch: str | None = None) -> None:
+    if branch:
+        git(repo, ["fetch", "origin", branch])
+    else:
+        git(repo, ["fetch", "--all", "--prune"])
 
 
-def changed(repo: Path) -> list[str]:
-    return [x.replace("\\", "/") for x in gout(repo, "diff", "--name-only").splitlines() if x.strip()]
+def remote_head(repo: Path, branch: str) -> str | None:
+    proc = git(repo, ["rev-parse", f"origin/{branch}"], check=False)
+    value = proc.stdout.strip()
+    return value if proc.returncode == 0 and value else None
 
 
-def staged(repo: Path) -> list[str]:
-    return [x.replace("\\", "/") for x in gout(repo, "diff", "--cached", "--name-only").splitlines() if x.strip()]
-
-
-def untracked(repo: Path) -> list[str]:
-    return [x.replace("\\", "/") for x in gout(repo, "ls-files", "--others", "--exclude-standard").splitlines() if x.strip()]
-
-
-def compare_upstream(repo: Path) -> tuple[int, int] | None:
-    up = upstream(repo)
-    if not up:
+def ahead_behind(repo: Path, branch: str) -> tuple[int, int] | None:
+    proc = git(repo, ["rev-list", "--left-right", "--count", f"HEAD...origin/{branch}"], check=False)
+    if proc.returncode != 0:
         return None
-    a, b = gout(repo, "rev-list", "--left-right", "--count", f"HEAD...{up}").split()
-    return int(a), int(b)
+    parts = proc.stdout.strip().split()
+    if len(parts) != 2:
+        return None
+    return int(parts[0]), int(parts[1])
 
 
-def sync(repo: Path) -> str:
-    if status(repo):
-        raise TulError("sync aborted: working tree is dirty")
-    git(repo, "fetch", "origin")
-    up = upstream(repo)
-    if not up:
-        return "no upstream configured"
-    comp = compare_upstream(repo)
-    if comp is None:
-        return "no upstream comparison available"
-    ahead, behind = comp
-    if ahead == 0 and behind == 0:
-        return f"already up to date with {up}"
-    if ahead == 0 and behind > 0:
-        git(repo, "pull", "--ff-only")
-        return f"pulled {behind} commit(s) from {up}"
-    if ahead > 0 and behind == 0:
-        return f"local branch ahead of {up} by {ahead} commit(s)"
-    raise TulError(f"branch diverged from {up}: ahead {ahead}, behind {behind}")
+def pull_ff_only(repo: Path) -> None:
+    git(repo, ["pull", "--ff-only"])
 
 
-def recent(repo: Path, n: int = 5) -> str:
-    return git(repo, "log", "--oneline", "--decorate", f"-{n}", check=False, capture=True).stdout.strip()
+def recent_commits(repo: Path, count: int = 5) -> list[str]:
+    proc = git(repo, ["log", f"-{count}", "--oneline"], check=False)
+    return [line for line in proc.stdout.splitlines() if line.strip()]
 
 
-def last_commit_files(repo: Path) -> list[str]:
-    cp = git(repo, "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD", check=False, capture=True)
-    return [x for x in cp.stdout.splitlines() if x.strip()]
+def changed_files(repo: Path, *, staged: bool = False) -> list[str]:
+    args = ["diff", "--name-only"]
+    if staged:
+        args.insert(1, "--cached")
+    lines = git(repo, args, check=False).stdout.splitlines()
+    if not staged:
+        untracked = git(repo, ["ls-files", "--others", "--exclude-standard"], check=False).stdout.splitlines()
+        lines.extend(untracked)
+    return sorted(set(line.strip() for line in lines if line.strip()))
 
 
-def push_verify(repo: Path) -> tuple[str, str]:
-    b = branch(repo)
-    git(repo, "push", "origin", b)
-    git(repo, "fetch", "origin", b)
-    local = gout(repo, "rev-parse", "HEAD")
-    remote = gout(repo, "rev-parse", f"origin/{b}")
+def stage_files(repo: Path, files: list[str]) -> None:
+    if not files:
+        raise GitError("no files provided for staging")
+    forbidden = {"-A", ".", "--all"}
+    if any(item in forbidden for item in files):
+        raise GitError("broad staging is forbidden; use explicit files only")
+    git(repo, ["add", "--", *files])
+
+
+def commit(repo: Path, message: str) -> str:
+    if not message.strip():
+        raise GitError("commit message is empty")
+    git(repo, ["commit", "-m", message])
+    return head(repo)
+
+
+def push_verify(repo: Path, branch: str) -> tuple[str, str]:
+    git(repo, ["push", "origin", branch])
+    fetch(repo, branch)
+    local = head(repo)
+    remote = remote_head(repo, branch)
     if local != remote:
-        raise TulError(f"push verification failed: local HEAD != origin/{b}")
-    return local, remote
+        raise GitError(f"remote HEAD verification failed: local={local}, origin/{branch}={remote}")
+    return local, remote or ""
+
+
+def diff_check(repo: Path, *, staged: bool = False) -> str:
+    args = ["diff", "--check"]
+    if staged:
+        args.insert(1, "--cached")
+    proc = git(repo, args, check=False)
+    if proc.returncode != 0:
+        raise GitError(proc.stdout + proc.stderr)
+    return proc.stdout
+
+
+def clone(slug: str, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    url = f"https://github.com/{slug}.git"
+    run(["git", "clone", url, str(dest)])

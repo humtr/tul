@@ -1,91 +1,110 @@
+"""LLM handoff prompt generation."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
-from . import platform
-from .gitops import branch, head, last_commit_files, recent, remote_url, status, upstream
-
-
-@dataclass
-class UpdateResult:
-    mode: str = "initial-review"
-    commit: str | None = None
-    push_verified: bool | None = None
-    rollback: str | None = None
-    package: str | None = None
+from .gitops import current_branch, fetch, head, recent_commits, remote_head, remote_url, status_porcelain
 
 
 INVARIANTS = [
-    "tul update pushes by default.",
-    "--no-push is the exception.",
-    "--no-commit is the exception.",
-    "No git add -A.",
-    "No force push.",
-    "Rollback defaults to git revert + git push.",
-    "Project-specific policy belongs in .tul.yml.",
-    "Environment paths and aliases belong in global config.",
-    "Windows and Termux package flow must converge.",
-    "tul update prints handoff automatically after successful remote verification.",
+    "tul update pushes by default; --no-push is an exception.",
+    "tul update is the full-loop command, not a split-command default.",
+    "Never use git add -A or git add . in the default update path.",
+    "Never force-push in the normal path.",
+    "Project-specific policy belongs in .tul.yml, not engine code.",
+    "Environment paths belong in global config, not engine code.",
+    "Windows/Termux package flow should converge on tul-package.yml + files/.",
+    "Successful update must print rollback instructions and an LLM-ready handoff.",
 ]
 
 
-def build(repo: Path, project: str | None, repo_config: dict, result: UpdateResult | None = None) -> str:
-    result = result or UpdateResult()
-    changed = last_commit_files(repo) if result.commit else []
-
+def generate_handoff(
+    *,
+    repo: Path,
+    project: str,
+    mode: str,
+    expected_repo: str | None = None,
+    package_name: str | None = None,
+    commit_hash: str | None = None,
+    push_verified: bool | None = None,
+    changed_files: list[str] | None = None,
+    validation: list[str] | None = None,
+    rollback_command: str | None = None,
+    state_file: Path | None = None,
+) -> str:
+    branch = current_branch(repo)
+    remote = None
+    try:
+        fetch(repo, branch)
+        remote = remote_head(repo, branch)
+    except Exception:
+        remote = None
+    status = status_porcelain(repo)
     lines = [
-        "# tul handoff",
+        "# tul LLM handoff",
         "",
-        "## LLM instruction",
-        "",
-        "You are receiving a tul handoff.",
-        "Treat it as a structured remote-review and next-package planning request.",
-        "Verify the remote repo, branch, and expected HEAD when possible.",
-        "If remote access is unavailable, say so explicitly.",
-        "",
-        "## Repository",
-        "",
-        f"Project: {project or repo.name}",
+        f"Mode: {mode}",
+        f"Project: {project}",
         f"Repo path: {repo}",
-        f"Remote URL: {remote_url(repo) or '(none)'}",
-        f"Configured repo: {repo_config.get('repo') or '(none)'}",
-        f"Platform: {platform.name()}",
-        f"Branch: {branch(repo)}",
-        f"Expected branch: {repo_config.get('branch') or '(none)'}",
+        f"Repo URL: {remote_url(repo) or 'unknown'}",
+        f"Expected repo: {expected_repo or 'unknown'}",
+        f"Branch: {branch}",
         f"HEAD: {head(repo)}",
-        f"Upstream: {upstream(repo) or '(none)'}",
-        "",
-        "## Terminal verification",
-        "",
-        f"Mode: {result.mode}",
-        f"Push verified: {result.push_verified if result.push_verified is not None else 'not available for this session'}",
-        f"Commit: {result.commit or 'none'}",
-        f"Package: {result.package or 'none'}",
-        f"Working tree: {'clean' if not status(repo) else 'dirty'}",
+        f"Remote HEAD after fetch: {remote or 'unavailable'}",
+        f"Working tree: {'clean' if not status else 'dirty'}",
     ]
-
-    if result.rollback:
-        lines.extend(["", "Rollback:", f"  {result.rollback}"])
-
-    lines.extend(["", "## Recent commits", "", recent(repo), "", "## Changed files", ""])
-    lines.extend(f"- {p}" for p in changed) if changed else lines.append("- none recorded for this handoff")
-
-    lines.extend(["", "## Invariants", ""])
-    lines.extend(f"- {x}" for x in INVARIANTS)
-
+    if package_name:
+        lines.append(f"Active package: {package_name}")
+    else:
+        lines.append("Active package: none")
+    if commit_hash:
+        lines.append(f"Commit hash: {commit_hash}")
+    if push_verified is not None:
+        lines.append(f"Push verified: {str(push_verified).lower()}")
+    else:
+        lines.append("Push verified: not available for this session")
+    if state_file:
+        lines.append(f"State file: {state_file}")
+    if rollback_command:
+        lines.extend(["", "## Rollback command", "", f"    {rollback_command}"])
+    if changed_files:
+        lines.extend(["", "## Changed files", ""])
+        lines.extend(f"- {item}" for item in changed_files)
+    if validation:
+        lines.extend(["", "## Validation results", ""])
+        for item in validation:
+            lines.append(f"- {item.splitlines()[0] if item else 'check'}")
+    lines.extend(["", "## Recent commits", ""])
+    lines.extend(f"- {item}" for item in recent_commits(repo))
+    lines.extend(["", "## Track / invariants", ""])
+    lines.extend(f"- {item}" for item in INVARIANTS)
     lines.extend([
         "",
         "## Request to LLM",
         "",
-        "1. Verify the remote repository, branch, and expected HEAD when possible.",
-        "2. Read the latest relevant files from the remote repo.",
-        "3. Separate user-stated goals, terminal-verified facts, assistant interpretation, and uncertainty.",
-        "4. Identify structural debt, missing automation, and non-regression risks.",
-        "5. Propose the next implementation package scope.",
-        "6. Provide a short-term execution plan and long-term roadmap.",
-        "7. If generating files, produce a cross-platform tul package with tul-package.yml and files/.",
-        "8. Do not regress push-by-default semantics.",
+        "1. Verify the remote repo, branch, and expected HEAD when remote access is available.",
+        "2. If remote verification is unavailable, say so explicitly.",
+        "3. Read the latest relevant repo files before proposing implementation.",
+        "4. Compare terminal-verified facts against remote state.",
+        "5. Check whether the invariants above were preserved.",
+        "6. Identify remaining structural debt and missing automation.",
+        "7. Propose the next package boundary and short/long roadmap.",
         "",
+        "## Source separation",
+        "",
+        "사용자가 직접 말한 것:",
+        "- tul은 Windows/Termux/LLM 사이의 폐루프 도구여야 한다.",
+        "- tul update는 push, remote verification, rollback 안내, handoff 출력을 포함해야 한다.",
+        "",
+        "terminal-verified facts:",
+        f"- Local HEAD at handoff generation: {head(repo)}",
+        f"- Remote HEAD after fetch: {remote or 'unavailable'}",
+        f"- Working tree status: {'clean' if not status else 'dirty'}",
+        "",
+        "assistant interpretation:",
+        "- Treat this handoff as a structured remote-review request, not as proof that remote verification has already been done by the LLM.",
+        "",
+        "불확실하거나 확인 필요한 부분:",
+        "- Remote file contents must be re-read by the receiving LLM if repository access is available.",
     ])
-    return "\n".join(lines)
+    return "\n".join(lines) + "\n"
