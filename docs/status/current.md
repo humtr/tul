@@ -37,6 +37,12 @@ This package adopts Option 2 as the production entrypoint strategy and adds an e
 - Repeated/already-applied package updates should exit as `noop` instead of attempting an empty commit.
 - Entrypoint strategy testing favored Option 2 over README-only or README-heavy strategies.
 
+## Current stage update
+
+Stage 2.1: launcher/install sync hardening.
+
+This package teaches `tul doctor` to detect stale PATH launchers and adds `tul install` to resync the user launcher with repo `bin/tul`. Operational commands should be alias-first and runnable without `cd` when global config is correct.
+
 ## Known remaining debt
 
 - Apply safety audit is next: directory copy must be restricted or explicitly gated.

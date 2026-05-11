@@ -33,12 +33,28 @@ Use this checklist when reviewing a package, handoff, or next-stage proposal.
 - [ ] `tul update <project> -l` is accepted as shorthand for `--latest`.
 - [ ] Latest selection does not scan work/archive roots by default.
 
+## Launcher sync
+
+- [ ] `tul doctor tul` reports whether PATH `tul` is synced with repo `bin/tul`.
+- [ ] `tul install tul` can resync a stale launcher.
+- [ ] Operational commands work from outside the repo directory.
+
+```bash
+cd ~
+tul status tul
+tul update tul --latest
+tul state tul
+tul handoff tul
+```
+
 ## Validation commands
 
 ```bash
 python -m py_compile bin/tul
 python -m py_compile lib/tulcore/*.py
 python bin/tul --version
+tul doctor tul
+tul install tul
 python bin/tul handoff tul
 python bin/tul handoff tul --full
 python bin/tul handoff tul --instructions

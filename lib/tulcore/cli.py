@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
+import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from . import __version__
@@ -63,6 +66,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("doctor", help="show tul environment diagnostics")
     p.add_argument("target", nargs="?")
+
+    p = sub.add_parser("install", help="install or resync the user PATH launcher")
+    p.add_argument("target", nargs="?", help="project/path to install; defaults to this tul repo")
+    p.add_argument("--copy", action="store_true", help="copy launcher instead of creating a symlink on POSIX")
+    p.add_argument("--force", action="store_true", help="replace an existing launcher after backing it up")
 
     p = sub.add_parser("report", help="print a lightweight report")
     p.add_argument("target")
@@ -146,6 +154,11 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if args.handoff:
             ctx = resolve_project(project)
             print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="initial-review", expected_repo=ctx.expected_repo))
+        return 0
+
+    if command == "install":
+        repo = resolve_project(args.target).repo_path if getattr(args, "target", None) else repo_root_from_module()
+        print(install_launcher(repo, copy=getattr(args, "copy", False), force=getattr(args, "force", False)))
         return 0
 
     if command == "status":
@@ -340,6 +353,126 @@ def print_status(ctx) -> None:
         print(f"- {item}")
 
 
+
+def short_path(path: Path | None) -> str:
+    return str(path) if path else "not found"
+
+
+def backup_path(path: Path) -> Path:
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    return path.with_name(f"{path.name}.bak-{stamp}")
+
+
+def run_launcher_version(path: Path) -> str:
+    try:
+        if os.name == "nt" and path.suffix.lower() in {".cmd", ".bat"}:
+            proc = subprocess.run(f'"{path}" --version', shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
+        else:
+            proc = subprocess.run([str(path), "--version"], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
+        text = (proc.stdout or proc.stderr).strip()
+        return text or f"exit {proc.returncode}"
+    except Exception as exc:
+        return f"unavailable ({type(exc).__name__}: {exc})"
+
+
+def same_resolved(a: Path | None, b: Path | None) -> bool:
+    if not a or not b:
+        return False
+    try:
+        return a.resolve() == b.resolve()
+    except Exception:
+        return False
+
+
+def path_launcher_info(repo: Path | None = None) -> list[str]:
+    found = shutil.which("tul")
+    repo_bin = (repo / "bin" / "tul") if repo else None
+    lines = ["launcher:"]
+    lines.append(f"- PATH tul: {found or 'not found'}")
+    if found:
+        found_path = Path(found)
+        try:
+            lines.append(f"- PATH tul resolved: {found_path.resolve()}")
+        except Exception:
+            lines.append("- PATH tul resolved: unavailable")
+        lines.append(f"- PATH tul version: {run_launcher_version(found_path)}")
+    if repo_bin:
+        lines.append(f"- repo bin/tul: {repo_bin}")
+        lines.append(f"- repo bin/tul version: {run_launcher_version(repo_bin)}")
+        if found:
+            status = "synced" if same_resolved(Path(found), repo_bin) else "stale-or-copy"
+            lines.append(f"- launcher status: {status}")
+            if status != "synced":
+                lines.append("- suggested fix: tul install " + str(repo))
+        else:
+            lines.append("- launcher status: missing")
+            lines.append("- suggested fix: tul install " + str(repo))
+    return lines
+
+
+def install_launcher(repo: Path, *, copy: bool = False, force: bool = False) -> str:
+    repo = repo.resolve()
+    repo_launcher = repo / "bin" / "tul"
+    if not repo_launcher.exists():
+        raise TulError(f"missing repo launcher: {repo_launcher}")
+
+    home_bin = Path.home() / "bin"
+    home_bin.mkdir(parents=True, exist_ok=True)
+    lines = ["# tul install"]
+    lines.append(f"Repo: {repo}")
+    lines.append(f"Repo launcher: {repo_launcher}")
+
+    if os.name == "nt":
+        cmd = home_bin / "tul.cmd"
+        content = f'@echo off\r\n"{sys.executable}" "{repo_launcher}" %*\r\n'
+        if cmd.exists() and cmd.read_text(encoding="utf-8", errors="ignore") != content:
+            if not force:
+                lines.append(f"Existing launcher differs: {cmd}")
+                lines.append("Re-run with --force to back it up and replace it.")
+                return "\n".join(lines)
+            backup = backup_path(cmd)
+            shutil.move(str(cmd), str(backup))
+            lines.append(f"Backed up existing launcher: {backup}")
+        cmd.write_text(content, encoding="utf-8")
+        lines.append(f"Installed Windows launcher: {cmd}")
+        path_entries = os.environ.get("PATH", "").split(os.pathsep)
+        if str(home_bin) not in path_entries:
+            lines.append(f"NOTE: add this directory to PATH if needed: {home_bin}")
+        lines.extend(path_launcher_info(repo))
+        return "\n".join(lines)
+
+    launcher = home_bin / "tul"
+    if launcher.exists() or launcher.is_symlink():
+        if launcher.is_symlink() and same_resolved(launcher, repo_launcher):
+            lines.append(f"Launcher already synced: {launcher} -> {repo_launcher}")
+            lines.extend(path_launcher_info(repo))
+            return "\n".join(lines)
+        if launcher.is_symlink():
+            launcher.unlink()
+            lines.append(f"Removed stale symlink launcher: {launcher}")
+        else:
+            backup = backup_path(launcher)
+            shutil.move(str(launcher), str(backup))
+            lines.append(f"Backed up existing non-symlink launcher: {backup}")
+    if copy:
+        shutil.copy2(repo_launcher, launcher)
+        lines.append(f"Copied launcher: {launcher}")
+    else:
+        launcher.symlink_to(repo_launcher)
+        lines.append(f"Symlinked launcher: {launcher} -> {repo_launcher}")
+    repo_launcher.chmod(repo_launcher.stat().st_mode | 0o755)
+    try:
+        launcher.chmod(launcher.stat().st_mode | 0o755)
+    except Exception:
+        pass
+    path_entries = os.environ.get("PATH", "").split(os.pathsep)
+    if str(home_bin) not in path_entries:
+        lines.append(f"NOTE: add this directory to PATH if needed: {home_bin}")
+        lines.append('For Termux/bash: export PATH="$HOME/bin:$PATH"')
+    lines.extend(path_launcher_info(repo))
+    return "\n".join(lines)
+
+
 def print_doctor(target: str | None = None) -> None:
     config, path = load_global_config()
     paths = platform_paths(config)
@@ -362,6 +495,7 @@ def print_doctor(target: str | None = None) -> None:
     print("projects:")
     for key, value in (config.get("projects") or {}).items():
         print(f"- {key}: {value.get('path') if isinstance(value, dict) else value}")
+    ctx = None
     if target:
         ctx = resolve_project(target)
         print("target:")
@@ -369,3 +503,7 @@ def print_doctor(target: str | None = None) -> None:
         print(f"- repo: {ctx.repo_path}")
         print(f"- branch: {current_branch(ctx.repo_path)}")
         print(f"- dirty: {is_dirty(ctx.repo_path)}")
+    print("launcher diagnostics:")
+    repo = ctx.repo_path if ctx else None
+    for line in path_launcher_info(repo):
+        print(line)

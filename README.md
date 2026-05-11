@@ -43,6 +43,27 @@ The durable project contract lives in repo documents. Runtime facts live in term
 
 ## Default command model
 
+## Launcher / install sync
+
+Operational commands should be runnable from any directory through the configured project alias:
+
+```bash
+tul status tul
+tul update tul --latest
+tul state tul
+tul handoff tul
+```
+
+If `tul` on PATH behaves differently from `python ~/prj/tul/bin/tul`, the user launcher is stale. Resync it with:
+
+```bash
+tul install tul
+# or, if the PATH launcher is too old to know install:
+python ~/prj/tul/bin/tul install tul
+```
+
+Use `tul doctor tul` to compare the PATH launcher with the repo launcher.
+
 Use the full-loop command:
 
 ```bash

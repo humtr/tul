@@ -39,6 +39,16 @@ Goals:
 - Keep mutable planning in `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
 - Add explicit `tul update <project> --latest` / `-l` command syntax for newest matching package selection.
 
+## Stage 2.1 — Launcher/install sync
+
+Status: active.
+
+Goals:
+
+- Detect when PATH `tul` is stale relative to repo `bin/tul`.
+- Provide `tul install [project|path]` for user launcher resync.
+- Keep operational examples alias-first and `cd`-free.
+
 ## Stage 2.5 — Apply safety audit
 
 Goals:

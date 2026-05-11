@@ -1,8 +1,9 @@
 # tul commands
 
-Primary loop:
+Primary loop. These commands are alias-first and should not require `cd` into the repo when global config is correct:
 
 ```text
+tul install [project|path]
 tul init <id|repo|path>
 tul sync <project|path>
 tul update <project|path>
@@ -44,3 +45,21 @@ Split commands exist for inspection, recovery, and future resume support; they m
 
 `archive` currently archives the latest local tul work state for a project. It does not delete repo files or rewrite git history.
 A repeated/already-applied package update should exit as `noop` instead of attempting an empty commit.
+
+
+## Launcher sync
+
+`tul install [project|path]` installs or resyncs the user PATH launcher to the repo `bin/tul`.
+
+Use it when `python ~/prj/tul/bin/tul ...` works but `tul ...` does not recognize newer commands.
+
+Diagnostic commands:
+
+```bash
+tul doctor tul
+command -v tul
+tul --version
+python ~/prj/tul/bin/tul --version
+```
+
+On POSIX/Termux, the default install creates `~/bin/tul` as a symlink to the repo launcher. On Windows, it creates a `tul.cmd` shim under `%USERPROFILE%\bin`.

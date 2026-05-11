@@ -90,7 +90,9 @@ def runtime_facts(
         lines.append(f"Outcome: {outcome}")
     if commit_hash:
         lines.append(f"Commit hash: {commit_hash}")
-    if push_verified is not None:
+    if outcome == "noop" and push_verified is False:
+        lines.append("Push verified: not applicable for no-op")
+    elif push_verified is not None:
         lines.append(f"Push verified: {str(push_verified).lower()}")
     else:
         lines.append("Push verified: not available for this session")
