@@ -1,10 +1,42 @@
 # tul handoff
 
-`tul handoff <project|path>` prints a structured prompt for the next LLM or coding session.
+`tul handoff <project>` prints a compact structured prompt for the next LLM or coding session.
 
-Modes:
+## Default compact handoff
 
-- `initial-review`: after clone/init or when no update was just performed
-- `post-update`: after a successful update package
+Default output contains:
 
-A handoff should include repo, branch, HEAD, remote HEAD if available, working tree status, invariants, rollback command when available, and an explicit request for remote verification.
+- mode
+- project
+- repo path and URL
+- branch
+- local HEAD
+- remote HEAD after fetch, if available
+- working tree status
+- active package
+- outcome
+- commit/push/rollback/state/report facts when available
+- repo document pointers
+
+It intentionally does not repeat the full protocol every time.
+
+## Full handoff
+
+```bash
+tul handoff <project> --full
+```
+
+Full mode includes invariants, LLM-side command grammar, request checklist, and source separation guidance.
+
+## Instructions output
+
+```bash
+tul handoff <project> --instructions
+tul instructions [project]
+```
+
+These commands print `templates/project-instructions.md`.
+
+## Runtime facts vs repo documents
+
+Commit hash, push verification, rollback command, and state/report paths are runtime facts. They are printed by the terminal handoff. Durable guidance belongs in repo documents under `docs/` and `templates/`.

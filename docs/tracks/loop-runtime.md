@@ -2,7 +2,7 @@
 
 This track implements `tul` as a config-driven, manifest-driven, cross-platform self-hosting loop runtime.
 
-Current invariants:
+## Current invariants
 
 - `tul update <project>` is the full-loop command.
 - Commit and push are included by default after validation.
@@ -13,6 +13,16 @@ Current invariants:
 - Project-specific policy belongs in `.tul.yml`.
 - Environment paths belong in global config.
 - LLM-to-terminal packages converge on `tul-package.yml` plus `files/`.
-- Successful update must write report/state/handoff and print the LLM handoff.
+- Successful update must write report/state/handoff and print compact LLM handoff.
 
-`runtime_restructure_v1` splits precheck, publish, and state responsibilities while preserving update semantics.
+## Completed stages
+
+- Stage 0: syntax/runtime recovery.
+- Stage 1: runtime boundary restructure.
+- Stage 1.5: no-op/state cleanup.
+
+## Active stage
+
+Stage 2: LLM loop contract.
+
+The goal is to make a fresh LLM or coding agent discover the loop contract from repo documents instead of relying on long chat history.

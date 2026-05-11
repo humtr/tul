@@ -30,6 +30,18 @@ from .state import archive_latest_state, latest_state, summarize_state
 from .sweep import sweep_repo
 
 
+def repo_root_from_module() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def read_repo_text(rel: str, *, repo: Path | None = None) -> str:
+    root = repo or repo_root_from_module()
+    path = root / rel
+    if not path.exists():
+        raise TulError(f"missing repo document: {rel}")
+    return path.read_text(encoding="utf-8")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tul", description="Terminal Update Loop")
     parser.add_argument("--version", action="version", version=f"tul {__version__}")
@@ -48,6 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("check", help="run repo checks")
     p.add_argument("target")
+
     p = sub.add_parser("doctor", help="show tul environment diagnostics")
     p.add_argument("target", nargs="?")
 
@@ -57,6 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("handoff", help="print an LLM handoff")
     p.add_argument("target")
     p.add_argument("--mode", default="initial-review")
+    p.add_argument("--full", action="store_true", help="include full loop contract and invariants")
+    p.add_argument("--instructions", action="store_true", help="print project instruction template instead of runtime handoff")
+
+    p = sub.add_parser("instructions", help="print the repo-resident LLM project instructions")
+    p.add_argument("target", nargs="?", help="optional project/path whose repo contains templates/project-instructions.md")
 
     p = sub.add_parser("sweep", help="move repo-local tul backups out of the repo")
     p.add_argument("target")
@@ -95,6 +113,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("archive", help="archive latest local tul work state")
     p.add_argument("target")
 
+    # Friendly alias for users who type `tul help`.
+    sub.add_parser("help", help="show this help message")
     return parser
 
 
@@ -102,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        return dispatch(args)
+        return dispatch(args, parser)
     except TulError as exc:
         print(f"tul: error: {exc}", file=sys.stderr)
         return 2
@@ -111,8 +131,14 @@ def main(argv: list[str] | None = None) -> int:
         return 130
 
 
-def dispatch(args: argparse.Namespace) -> int:
+def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = None) -> int:
     command = args.command
+
+    if command == "help":
+        if parser is not None:
+            parser.print_help()
+        return 0
+
     if command == "init":
         repo, project = init_project(args.target, branch=args.branch)
         print(f"Initialized {project}: {repo}")
@@ -120,10 +146,12 @@ def dispatch(args: argparse.Namespace) -> int:
             ctx = resolve_project(project)
             print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="initial-review", expected_repo=ctx.expected_repo))
         return 0
+
     if command == "status":
         ctx = resolve_project(args.target)
         print_status(ctx)
         return 0
+
     if command == "sync":
         ctx = resolve_project(args.target)
         branch = current_branch(ctx.repo_path)
@@ -135,6 +163,7 @@ def dispatch(args: argparse.Namespace) -> int:
             pull_ff_only(ctx.repo_path)
         print_status(ctx)
         return 0
+
     if command == "check":
         ctx = resolve_project(args.target)
         outputs = run_checks(ctx.repo_path, ctx.repo_config)
@@ -143,23 +172,46 @@ def dispatch(args: argparse.Namespace) -> int:
             print()
         print("Checks passed.")
         return 0
+
     if command == "doctor":
         print_doctor(getattr(args, "target", None))
         return 0
+
     if command == "report":
         ctx = resolve_project(args.target)
         print(build_report(repo=ctx.repo_path, project=ctx.project_id))
         return 0
+
     if command == "handoff":
         ctx = resolve_project(args.target)
-        print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode=args.mode, expected_repo=ctx.expected_repo))
+        if args.instructions:
+            print(read_repo_text("templates/project-instructions.md", repo=ctx.repo_path))
+            return 0
+        print(
+            generate_handoff(
+                repo=ctx.repo_path,
+                project=ctx.project_id,
+                mode=args.mode,
+                expected_repo=ctx.expected_repo,
+                full=args.full,
+            )
+        )
         return 0
+
+    if command == "instructions":
+        repo = None
+        if getattr(args, "target", None):
+            repo = resolve_project(args.target).repo_path
+        print(read_repo_text("templates/project-instructions.md", repo=repo))
+        return 0
+
     if command == "sweep":
         ctx = resolve_project(args.target)
         moved = sweep_repo(ctx.repo_path, ctx.global_config)
         print("Sweep moved:")
         print("\n".join(moved) if moved else "nothing")
         return 0
+
     if command == "update":
         ctx = resolve_project(args.target)
         result = run_update(
@@ -173,20 +225,23 @@ def dispatch(args: argparse.Namespace) -> int:
         print("\n--- LLM HANDOFF ---\n")
         print(result.handoff)
         return 0
+
     if command == "publish":
         ctx = resolve_project(args.target)
         print("publish is recovery/debug only. Use 'tul update' for the default loop.")
         print("Staged files:")
         print("\n".join(changed_files(ctx.repo_path, staged=True)) or "none")
         return 0
+
     if command == "rollback":
         ctx = resolve_project(args.target)
-        commit_id = args.commit or "<commit>"
+        commit_id = args.commit or ""
         branch = current_branch(ctx.repo_path)
         print(f"cd {ctx.repo_path}")
         print(f"git revert {commit_id}")
         print(f"git push origin {branch}")
         return 0
+
     if command == "state":
         ctx = resolve_project(args.target)
         paths = platform_paths(ctx.global_config)
@@ -215,6 +270,7 @@ def dispatch(args: argparse.Namespace) -> int:
             if clean:
                 print("- Note: the latest failed state may be stale or from a repeated/no-op update attempt.")
         return 0
+
     if command == "archive":
         ctx = resolve_project(args.target)
         paths = platform_paths(ctx.global_config)
@@ -236,19 +292,23 @@ def dispatch(args: argparse.Namespace) -> int:
         print(f"- dir: {dest}")
         print(f"- phase: {data.get('phase')}")
         return 0
+
     if command == "config":
         if args.config_command == "path":
             print(config_path())
             return 0
+
     if command == "projects":
         config, path = load_global_config()
         print(f"Config: {path}")
         for key, value in (config.get("projects") or {}).items():
             print(f"{key}: {value.get('path') if isinstance(value, dict) else value}")
         return 0
+
     if command in {"import", "apply", "resume"}:
         print(f"'{command}' is scaffolded for recovery/debug. The default workflow is 'tul update <project>'.")
         return 0
+
     raise TulError(f"unknown command: {command}")
 
 
