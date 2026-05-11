@@ -1,3 +1,3 @@
 """Core modules for tul: Terminal Update Loop."""
 
-__version__ = "0.4.3-doctor-noop-output"
+__version__ = "0.4.4-apply-safety"

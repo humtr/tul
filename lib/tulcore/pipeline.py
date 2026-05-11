@@ -78,14 +78,24 @@ def run_update(
 
         failed_at = "apply"
         backup_dir = imported.work_dir / "backups"
+        apply_log = imported.work_dir / "apply.log"
+        apply_plan = imported.work_dir / "apply-plan.json"
         applied_files = apply_copy(
             imported.manifest,
             extracted_dir=imported.extracted_dir,
             repo_path=repo,
             backup_dir=backup_dir,
-            log_path=imported.work_dir / "apply.log",
+            log_path=apply_log,
+            plan_path=apply_plan,
+            allowed_files=imported.manifest.commit_files,
         )
-        set_phase(state_file, "applied", applied_files=applied_files)
+        set_phase(
+            state_file,
+            "applied",
+            applied_files=applied_files,
+            apply_log=str(apply_log),
+            apply_plan=str(apply_plan),
+        )
 
         failed_at = "checks"
         checks = run_checks(repo, ctx.repo_config, log_path=imported.work_dir / "check.log")
@@ -119,6 +129,8 @@ def run_update(
             checks=checks,
             state_file=state_file,
             outcome=publish.outcome,
+            apply_plan=apply_plan,
+            apply_log=apply_log,
         )
         report_path = imported.work_dir / "report.md"
         write_report(report_path, report)

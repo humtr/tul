@@ -74,3 +74,7 @@ sync is determined by resolved paths.
 For no-op updates, push verification is **not applicable**, not failed. A no-op
 means the package produced no repo changes after safe apply, usually because it
 was already applied.
+
+## Apply safety notes
+
+`tul update` now builds an apply plan before copying. Directory copy from a package is rejected unless the manifest item sets `allow_directory: true`, and every expanded destination must be included in `commit.files`.

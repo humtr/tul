@@ -119,7 +119,18 @@ def summarize_state(path: Path, data: dict[str, Any]) -> str:
         lines.append(f"No-op: {str(data.get('no_op')).lower()}")
     if data.get("reason"):
         lines.append(f"Reason: {data['reason']}")
-    for key in ("project", "package_name", "package", "sha256", "commit", "branch", "report", "handoff"):
+    for key in (
+        "project",
+        "package_name",
+        "package",
+        "sha256",
+        "commit",
+        "branch",
+        "apply_plan",
+        "apply_log",
+        "report",
+        "handoff",
+    ):
         if data.get(key):
             lines.append(f"{key.replace('_', ' ').title()}: {data[key]}")
     if data.get("outcome") == "noop" or data.get("no_op") is True:

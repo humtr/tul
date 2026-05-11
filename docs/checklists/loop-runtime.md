@@ -47,6 +47,16 @@ tul state tul
 tul handoff tul
 ```
 
+## Apply safety
+
+- [ ] `apply.py` builds an apply plan before copying files.
+- [ ] `apply-plan.json` is written to the package work directory.
+- [ ] Directory copy is rejected unless `allow_directory: true` is set on the apply item.
+- [ ] Every planned destination is covered by manifest `commit.files`.
+- [ ] Duplicate apply destinations are rejected before any copy occurs.
+- [ ] Existing path traversal and repo-escape protections remain in place.
+- [ ] `tul state <project>` can show `Apply Plan` and `Apply Log` paths after a run.
+
 ## Validation commands
 
 ```bash

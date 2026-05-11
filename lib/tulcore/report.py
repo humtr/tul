@@ -18,6 +18,8 @@ def build_report(
     checks: list[str] | None = None,
     state_file: Path | None = None,
     outcome: str | None = None,
+    apply_plan: Path | None = None,
+    apply_log: Path | None = None,
 ) -> str:
     lines = [
         "# tul update report",
@@ -33,6 +35,12 @@ def build_report(
         lines.append(f"Outcome: {outcome}")
     if state_file:
         lines.append(f"State file: {state_file}")
+    if apply_plan or apply_log:
+        lines.extend(["", "## Apply artifacts", ""])
+        if apply_plan:
+            lines.append(f"- Apply plan: {apply_plan}")
+        if apply_log:
+            lines.append(f"- Apply log: {apply_log}")
     if commit_hash:
         lines.append(f"Commit: {commit_hash}")
     if outcome == "noop":

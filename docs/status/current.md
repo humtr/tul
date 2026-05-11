@@ -45,7 +45,7 @@ This package teaches `tul doctor` to detect stale PATH launchers and adds `tul i
 
 ## Known remaining debt
 
-- Apply safety audit is next: directory copy must be restricted or explicitly gated.
+- Apply safety audit is active: directory copy is explicitly gated and apply-plan logging is being added.
 - `tul init` should eventually generate or repair global config and aliases.
 - Recovery/debug commands need deeper implementation after the LLM loop surface is stable.
 - `humtr/ai` onboarding remains the first major external repo target.
@@ -57,3 +57,9 @@ This patch makes launcher diagnostics non-recursive so `tul doctor tul` prints
 its report and exits cleanly. It also normalizes no-op push verification wording:
 no-op updates do not push, so push verification is `not applicable for no-op`
 rather than false or unavailable.
+
+## Stage 2.5 — apply safety audit
+
+This stage hardens `lib/tulcore/apply.py` so packages cannot silently perform broad directory writes. The runtime now builds an apply plan before copy, rejects directory copy unless explicitly allowed, and requires every planned destination to appear in manifest `commit.files`.
+
+Expected package/version: `0.4.4-apply-safety`.

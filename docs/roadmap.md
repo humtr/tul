@@ -61,12 +61,20 @@ Goals:
 
 ## Stage 2.5 — Apply safety audit
 
+Status: active.
+
 Goals:
 
 - Restrict or explicitly gate directory copy.
 - Record apply plans before copying.
 - Compare apply destinations with manifest `commit.files` before staging.
 - Preserve path traversal protections.
+
+Acceptance:
+
+- Directory copy without `allow_directory: true` is rejected before copying.
+- Directory copy with `allow_directory: true` still requires every expanded destination in `commit.files`.
+- `apply-plan.json` and `apply.log` are recorded in state/report output.
 
 ## Stage 3 — Recovery/debug commands
 
