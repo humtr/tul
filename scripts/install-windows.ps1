@@ -1,29 +1,28 @@
 param(
   [string]$Repo = "D:\work\prj\tul",
-  [string]$Dest = "D:\work\bin\tul"
+  [string]$Dest = "D:\work\bin\tul.cmd",
+  [string]$LibDest = "D:\work\home\.config\tul\lib"
 )
 
 $ErrorActionPreference = "Stop"
 
 $Repo = (Resolve-Path $Repo).Path
-$Source = Join-Path $Repo "bin\tul"
+Set-Location $Repo
 
-if (!(Test-Path $Source)) {
-  Write-Error "missing $Source"
-  exit 1
-}
+python -m py_compile .\bin\tul
+python -m py_compile (Get-ChildItem .\lib\tulcore -Filter "*.py" | ForEach-Object { $_.FullName })
 
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Dest) | Out-Null
+New-Item -ItemType Directory -Force -Path $LibDest | Out-Null
 
-$Wrapper = @"
-@echo off
-python "$Source" %*
-"@
+$TulPath = Join-Path $Repo "bin\tul"
+$Wrapper = "@echo off`r`npython `"$TulPath`" %*`r`n"
+[System.IO.File]::WriteAllText($Dest, $Wrapper, [System.Text.UTF8Encoding]::new($false))
 
-[System.IO.File]::WriteAllText($Dest + ".cmd", $Wrapper, [System.Text.UTF8Encoding]::new($false))
+$TargetCore = Join-Path $LibDest "tulcore"
+if (Test-Path $TargetCore) { Remove-Item $TargetCore -Recurse -Force }
+Copy-Item -LiteralPath (Join-Path $Repo "lib\tulcore") -Destination $LibDest -Recurse -Force
 
-Write-Host "Installed Windows wrapper:"
-Write-Host "  $Dest.cmd"
-Write-Host ""
-Write-Host "Ensure D:\work\bin is on PATH, then run:"
-Write-Host "  tul status D:\work\prj\tul"
+Write-Host "Installed tul:"
+Write-Host "  $Dest"
+Write-Host "  $TargetCore"

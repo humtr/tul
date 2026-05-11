@@ -3,18 +3,18 @@ set -euo pipefail
 
 REPO="${1:-$HOME/prj/tul}"
 DEST="${TUL_BIN_DEST:-$HOME/bin/tul}"
+LIB_DEST="${TUL_LIB_DEST:-$HOME/.config/tul/lib}"
 
-if [ ! -f "$REPO/bin/tul" ]; then
-  echo "ERROR: missing $REPO/bin/tul" >&2
-  exit 1
-fi
+cd "$REPO"
+python -m py_compile bin/tul
+python -m py_compile lib/tulcore/*.py
 
-mkdir -p "$(dirname "$DEST")"
-cp -f "$REPO/bin/tul" "$DEST"
+mkdir -p "$(dirname "$DEST")" "$LIB_DEST"
+cp -f bin/tul "$DEST"
 chmod +x "$DEST"
+rm -rf "$LIB_DEST/tulcore"
+cp -a lib/tulcore "$LIB_DEST/"
 
-echo "Installed:"
+echo "Installed tul:"
 echo "  $DEST"
-echo
-echo "Run:"
-echo "  tul status $REPO"
+echo "  $LIB_DEST/tulcore"

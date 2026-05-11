@@ -1,3 +1,11 @@
+version: 1
 name: tul
 repo: humtr/tul
 branch: main
+track: loop-runtime
+
+check:
+  commands:
+    - python -m py_compile bin/tul
+    - python -m py_compile lib/tulcore/*.py
+    - git diff --check
