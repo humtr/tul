@@ -1,34 +1,30 @@
 # Loop runtime checklist
 
-Before trusting a package/update cycle:
+Before accepting a package:
 
 ```bash
-tul verify tul
 tul package latest tul
+tul package check /sdcard/Download/<package>.zip --target tul
 tul update tul -l
-tul state tul
-```
-
-Fresh clone confidence check:
-
-```bash
+tul verify tul
 tul verify tul --fresh-clone
 ```
 
-Package authoring checks:
+For package authoring:
 
 ```bash
-tul package check /sdcard/Download/package.zip --target tul
-tul update tul --latest --dry-run
+tul package scaffold NAME --target tul --message "Commit message"
+tul package add NAME --target tul FILE [FILE...]
+tul package summary NAME
+tul package zip NAME --out /sdcard/Download/NAME.zip --force
+tul package check /sdcard/Download/NAME.zip --target tul
 ```
 
-Safety invariants:
+Invariants:
 
-- `tul update <project>` remains the default full loop.
-- Push is included by default after commit.
-- `--no-push` and `--no-commit` are exceptions.
-- Do not use `git add -A` or `git add .` in the normal path.
-- Do not force push.
-- Project policy belongs in `.tul.yml`.
+- `tul update` pushes by default.
+- `-l` / `--latest` selects from configured inbox roots only.
+- No `git add -A` or `git add .` in the normal path.
+- No force push.
+- Repo policy belongs in `.tul.yml`.
 - Environment paths and aliases belong in global config.
-- Package archive root must contain `tul-package.yml`, `README.md`, and `files/`.

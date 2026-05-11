@@ -1,53 +1,47 @@
-# tul commands
+# Commands
 
-Default workflow:
+Primary loop:
 
 ```bash
+tul update <project>
 tul update <project> -l
+tul update <project> --latest
 ```
 
-`-l` is the short form of `--latest`; it selects the newest matching package from configured inbox roots.
-
-## Core loop
+Package discovery:
 
 ```bash
-tul status tul
+tul package latest tul
+tul package list tul
+tul package inspect /path/to/package.zip
+tul update tul --latest --dry-run
+```
+
+Package authoring:
+
+```bash
+tul package scaffold NAME --target tul --message "Commit message"
+tul package add NAME --target tul FILE [FILE...]
+tul package summary NAME
+tul package zip NAME --out /sdcard/Download/NAME.zip --force
+tul package check /sdcard/Download/NAME.zip --target tul
+```
+
+Verification:
+
+```bash
 tul verify tul
 tul verify tul --fresh-clone
-tul package latest tul
-tul update tul -l
+```
+
+Recovery/debug:
+
+```bash
 tul state tul
-```
-
-## Package discovery and authoring
-
-```bash
-tul package list tul
-tul package latest tul
-tul package inspect /sdcard/Download/package.zip
-tul package check /sdcard/Download/package.zip --target tul
-```
-
-Create a package skeleton:
-
-```bash
-tul package scaffold tul_example_v1 --target tul --message "Example package"
-```
-
-Create a root-correct zip:
-
-```bash
-tul package zip tul_example_v1 --out /sdcard/Download/tul_example_v1.zip
-```
-
-## Recovery/debug
-
-Split commands are recovery/debug tools, not the default workflow:
-
-```bash
-tul import tul -l
 tul state tul --all --limit 5
 tul archive tul --noop --dry-run
 tul rollback tul
-tul resume tul
+tul import tul -l
 ```
+
+Split commands are recovery/debug tools. The default workflow remains `tul update <project> -l`.

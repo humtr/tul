@@ -5,7 +5,7 @@
 - Stage 0 — syntax/runtime recovery
 - Stage 1 — runtime boundary restructure
 - Stage 1.5 — no-op/state cleanup
-- Stage 2 — LLM loop contract / compact README option 2
+- Stage 2 — LLM loop contract and README option 2
 - Stage 2.1 — launcher/install sync
 - Stage 2.1.1 — doctor/no-op output polish
 - Stage 2.5 — apply safety audit
@@ -16,17 +16,19 @@
 - Stage 5.2 — package discovery polish
 - Stage 5.3 — state cleanup UX
 - Stage 5.4 — package authoring helper
+- Stage 5.5 — package authoring polish
 
-## Active track: tul development acceleration
+## Next
 
-The current priority is improving the speed and safety of tul's own self-hosting development loop.
+Stage 6 — self-host loop hardening and accelerated multi-change packages.
 
-Near-term candidates:
+Focus:
 
-1. Package authoring polish: richer manifest templates, package diff summaries, and package provenance metadata.
-2. Package report improvements: show authoring/check results in update reports.
-3. Self-host loop hardening: repeated `tul update tul -l` should remain safe, inspectable, and fast.
+- bundle related UX/documentation/runtime improvements safely
+- keep `tul verify tul --fresh-clone` as acceptance gate
+- keep `tul update tul -l` as the default application command
+- avoid broad staging, force push, and repo-specific engine hardcoding
 
-## Stage X — future target onboarding
+## Stage X
 
-`humtr/ai` onboarding is intentionally deferred. It should happen after tul's own package creation, verification, and update flow is comfortable enough to reduce the human bridge burden.
+`humtr/ai` onboarding is intentionally deferred until tul development acceleration is stable.

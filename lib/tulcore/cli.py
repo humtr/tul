@@ -12,7 +12,16 @@ from pathlib import Path
 
 from . import __version__
 from .apply import build_apply_plan, write_apply_plan
-from .authoring import check_package_archive, format_package_check, scaffold_package_dir, zip_package_dir
+from .authoring import (
+    add_repo_files_to_package,
+    check_package_archive,
+    format_package_add,
+    format_package_check,
+    format_package_summary,
+    scaffold_package_dir,
+    summarize_package_dir,
+    zip_package_dir,
+)
 from .checks import run_checks
 from .config import config_path, load_global_config, platform_paths, resolve_project
 from .errors import TulError
@@ -150,6 +159,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_zip.add_argument("package_dir")
     p_zip.add_argument("--out", help="output zip path; default: <package_dir>.zip")
     p_zip.add_argument("--force", action="store_true", help="replace an existing output zip")
+
+    p_add = package_sub.add_parser("add", help="copy repo files into a package and update its manifest")
+    p_add.add_argument("package_dir")
+    p_add.add_argument("repo_files", nargs="+", help="repo-relative files to copy into package files/")
+    p_add.add_argument("--target", help="project/path alias used as the repo source; defaults to current git repo")
+    p_add.add_argument("--message", help="also update commit.message")
+
+    p_summary = package_sub.add_parser("summary", help="summarize a package source directory")
+    p_summary.add_argument("package_dir")
+    p_summary.add_argument("--json", action="store_true", help="print machine-readable summary")
 
     p = sub.add_parser("rollback", help="print a safe rollback command")
     p.add_argument("target")
@@ -389,6 +408,18 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             print("Package root: ok")
             print("Next:")
             print(f"- tul package check {archive}")
+            return 0
+        if args.package_command == "add":
+            ctx = resolve_project(args.target) if args.target else None
+            result = add_repo_files_to_package(Path(args.package_dir), args.repo_files, repo_path=ctx.repo_path if ctx else None, message=args.message)
+            print(format_package_add(result))
+            return 0
+        if args.package_command == "summary":
+            summary = summarize_package_dir(Path(args.package_dir))
+            if args.json:
+                print(json.dumps(summary, indent=2, ensure_ascii=False))
+            else:
+                print(format_package_summary(summary))
             return 0
         ctx = resolve_project(args.target)
         if args.package_command == "list":

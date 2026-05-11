@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
 import tarfile
 import tempfile
 import zipfile
@@ -10,11 +12,11 @@ from pathlib import Path
 from typing import Any
 
 from .apply import build_apply_plan
-from .config import dump_yaml
+from .config import dump_yaml, load_yaml_file
 from .errors import TulError
 from .manifest import Manifest, load_manifest, validate_manifest
 from .package import manifest_data_from_archive, safe_extract, sha256_file
-from .paths import mkdirp
+from .paths import mkdirp, normalize_repo_relative
 
 FORBIDDEN_ARCHIVE_PARTS = {"__pycache__", ".git"}
 FORBIDDEN_SUFFIXES = {".pyc", ".pyo"}
@@ -234,3 +236,105 @@ def zip_package_dir(package_dir: Path, *, out_path: Path | None = None, force: b
     if "tul-package.yml" not in names or "README.md" not in names or not any(name.startswith("files/") for name in names):
         raise TulError(f"created archive has invalid root layout: {out}")
     return out
+
+
+@dataclass
+class PackageAddResult:
+    package_dir: Path
+    repo_path: Path
+    added: list[str]
+    manifest_path: Path
+    message: str | None = None
+
+
+def find_git_root(start: Path) -> Path:
+    start = start.expanduser().resolve()
+    proc = subprocess.run(["git", "-C", str(start), "rev-parse", "--show-toplevel"], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        raise TulError(f"could not infer git repo root from {start}; pass --target")
+    return Path(proc.stdout.strip()).resolve()
+
+
+def _load_package_manifest_data(package_dir: Path) -> dict[str, Any]:
+    manifest_path = package_dir / "tul-package.yml"
+    if not manifest_path.exists():
+        raise TulError(f"missing package manifest: {manifest_path}")
+    return load_yaml_file(manifest_path, required=True)
+
+
+def _ensure_manifest_lists(data: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str]]:
+    data.setdefault("version", 1)
+    data.setdefault("apply", {})
+    data.setdefault("commit", {})
+    data["apply"].setdefault("mode", "copy")
+    files = data["apply"].setdefault("files", [])
+    commit_files = data["commit"].setdefault("files", [])
+    if not isinstance(files, list):
+        raise TulError("manifest apply.files must be a list")
+    if not isinstance(commit_files, list):
+        raise TulError("manifest commit.files must be a list")
+    return files, commit_files
+
+
+def add_repo_files_to_package(package_dir: Path, repo_files: list[str], *, repo_path: Path | None = None, message: str | None = None) -> PackageAddResult:
+    """Copy repo files into package files/ and update tul-package.yml."""
+    package_dir = package_dir.expanduser().resolve()
+    if not package_dir.is_dir():
+        raise TulError(f"package directory does not exist: {package_dir}")
+    repo_root = repo_path.expanduser().resolve() if repo_path else find_git_root(Path.cwd())
+    if not (repo_root / ".git").exists():
+        raise TulError(f"not a git repo root: {repo_root}")
+    manifest_path = package_dir / "tul-package.yml"
+    data = _load_package_manifest_data(package_dir)
+    apply_files, commit_files = _ensure_manifest_lists(data)
+    added: list[str] = []
+    for raw in repo_files:
+        rel = normalize_repo_relative(raw)
+        src = (repo_root / rel).resolve()
+        if not src.exists():
+            raise TulError(f"repo file does not exist: {rel}")
+        if src.is_dir():
+            raise TulError(f"directory add is not supported by package add: {rel}")
+        dst_rel = f"files/{rel}"
+        dst = package_dir / dst_rel
+        mkdirp(dst.parent)
+        shutil.copy2(src, dst)
+        apply_files[:] = [item for item in apply_files if not (isinstance(item, dict) and str(item.get("to")) == rel)]
+        apply_files.append({"from": dst_rel, "to": rel})
+        if rel not in [str(item) for item in commit_files]:
+            commit_files.append(rel)
+        added.append(rel)
+    if message is not None:
+        data.setdefault("commit", {})["message"] = message
+    marker = package_dir / "files" / ".gitkeep"
+    if marker.exists() and added:
+        marker.unlink()
+    manifest_path.write_text(dump_yaml(data) + "\n", encoding="utf-8", newline="\n")
+    return PackageAddResult(package_dir=package_dir, repo_path=repo_root, added=added, manifest_path=manifest_path, message=message)
+
+
+def format_package_add(result: PackageAddResult) -> str:
+    lines = ["# tul package add", "", f"Package dir: {result.package_dir}", f"Repo: {result.repo_path}", f"Manifest: {result.manifest_path}", "", "## Added files"]
+    lines.extend(f"- {item}" for item in result.added) if result.added else lines.append("- none")
+    lines.extend(["", "Next:", f"- tul package summary {result.package_dir}", f"- tul package zip {result.package_dir} --force", f"- tul package check {result.package_dir.with_suffix('.zip')}"])
+    return "\n".join(lines)
+
+
+def summarize_package_dir(package_dir: Path) -> dict[str, Any]:
+    package_dir = package_dir.expanduser().resolve()
+    data = _load_package_manifest_data(package_dir)
+    apply_files = ((data.get("apply") or {}).get("files") or [])
+    commit_files = ((data.get("commit") or {}).get("files") or [])
+    payload_files = []
+    files_dir = package_dir / "files"
+    if files_dir.exists():
+        payload_files = sorted(item.relative_to(package_dir).as_posix() for item in files_dir.rglob("*") if item.is_file() and not should_skip_zip_member(item))
+    return {"package_dir": str(package_dir), "name": data.get("name"), "target": data.get("target") or {}, "message": (data.get("commit") or {}).get("message"), "apply_count": len(apply_files) if isinstance(apply_files, list) else 0, "commit_count": len(commit_files) if isinstance(commit_files, list) else 0, "payload_count": len(payload_files), "commit_files": commit_files, "payload_files": payload_files}
+
+
+def format_package_summary(summary: dict[str, Any]) -> str:
+    target = summary.get("target") or {}
+    lines = ["# tul package summary", "", f"Package dir: {summary.get('package_dir')}", f"Name: {summary.get('name')}", f"Target: {target.get('project')} {target.get('repo')} {target.get('branch')}", f"Message: {summary.get('message')}", f"Apply files: {summary.get('apply_count')}", f"Commit files: {summary.get('commit_count')}", f"Payload files: {summary.get('payload_count')}", "", "## Commit files"]
+    commit_files = summary.get("commit_files") or []
+    lines.extend(f"- {item}" for item in commit_files) if commit_files else lines.append("- none")
+    return "\n".join(lines)

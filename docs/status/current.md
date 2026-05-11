@@ -1,21 +1,17 @@
 # Current status
 
-Latest stage: **Stage 5.4 — package authoring helper**.
+Latest stage: Stage 5.5 — package authoring polish.
 
-Current focus:
+The current acceleration focus is reducing the package creation loop:
 
-- Keep `/ai` as **Stage X — future target onboarding**.
-- Accelerate tul self-development before expanding to other repos.
-- Make package authoring, checking, and zipping deterministic.
+```bash
+tul package scaffold
+tul package add
+tul package zip
+tul package check
+tul update tul -l
+```
 
-Recently completed:
+Completed foundations include runtime recovery, full-loop update semantics, compact README entrypoint, launcher sync, apply safety planning, recovery/debug commands, init/config onboarding, and fresh clone verification.
 
-- Stage 5.1: `tul verify tul` and `tul verify tul --fresh-clone`.
-- Stage 5.2: package discovery polish.
-- Stage 5.3: state cleanup UX.
-- Stage 5.4: package authoring helpers.
-
-Next likely stage:
-
-- Stage 5.5: package authoring polish or package metadata/report improvements.
-- Stage 6: self-host loop hardening.
+`humtr/ai` onboarding is Stage X and intentionally deferred.
