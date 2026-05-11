@@ -63,3 +63,7 @@ rather than false or unavailable.
 This stage hardens `lib/tulcore/apply.py` so packages cannot silently perform broad directory writes. The runtime now builds an apply plan before copy, rejects directory copy unless explicitly allowed, and requires every planned destination to appear in manifest `commit.files`.
 
 Expected package/version: `0.4.4-apply-safety`.
+
+## Stage 3 recovery/debug commands
+
+Status: package prepared. Recovery/debug surface includes `tul import`, `tul state --all/--json`, `tul archive --all`, rollback-from-state, and conservative `resume/apply` guidance. Split commands remain recovery/debug tools; default workflow remains `tul update <project>`.

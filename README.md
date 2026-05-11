@@ -20,6 +20,7 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 4. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md).
 5. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md) if handling a terminal handoff.
 6. Read [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md) if interpreting `/tul ...` commands.
+7. Read [`docs/workflows/recovery-debug.md`](docs/workflows/recovery-debug.md) when inspecting failed/no-op/interrupted state.
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 

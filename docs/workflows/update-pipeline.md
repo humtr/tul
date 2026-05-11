@@ -46,3 +46,7 @@ The apply step is intentionally stricter than normal file copying:
 - Every planned destination must be listed in manifest `commit.files`.
 - Duplicate destinations are rejected before copying.
 - `apply-plan.json` is written before copy so state/report output can point to the exact planned operations.
+
+## Stage 3 recovery/debug commands
+
+Status: package prepared. Recovery/debug surface includes `tul import`, `tul state --all/--json`, `tul archive --all`, rollback-from-state, and conservative `resume/apply` guidance. Split commands remain recovery/debug tools; default workflow remains `tul update <project>`.

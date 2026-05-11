@@ -78,3 +78,22 @@ was already applied.
 ## Apply safety notes
 
 `tul update` now builds an apply plan before copying. Directory copy from a package is rejected unless the manifest item sets `allow_directory: true`, and every expanded destination must be included in `commit.files`.
+
+## Recovery/debug commands
+
+Split commands are for inspection and recovery. They do not replace the default `tul update <project>` loop.
+
+```bash
+tul import tul --latest        # import, validate, and create apply-plan.json without modifying repo files
+tul state tul                 # show latest state
+tul state tul --all           # show all matching states
+tul state tul --json          # machine-readable latest state
+tul archive tul               # archive latest state directory
+tul archive tul --all         # archive all matching state directories
+tul rollback tul              # print rollback command from latest state commit when available
+tul rollback tul <commit>     # print rollback command for an explicit commit
+tul resume tul                # inspect latest state and suggest safe next command
+tul apply tul --state <path>  # inspect-only helper; default workflow remains update
+```
+
+`import`, `apply`, and `resume` are intentionally conservative. They should not silently perform partial update steps that leave the repo dirty.

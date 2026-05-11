@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import sys
@@ -9,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import __version__
+from .apply import build_apply_plan, write_apply_plan
 from .checks import run_checks
 from .config import config_path, load_global_config, platform_paths, resolve_project
 from .errors import TulError
@@ -26,9 +28,11 @@ from .gitops import (
 )
 from .handoff import generate_handoff
 from .init import init_project
+from .manifest import validate_manifest
+from .package import import_package, select_package
 from .pipeline import run_update
 from .report import build_report
-from .state import archive_latest_state, latest_state, summarize_state
+from .state import archive_latest_state, archive_states, iter_states, latest_state, state_commit, summarize_state, set_phase
 from .sweep import sweep_repo
 
 
@@ -100,10 +104,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("rollback", help="print a safe rollback command")
     p.add_argument("target")
-    p.add_argument("commit", nargs="?")
+    p.add_argument("commit", nargs="?", help="commit to revert; defaults to latest state commit when available")
 
-    p = sub.add_parser("state", help="show latest local tul work state hint")
+    p = sub.add_parser("state", help="show local tul work state")
     p.add_argument("target")
+    p.add_argument("--all", action="store_true", help="show all matching state files, newest first")
+    p.add_argument("--json", action="store_true", help="print state data as JSON")
 
     p = sub.add_parser("config", help="config helpers")
     config_sub = p.add_subparsers(dest="config_command", required=True)
@@ -111,15 +117,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("projects", help="list configured projects")
 
-    # Scaffolds kept explicit so split commands do not become the default loop.
-    p = sub.add_parser("import", help="scaffold: package import is normally part of update")
-    p.add_argument("package", nargs="?")
-    p = sub.add_parser("apply", help="scaffold: package apply is normally part of update")
+    # Split commands are recovery/debug tools; default workflow remains update.
+    p = sub.add_parser("import", help="import, validate, and plan a package without applying it")
     p.add_argument("target")
-    p = sub.add_parser("resume", help="scaffold: resume is not yet fully implemented")
+    p.add_argument("--package", dest="package_path")
+    p.add_argument("-l", "--latest", action="store_true", help="use newest matching package from configured inbox roots")
+
+    p = sub.add_parser("apply", help="recovery/debug: show how to apply; default workflow remains update")
     p.add_argument("target")
-    p = sub.add_parser("archive", help="archive latest local tul work state")
+    p.add_argument("--state", help="state.json or work dir to inspect before applying manually")
+
+    p = sub.add_parser("resume", help="recovery/debug: inspect latest state and suggest a safe next command")
     p.add_argument("target")
+
+    p = sub.add_parser("archive", help="archive local tul work state")
+    p.add_argument("target")
+    p.add_argument("--all", action="store_true", help="archive all matching states, not just the latest")
 
     # Friendly alias for users who type `tul help`.
     sub.add_parser("help", help="show this help message")
@@ -255,8 +268,21 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
 
     if command == "rollback":
         ctx = resolve_project(args.target)
-        commit_id = args.commit or ""
+        commit_id = args.commit
+        paths = platform_paths(ctx.global_config)
+        work_root = paths.get("work_root")
+        source = "argument"
+        if not commit_id and work_root:
+            found = latest_state(work_root, project=ctx.project_id)
+            if found:
+                _state_path, data = found
+                commit_id = state_commit(data)
+                source = "latest state"
+        if not commit_id:
+            raise TulError("rollback needs a commit argument or a latest state with a commit")
         branch = current_branch(ctx.repo_path)
+        print("# safe rollback command")
+        print(f"# source: {source}")
         print(f"cd {ctx.repo_path}")
         print(f"git revert {commit_id}")
         print(f"git push origin {branch}")
@@ -269,26 +295,38 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if not work_root:
             print("No platform.work_root configured.")
             return 0
-        found = latest_state(work_root, project=ctx.project_id)
-        if not found:
+        states = iter_states(work_root, project=ctx.project_id) if args.all else []
+        if not args.all:
+            found = latest_state(work_root, project=ctx.project_id)
+            states = [found] if found else []
+        if not states:
             print(f"No tul state found for project {ctx.project_id} under {work_root}")
             return 0
-        path, data = found
-        print(summarize_state(path, data))
-        if data.get("phase") == "failed":
-            print()
-            print("Repo status at inspection:")
-            branch = current_branch(ctx.repo_path)
-            try:
-                fetch(ctx.repo_path, branch)
-            except Exception:
-                pass
-            print(f"- HEAD: {head(ctx.repo_path)}")
-            print(f"- Remote HEAD: {remote_head(ctx.repo_path, branch) or 'unavailable'}")
-            clean = not is_dirty(ctx.repo_path)
-            print(f"- Working tree: {'clean' if clean else 'dirty'}")
-            if clean:
-                print("- Note: the latest failed state may be stale or from a repeated/no-op update attempt.")
+        if args.json:
+            payload = [{"state_file": str(path), **data} for path, data in states if path is not None]
+            print(json.dumps(payload[0] if not args.all else payload, indent=2, ensure_ascii=False))
+            return 0
+        for index, item in enumerate(states):
+            if item is None:
+                continue
+            path, data = item
+            if index:
+                print("\n---\n")
+            print(summarize_state(path, data))
+            if data.get("phase") == "failed":
+                print()
+                print("Repo status at inspection:")
+                branch = current_branch(ctx.repo_path)
+                try:
+                    fetch(ctx.repo_path, branch)
+                except Exception:
+                    pass
+                print(f"- HEAD: {head(ctx.repo_path)}")
+                print(f"- Remote HEAD: {remote_head(ctx.repo_path, branch) or 'unavailable'}")
+                clean = not is_dirty(ctx.repo_path)
+                print(f"- Working tree: {'clean' if clean else 'dirty'}")
+                if clean:
+                    print("- Note: the latest failed state may be stale or from a repeated/no-op update attempt.")
         return 0
 
     if command == "archive":
@@ -302,15 +340,15 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if not archive_root:
             print("No platform.archive_root or platform.backup_root configured.")
             return 0
-        archived = archive_latest_state(work_root, archive_root, project=ctx.project_id)
+        archived = archive_states(work_root, archive_root, project=ctx.project_id, all_states=args.all)
         if not archived:
             print(f"No tul state found for project {ctx.project_id} under {work_root}")
             return 0
-        state_path, dest, data = archived
-        print(f"Archived latest state for {ctx.project_id}:")
-        print(f"- state: {state_path}")
-        print(f"- dir: {dest}")
-        print(f"- phase: {data.get('phase')}")
+        print(f"Archived {len(archived)} state(s) for {ctx.project_id}:")
+        for state_path, dest, data in archived:
+            print(f"- state: {state_path}")
+            print(f"  dir: {dest}")
+            print(f"  phase: {data.get('phase')}")
         return 0
 
     if command == "config":
@@ -325,12 +363,85 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             print(f"{key}: {value.get('path') if isinstance(value, dict) else value}")
         return 0
 
-    if command in {"import", "apply", "resume"}:
-        print(f"'{command}' is scaffolded for recovery/debug. The default workflow is 'tul update <project>'.")
+    if command == "import":
+        ctx = resolve_project(args.target)
+        if args.latest and args.package_path:
+            raise TulError("use either --package PATH or --latest, not both")
+        package_path = None if args.latest else args.package_path
+        print_import_plan(ctx, package_path=package_path)
+        return 0
+
+    if command == "apply":
+        ctx = resolve_project(args.target)
+        print("'tul apply' is recovery/debug only. The default workflow is 'tul update <project>'.")
+        if args.state:
+            print(f"State hint: {args.state}")
+        print("Recommended safe command:")
+        print(f"  tul update {ctx.project_id} --latest")
+        return 0
+
+    if command == "resume":
+        ctx = resolve_project(args.target)
+        paths = platform_paths(ctx.global_config)
+        work_root = paths.get("work_root")
+        found = latest_state(work_root, project=ctx.project_id) if work_root else None
+        print("'tul resume' is not automatic yet. Inspect latest state first.")
+        if found:
+            path, data = found
+            print(summarize_state(path, data))
+        print("Recommended safe commands:")
+        print(f"  tul state {ctx.project_id}")
+        print(f"  tul update {ctx.project_id} --latest")
         return 0
 
     raise TulError(f"unknown command: {command}")
 
+
+
+def print_import_plan(ctx, *, package_path: str | None = None) -> None:
+    branch = current_branch(ctx.repo_path)
+    expected_branch = ctx.expected_branch or branch
+    source = select_package(
+        ctx.global_config,
+        explicit=package_path,
+        project=ctx.project_id,
+        repo=ctx.expected_repo,
+        branch=expected_branch,
+    )
+    imported = import_package(source, ctx.global_config)
+    state_file = imported.work_dir / "state.json"
+    validate_manifest(imported.manifest, project=ctx.project_id, repo=ctx.expected_repo, branch=expected_branch)
+    apply_plan = imported.work_dir / "apply-plan.json"
+    planned = build_apply_plan(
+        imported.manifest,
+        extracted_dir=imported.extracted_dir,
+        repo_path=ctx.repo_path,
+        allowed_files=imported.manifest.commit_files,
+    )
+    write_apply_plan(apply_plan, planned)
+    set_phase(
+        state_file,
+        "validated",
+        outcome="imported",
+        project=ctx.project_id,
+        repo=str(ctx.repo_path),
+        branch=branch,
+        package=str(source),
+        package_name=imported.manifest.name,
+        sha256=imported.sha256,
+        apply_plan=str(apply_plan),
+        planned_operations=len(planned),
+    )
+    print("# tul import")
+    print(f"Project: {ctx.project_id}")
+    print(f"Package: {source}")
+    print(f"Work dir: {imported.work_dir}")
+    print(f"State file: {state_file}")
+    print(f"Apply plan: {apply_plan}")
+    print(f"Planned operations: {len(planned)}")
+    print("No repo files were modified.")
+    print("To run the full safe loop, use:")
+    print(f"  tul update {ctx.project_id} --package {source}")
 
 def print_status(ctx) -> None:
     repo = ctx.repo_path

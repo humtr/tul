@@ -90,3 +90,7 @@ Expected:
 - `tul doctor tul` has no shell-level `Aborted` message.
 - exit code is `0`.
 - no-op handoff/report/state say `Push verified: not applicable for no-op`.
+
+## Stage 3 recovery/debug commands
+
+Status: package prepared. Recovery/debug surface includes `tul import`, `tul state --all/--json`, `tul archive --all`, rollback-from-state, and conservative `resume/apply` guidance. Split commands remain recovery/debug tools; default workflow remains `tul update <project>`.

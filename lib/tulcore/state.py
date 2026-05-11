@@ -87,25 +87,56 @@ def latest_state(work_root: Path, *, project: str | None = None) -> tuple[Path, 
     return None
 
 
+
+def iter_states(work_root: Path, *, project: str | None = None) -> list[tuple[Path, dict[str, Any]]]:
+    result: list[tuple[Path, dict[str, Any]]] = []
+    for path in find_state_files(work_root):
+        data = read_state(path)
+        if project is None or str(data.get("project") or "") == str(project):
+            result.append((path, data))
+    return result
+
+
+def archive_states(
+    work_root: Path,
+    archive_root: Path,
+    *,
+    project: str | None = None,
+    all_states: bool = False,
+) -> list[tuple[Path, Path, dict[str, Any]]]:
+    states = iter_states(work_root, project=project)
+    if not all_states:
+        states = states[:1]
+    archived_items: list[tuple[Path, Path, dict[str, Any]]] = []
+    for state_path, _data in states:
+        state_dir = state_path.parent
+        if not state_dir.exists():
+            continue
+        archive_root.mkdir(parents=True, exist_ok=True)
+        dest = archive_root / state_dir.name
+        if dest.exists():
+            dest = archive_root / f"{state_dir.name}-archived-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        shutil.move(str(state_dir), str(dest))
+        new_state = dest / "state.json"
+        archived = set_phase(
+            new_state,
+            "archived",
+            archived_from=str(state_dir),
+            archived_to=str(dest),
+        )
+        archived_items.append((new_state, dest, archived))
+    return archived_items
+
+
+def state_commit(data: dict[str, Any]) -> str | None:
+    value = data.get("commit")
+    if value:
+        return str(value)
+    return None
+
 def archive_latest_state(work_root: Path, archive_root: Path, *, project: str | None = None) -> tuple[Path, Path, dict[str, Any]] | None:
-    found = latest_state(work_root, project=project)
-    if not found:
-        return None
-    state_path, _data = found
-    state_dir = state_path.parent
-    archive_root.mkdir(parents=True, exist_ok=True)
-    dest = archive_root / state_dir.name
-    if dest.exists():
-        dest = archive_root / f"{state_dir.name}-archived-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-    shutil.move(str(state_dir), str(dest))
-    new_state = dest / "state.json"
-    archived = set_phase(
-        new_state,
-        "archived",
-        archived_from=str(state_dir),
-        archived_to=str(dest),
-    )
-    return new_state, dest, archived
+    archived = archive_states(work_root, archive_root, project=project, all_states=False)
+    return archived[0] if archived else None
 
 
 def summarize_state(path: Path, data: dict[str, Any]) -> str:

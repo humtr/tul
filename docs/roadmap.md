@@ -104,3 +104,7 @@ Goals:
 Goals:
 
 - Make repeated `tul update tul` and `tul update ai` safe, inspectable, and recoverable across Windows and Termux.
+
+## Stage 3 recovery/debug commands
+
+Status: package prepared. Recovery/debug surface includes `tul import`, `tul state --all/--json`, `tul archive --all`, rollback-from-state, and conservative `resume/apply` guidance. Split commands remain recovery/debug tools; default workflow remains `tul update <project>`.
