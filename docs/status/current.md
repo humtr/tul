@@ -36,9 +36,15 @@ Compatibility aliases such as `tul-verify-latest.md` are still written, but the 
 
 ## Current package
 
-`tul_update_verify_gate_v1`
+`tul_update_verify_gate_smoke_v1`
 
-Implemented scope:
+Purpose:
+
+- make the next normal `tul update` exercise the update-integrated fresh verification gate;
+- prove that one command can apply, commit, push, verify remote HEAD, run fresh verification, and write the uploadable verify artifact;
+- preserve the visible order: update report, commit/push/rollback, fresh verification gate, then LLM handoff.
+
+Baseline implemented by `tul_update_verify_gate_v1`:
 
 - normal `tul update` runs post-update `verify fresh`;
 - fresh verify markdown/json artifacts are written automatically;
@@ -48,7 +54,7 @@ Implemented scope:
 
 ## Next package
 
-Next Stage 6 bundle
+Bundle 6 — State compactness and docs consistency
 
 Expected scope:
 
@@ -59,5 +65,18 @@ Expected scope:
 
 ## Current risk notes
 
-- Native context package guidance is implemented. Update-integrated release-gate artifacts are implemented; state-compact output remains pending.
+- Native context package guidance is implemented.
+- Update-integrated release-gate artifacts are implemented and this smoke package is intended to verify that the integration works on the next package application.
+- If `tul update` does not refresh `tul-vf-latest.md` to the smoke commit, the release-gate integration needs a follow-up fix.
+- State-compact output remains pending.
 - Stage X target onboarding remains deferred.
+
+## Smoke-test expectation
+
+After applying `tul_update_verify_gate_smoke_v1`, the user should be able to upload only:
+
+```text
+/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+```
+
+The artifact HEAD should match the new smoke-test commit. If it still points at the previous commit, the post-update verify hook did not run or did not refresh the latest artifact.

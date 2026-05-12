@@ -136,3 +136,13 @@ Context: `tul update` already applies, checks, commits, pushes, verifies remote 
 Decision: In the normal full-loop path, `tul update` runs a post-update fresh verification gate after publish/no-op handling. It writes the same markdown/json verify artifacts as `tul verify fresh`, prints a compact PASS/FAIL summary, and records artifact paths in report, state, and handoff. Debug paths such as `--no-commit` or `--no-push` do not run the automatic fresh gate because the remote may intentionally not reflect local changes. `--no-verify` remains available as an exception.
 
 Consequences: The default self-host loop becomes one command shorter. The output order preserves user authority: update report first, commit/push/rollback visibility, fresh verification gate second, LLM handoff last.
+
+## ADR-013 — Self-hosting runtime changes need a following smoke package
+
+Status: accepted
+
+Context: Some tul changes modify behavior that would only run after the current command process has already started. For example, the package that adds post-update fresh verification cannot make the already-running old update process execute the new post-update hook.
+
+Decision: When a package changes the behavior of the currently running self-host loop, use a following minimal smoke package to prove the new behavior under the next invocation. The smoke package should change low-risk docs and should have a clear artifact-based acceptance criterion.
+
+Consequences: Integrity improves because bootstrap limits are explicit. Users do not have to infer whether a behavior failed or merely could not prove itself during installation.

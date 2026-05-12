@@ -130,6 +130,25 @@ Scope:
 - verify artifacts are recorded in report, state, and handoff;
 - `--no-verify` exists for exceptional recovery/debug paths.
 
+
+### Bundle 5.1 — Update-integrated release gate smoke
+
+Package: `tul_update_verify_gate_smoke_v1`
+
+Scope:
+
+- make a small docs-only change after `tul_update_verify_gate_v1`;
+- verify that the next normal `tul update` refreshes `tul-vf-latest.md` automatically;
+- record the bootstrap lesson that the package which installs update-integrated verify cannot prove itself in the same running process;
+- keep the next functional bundle focused on compact state and docs consistency.
+
+Acceptance:
+
+- `tul update` alone applies and publishes the smoke package;
+- `tul-vf-latest.md` is regenerated after the update;
+- the verify artifact HEAD matches the smoke package commit;
+- no separate `tul verify fresh` command is needed for normal evidence handoff.
+
 ### Bundle 6 — State compactness and docs consistency
 
 Scope:

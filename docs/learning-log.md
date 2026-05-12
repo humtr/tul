@@ -164,3 +164,13 @@ Impact: The normal update loop should produce the LLM-review artifact itself. Th
 Reflected in: `tul_update_verify_gate_v1`, `lib/tulcore/pipeline.py`, `lib/tulcore/verify.py`, `docs/workflows/update-pipeline.md`.
 
 Follow-up: Keep full verify details in files, keep terminal output compact, and let users upload `tul-vf-latest.md` after a single `tul update`.
+
+## Stage 6.2.1 — update-integrated verify has a bootstrap boundary
+
+Observation: The package that installs update-integrated verification cannot prove the new behavior inside the same already-running `tul update` process. The old process applies the new code, but it does not restart into the new pipeline logic.
+
+Impact: `tul_update_verify_gate_v1` required one manual `tul verify fresh` after application. The next package must be a small smoke package to prove that normal future updates now generate the verify artifact automatically.
+
+Reflected in: `tul_update_verify_gate_smoke_v1`, `docs/status/current.md`, and `docs/roadmap.md`.
+
+Follow-up: Treat self-hosting behavior changes that affect the currently running update process as two-step changes: install the new behavior, then prove it with a subsequent minimal package.
