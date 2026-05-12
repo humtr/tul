@@ -42,6 +42,7 @@ from .handoff import generate_handoff
 from .init import init_project
 from .manifest import validate_manifest
 from .package import candidate_record, discover_candidates, discover_package_inventory, import_package, invalid_candidate_record, manifest_data_from_archive, select_package, sha256_file
+from .package_hygiene import format_package_hygiene, run_package_hygiene
 from .pipeline import run_update
 from .report import build_report
 from .review import export_review_bundle, format_review_export
@@ -182,6 +183,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_latest = package_sub.add_parser("latest", help="show the newest matching package and selection reason")
     p_latest.add_argument("target", nargs="?")
     p_latest.add_argument("--json", action="store_true", help="print machine-readable selected candidate data")
+
+    p_hygiene = package_sub.add_parser("hygiene", help="dry-run or quarantine stale package archives from inbox roots")
+    p_hygiene.add_argument("target", nargs="?")
+    p_hygiene.add_argument("--json", action="store_true", help="print machine-readable hygiene data")
+    p_hygiene.add_argument("--limit", type=int, default=50, help="maximum planned actions to print")
+    p_hygiene.add_argument("--keep-duplicates", type=int, default=1, help="keep newest N matching archives per duplicate package name")
+    p_hygiene.add_argument("--quarantine", action="store_true", help="move selected archives to package-quarantine instead of only printing a dry-run")
+    p_hygiene.add_argument("--no-invalid", action="store_true", help="do not select invalid archives")
+    p_hygiene.add_argument("--no-duplicates", action="store_true", help="do not select older duplicate matching packages")
 
     p_inspect = package_sub.add_parser("inspect", help="inspect a package archive manifest without applying it")
     p_inspect.add_argument("package_path")
@@ -536,6 +546,19 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             return 0
         if args.package_command == "latest":
             print_package_candidates(ctx, limit=1, as_json=args.json, latest_only=True)
+            return 0
+        if args.package_command == "hygiene":
+            result = run_package_hygiene(
+                ctx,
+                quarantine=args.quarantine,
+                keep_duplicates=args.keep_duplicates,
+                include_invalid=not args.no_invalid,
+                include_duplicates=not args.no_duplicates,
+            )
+            if args.json:
+                print(json.dumps(result.as_dict(), indent=2, ensure_ascii=False))
+            else:
+                print(format_package_hygiene(result, limit=args.limit))
             return 0
 
     if command == "rollback":
@@ -944,6 +967,10 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
         print("Warnings:")
         for item in warnings:
             print(f"- {item}")
+        if duplicates or invalid:
+            print("Hygiene:")
+            print("  - dry-run: tul package hygiene")
+            print("  - quarantine after review: tul package hygiene --quarantine")
         if incompatible:
             print("Incompatible examples:")
             for item in incompatible[:3]:

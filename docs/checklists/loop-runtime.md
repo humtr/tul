@@ -217,3 +217,11 @@ Invariants:
 - [x] Review export remains separate from verify and update until explicit command behavior is verified.
 - [ ] Review export metadata is visible in `tul state` after `tul export review`.
 - [ ] Review export refreshes `tul-vf-latest.md` runtime snapshots after explicit export.
+
+## Package inbox hygiene checkpoint
+
+- [x] `tul package hygiene` exists as a dry-run command.
+- [x] Invalid archives are identified with reasons.
+- [x] Older duplicate matching packages are selected while the newest matching archive per package name is kept.
+- [x] `tul package hygiene --quarantine` moves selected archives instead of deleting them.
+- [x] Incompatible package quarantine remains deferred.

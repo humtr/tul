@@ -130,3 +130,14 @@ Acceptance:
 - Latest and latest rollbackable states are protected.
 - Non-noop actual moves are refused until separately authorized.
 - Successful moves record moved-count evidence in the latest remaining state.
+
+## K2 package inbox hygiene
+
+K2 closes the immediate package-selection hygiene problem. It adds `tul package hygiene` as a dry-run-first command and `tul package hygiene --quarantine` for explicit, reversible movement of invalid archives and older duplicate matching packages.
+
+Acceptance:
+
+- `tul package latest` can point users to hygiene when duplicates or invalid archives exist.
+- `tul package hygiene` prints inventory, duplicate groups, selected actions, and quarantine destinations.
+- `tul package hygiene --quarantine` moves selected files, not deletes them.
+- Incompatible package cleanup remains deferred.

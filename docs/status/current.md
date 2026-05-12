@@ -1,16 +1,16 @@
 # Current status
 
-Latest known version: `0.8.20-archive-execution-safety`.
+Latest known version: `0.8.21-package-inbox-hygiene`.
 
-Current mode: Stage 6 bounded parallel stabilization, K track. Review bundle export is closed; the next focus is archive/work-state cleanup safety.
+Current mode: Stage 6 bounded parallel stabilization, K track. K1 archive execution safety is closed; K2 package inbox hygiene adds dry-run/quarantine handling for duplicate and invalid package archives.
 
 ## Verified baseline
 
 Latest verified baseline:
 
 ```text
-HEAD: c481e539b47c7e0b232271fa163b8284eda9de49
-Remote HEAD: c481e539b47c7e0b232271fa163b8284eda9de49
+HEAD: b07f4a2f29d7d46857923e847211f4e12b62f96d
+Remote HEAD: b07f4a2f29d7d46857923e847211f4e12b62f96d
 Release gate: PASS
 Working tree: clean
 ```
@@ -99,3 +99,13 @@ tul archive --noop --keep 3
 ```
 
 Do not move imported, failed, mixed, or broad `--all` state selections until separate cleanup policies are accepted.
+## K2 package inbox hygiene
+
+K2 adds a package hygiene command for inbox-root cleanup:
+
+```bash
+tul package hygiene
+tul package hygiene --quarantine
+```
+
+The dry-run selects invalid archives and older duplicate matching packages. `--quarantine` moves selected files under the platform package-quarantine root. Files are moved, not deleted. Incompatible packages remain visible but are not quarantined by default.

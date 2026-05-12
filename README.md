@@ -22,10 +22,11 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 6. Read [`docs/roadmap.md`](docs/roadmap.md) for the short-term ready queue and bundle candidates.
 7. Read [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md) before proposing the next bounded bundle.
 8. Read [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) before treating any zip as review evidence, source evidence, or backup.
-9. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
-10. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
-11. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
-12. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
+9. Read [`docs/workflows/package-hygiene.md`](docs/workflows/package-hygiene.md) before moving downloaded package archives out of inbox roots.
+10. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
+11. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
+12. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
+13. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
@@ -156,6 +157,23 @@ sync precheck
 
 Split commands exist for debugging, recovery, and manual intervention. They must not replace the default full loop.
 
+
+
+## Package inbox hygiene
+
+Package discovery intentionally scans configured inbox roots only. When `tul package latest` reports duplicate matching packages or invalid archives, start with a dry-run hygiene review:
+
+```bash
+tul package hygiene
+```
+
+The command selects invalid archives and older duplicate matching packages for quarantine. It never deletes files. After reviewing the list, move selected archives out of inbox roots with:
+
+```bash
+tul package hygiene --quarantine
+```
+
+Quarantined packages are moved under the platform package-quarantine root. Keep `tul package latest` focused on current candidate packages rather than old failed downloads or duplicate bundles.
 
 ## Review bundle export
 

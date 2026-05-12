@@ -332,3 +332,7 @@ Observation: The dry-run archive flow made cleanup candidates visible, but actua
 Lesson: Allow broad selectors for dry-run diagnosis, but keep first actual cleanup bounded to no-op states. Move mode should refuse default/latest, imported, failed, mixed, and broad selections until those policies have their own acceptance gates.
 
 Action: K1 protects latest/latest-rollbackable references in the archive engine, limits actual moves to `--noop`, and records moved-count evidence in the latest remaining state.
+
+## K2 package inbox hygiene lesson
+
+Package discovery warning noise should be reduced by moving stale transport artifacts out of inbox roots rather than broadening selection rules. The safe pattern is dry-run first, quarantine second, never delete by default. Duplicate matching packages are safe to rank by package name and mtime; incompatible packages require a separate policy because they may be valid for other projects.
