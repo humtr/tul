@@ -188,5 +188,12 @@ Invariants:
 - [ ] Successful full `tul update` refreshes `/sdcard/termux/import/tul/tul-main.zip`.
 - [ ] Repo zip export excludes `.git`, caches, build outputs, dependency directories, existing zip files, and backup files.
 - [ ] Export status is recorded in handoff-ready state.
-- [ ] `tul-vf-latest.md` runtime `tul state` snapshot shows the repo zip path.
+- [x] `tul-vf-latest.md` runtime `tul state` snapshot shows the repo zip path after the export timing fix.
 - [ ] Export failure is visible in state without retroactively failing a passed release gate.
+
+### Repo zip export timing fix
+
+- [ ] Successful full `tul update` writes `/sdcard/termux/import/tul/tul-main.zip`.
+- [ ] `tul state` shows `repo zip: /sdcard/termux/import/tul/tul-main.zip`.
+- [ ] `tul-vf-latest.md` runtime `tul state` snapshot shows the same repo zip path.
+- [ ] Export failure is visible in state/report/handoff without flipping a passed release gate.

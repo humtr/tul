@@ -158,3 +158,13 @@ Acceptance:
 3. The zip excludes `.git`, caches, build outputs, existing zip files, and backup files.
 4. `tul-vf-latest.md` runtime `tul state` snapshot shows the repo zip path.
 5. Export failure is visible in state but does not corrupt the already-passed release gate.
+
+### Stage 6 Bundle I-fix — Repo zip export timing fix
+
+Goal: make repo zip export observable in the same successful update that follows Bundle I. Export now runs after release-gate verification but before report, handoff, final state, and runtime snapshot rewrite.
+
+Acceptance:
+
+- `/sdcard/termux/import/tul/tul-main.zip` exists after `tul update`.
+- `tul state` shows `repo zip: /sdcard/termux/import/tul/tul-main.zip`.
+- `tul-vf-latest.md` runtime `tul state` snapshot shows the same repo zip path.

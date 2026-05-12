@@ -245,3 +245,11 @@ Context: The latest verify markdown now lives beside `tul-main.zip` and includes
 Decision: After a successful full `tul update` with commit, push, and fresh verify passing, tul writes a stable repo zip export to `/sdcard/termux/import/tul/tul-main.zip`. The export is a latest pointer, not history. It excludes Git metadata, caches, build outputs, dependency directories, existing zip files, backup files, and transient roots. Export status is recorded in the handoff-ready state.
 
 Consequences: The next package-generation session normally needs only the side-by-side pair `tul-vf-latest.md` and `tul-main.zip`. If repo zip export fails after the release gate passed, the failure is visible in state/runtime snapshots but does not retroactively make the release gate fail.
+
+## ADR-021 — Repo zip export is post-verify metadata, recorded before final handoff
+
+Context: Repo zip export is a convenience artifact for the next LLM package-generation turn. It should be refreshed after successful verification, but a failure to write the zip after commit/push/verify should not retroactively change the release gate.
+
+Decision: Run repo zip export after fresh verify passes and before report, handoff, final handoff-ready state, and runtime snapshot rewrite. Record either the export path or the failure reason in state/report/handoff.
+
+Consequences: The next uploaded pair should be `tul-vf-latest.md` and `tul-main.zip`. If zip export fails, the latest verify artifact remains valid for release review while visibly reporting that code-level package generation still requires a manual repo zip.

@@ -2,7 +2,7 @@
 
 Latest known version: `0.8.13-repo-zip-export-bundle`.
 
-Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, handoff discoverability, parallel-readiness gating, import-root latest snapshots, and state verify path alignment are baseline behavior. Bundle B through Bundle H have passed release gate. The active bounded package is the repo zip export bundle.
+Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, handoff discoverability, parallel-readiness gating, import-root latest snapshots, and state verify path alignment are baseline behavior. Bundle B through Bundle H have passed release gate. The active bounded package is the repo zip export bootstrap fix bundle.
 
 ## Current verified loop
 
@@ -20,7 +20,7 @@ tul update
 
 Package: `tul_stage6_repo_zip_export_bundle_v1`
 
-Commit message: `Export repo zip after successful update`
+Commit message: `Fix repo zip export timing`
 
 Scope:
 
@@ -121,3 +121,9 @@ Stage 6 allows bounded parallel planning but still applies packages one at a tim
 ## Deferred
 
 Stage X target onboarding, including `humtr/ai`, remains deferred until tul's self-host loop is stable enough to reduce rather than increase bridge work.
+
+## Repo zip export bootstrap fix
+
+Bundle I introduced `lib/tulcore/repozip.py`, but the package that introduced the pipeline hook was applied by the previous runtime. Therefore the first update proved commit/push/verify but did not create `tul-main.zip`. The fix moves repo zip export before report and handoff generation for future updates and keeps export status in the handoff-ready state before runtime snapshots are rewritten.
+
+Acceptance: after a successful full update, `/sdcard/termux/import/tul/tul-main.zip` exists and compact `tul state` shows `repo zip: /sdcard/termux/import/tul/tul-main.zip`.

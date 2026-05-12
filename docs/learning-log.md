@@ -282,3 +282,11 @@ Follow-up: Consider a separate export bundle that writes `/sdcard/termux/import/
 Observation: After latest verify moved to the import root and began carrying state/handoff snapshots, the remaining repetitive bridge step was manually creating `tul-main.zip` before the next package-generation turn. The user still had to run a separate zip command even though tul already knew when an update had succeeded.
 
 Impact: A successful full update is the right moment to refresh a stable repo zip pointer. This makes the next handoff pair predictable: `tul-vf-latest.md` for runtime facts and `tul-main.zip` for code/package generation. The export should stay outside release-gate semantics: if export fails after commit/push/verify passed, record the export failure rather than changing the release result.
+
+## 2026-05-12 — Repo zip export needs bootstrap-aware timing
+
+Observation: The Bundle I commit verified successfully and installed `repozip.py`, but `tul-main.zip` was not written during that same update because the update process was still running the previous pipeline implementation.
+
+Impact: Runtime changes that add post-update side effects must be checked for bootstrap behavior. A follow-up update can use the newly installed pipeline, but report, handoff, state, and verify snapshots should record export status in a single coherent order.
+
+Action: Move repo zip export before report/handoff generation and final state snapshot rewrite. Treat export failure as visible runtime metadata, not as a release-gate failure after verify has passed.

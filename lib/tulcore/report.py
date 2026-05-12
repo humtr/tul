@@ -22,6 +22,7 @@ def build_report(
     apply_log: Path | None = None,
     verify_fresh_ok: bool | None = None,
     verify_artifacts: dict[str, str] | None = None,
+    repo_zip_export: dict[str, object] | None = None,
 ) -> str:
     lines = [
         "# tul update report",
@@ -65,6 +66,20 @@ def build_report(
                 lines.append(f"- Timestamped markdown: {md}")
             if latest_json:
                 lines.append(f"- Latest JSON: {latest_json}")
+    if repo_zip_export:
+        lines.extend(["", "## Repo zip export", ""])
+        if repo_zip_export.get("ok") is False:
+            error = repo_zip_export.get("error") or repo_zip_export.get("error_type") or "failed"
+            lines.append(f"- Result: failed ({error})")
+        else:
+            if repo_zip_export.get("path"):
+                lines.append(f"- Path: {repo_zip_export['path']}")
+            if repo_zip_export.get("sha256"):
+                lines.append(f"- SHA256: {repo_zip_export['sha256']}")
+            if repo_zip_export.get("size_bytes") is not None:
+                lines.append(f"- Size bytes: {repo_zip_export['size_bytes']}")
+            if repo_zip_export.get("file_count") is not None:
+                lines.append(f"- Files: {repo_zip_export['file_count']}")
     if changed_files is not None:
         lines.extend(["", "## Changed files", ""])
         if changed_files:

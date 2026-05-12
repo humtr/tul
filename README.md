@@ -207,3 +207,12 @@ apply.ps1
 ```
 
 Normal operation should use `tul-package.yml`, not arbitrary script execution.
+
+## Current handoff artifacts
+
+After a successful full `tul update`, the normal upload pair is:
+
+- `/sdcard/termux/import/tul/tul-vf-latest.md`
+- `/sdcard/termux/import/tul/tul-main.zip`
+
+The verify markdown is the runtime review artifact. The repo zip is a latest code snapshot for the next package-generation turn.

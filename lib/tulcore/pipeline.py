@@ -144,6 +144,23 @@ def run_update(
             )
             verify_text = format_verify_gate(verify_result, verify_artifacts)
 
+        repo_zip_export = None
+        if (
+            verify_result is not None
+            and verify_result.ok
+            and not no_commit
+            and not no_push
+            and publish.outcome in {"published", "noop"}
+        ):
+            try:
+                repo_zip_export = export_repo_zip(ctx).to_dict()
+            except Exception as exc:  # pragma: no cover - defensive export path
+                repo_zip_export = {
+                    "ok": False,
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                }
+
         report = build_report(
             repo=repo,
             project=ctx.project_id,
@@ -159,6 +176,7 @@ def run_update(
             apply_log=apply_log,
             verify_fresh_ok=verify_result.ok if verify_result is not None else None,
             verify_artifacts=verify_artifacts,
+            repo_zip_export=repo_zip_export,
         )
         report_path = imported.work_dir / "report.md"
         write_report(report_path, report)
@@ -185,6 +203,7 @@ def run_update(
             outcome=publish.outcome,
             verify_fresh_ok=verify_result.ok if verify_result is not None else None,
             verify_artifacts=verify_artifacts,
+            repo_zip_export=repo_zip_export,
         )
         handoff_path = imported.work_dir / "handoff.md"
         handoff_path.write_text(handoff, encoding="utf-8", newline="\n")
@@ -200,27 +219,8 @@ def run_update(
             changed_files=visible_changed_files,
             verify_fresh_ok=verify_result.ok if verify_result is not None else None,
             verify_artifacts=verify_artifacts,
+            repo_zip_export=repo_zip_export,
         )
-        if (
-            verify_result is not None
-            and verify_result.ok
-            and publish.commit_hash
-            and not no_commit
-            and not no_push
-        ):
-            try:
-                repo_export = export_repo_zip(ctx)
-                set_phase(state_file, "handoff-ready", repo_zip_export=repo_export.to_dict())
-            except Exception as exc:  # pragma: no cover - defensive export path
-                set_phase(
-                    state_file,
-                    "handoff-ready",
-                    repo_zip_export={
-                        "ok": False,
-                        "error_type": type(exc).__name__,
-                        "error": str(exc),
-                    },
-                )
         if verify_result is not None and verify_artifacts is not None:
             rewrite_verify_artifacts_with_runtime_snapshots(ctx, verify_result, verify_artifacts)
         return UpdateResult(

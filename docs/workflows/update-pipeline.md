@@ -97,3 +97,16 @@ After a successful full `tul update` with commit, push, and fresh verify passing
 This export is a convenience pointer for the next package-generation session, not an archival history. It is overwritten on each successful full update. The export excludes Git metadata, Python caches, test caches, build outputs, dependency folders, existing zip files, backup files, and transient roots such as `logs`, `work`, and `archive` if they appear inside the repo.
 
 Repo zip export failure should not retroactively fail a release gate that already passed. Instead, tul records `repo_zip_export.ok: false` in the handoff-ready state so the latest verify markdown can surface the export problem in its runtime snapshot.
+
+## Repo zip export timing
+
+For full updates, repo zip export runs after fresh verify passes and before report, handoff, final state, and runtime snapshot rewrite. This order makes the export visible in all post-update review surfaces.
+
+Expected latest pair after a successful update:
+
+```text
+/sdcard/termux/import/tul/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-main.zip
+```
+
+If export fails, tul records `repo_zip_export.ok=false` with the error type/message and keeps the release gate result unchanged.
