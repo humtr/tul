@@ -165,12 +165,23 @@ Reflected in: `tul_update_verify_gate_v1`, `lib/tulcore/pipeline.py`, `lib/tulco
 
 Follow-up: Keep full verify details in files, keep terminal output compact, and let users upload `tul-vf-latest.md` after a single `tul update`.
 
-## Stage 6.2.1 — update-integrated verify has a bootstrap boundary
 
-Observation: The package that installs update-integrated verification cannot prove the new behavior inside the same already-running `tul update` process. The old process applies the new code, but it does not restart into the new pipeline logic.
+### Stage 6.1e — Update-integrated verify bootstrap boundary
 
-Impact: `tul_update_verify_gate_v1` required one manual `tul verify fresh` after application. The next package must be a small smoke package to prove that normal future updates now generate the verify artifact automatically.
+Observation: The package that installs update-integrated verify cannot itself benefit from the newly installed update pipeline during the same running process. A manual `tul verify fresh` was needed once after installing the feature and its handoff hotfix.
 
-Reflected in: `tul_update_verify_gate_smoke_v1`, `docs/status/current.md`, and `docs/roadmap.md`.
+Impact: Self-modifying update features need an explicit bootstrap note. The next ordinary package is the correct smoke test for the newly installed behavior.
 
-Follow-up: Treat self-hosting behavior changes that affect the currently running update process as two-step changes: install the new behavior, then prove it with a subsequent minimal package.
+Reflected in: `docs/status/current.md`, `docs/roadmap.md`, and `docs/decisions.md`.
+
+Follow-up: Use `tul_parallel_entry_smoke_v1` as the first normal package after the hotfix. If it updates `tul-vf-latest.md` to the smoke commit automatically, parallel bundles may begin.
+
+### Stage 6.1e — Verify artifact clutter
+
+Observation: Keeping latest artifacts and timestamped artifacts in one directory makes the Termux log folder noisy. Writing both `vf` and `verify` latest aliases also creates duplicate canonical-looking files.
+
+Impact: The artifact system should keep one canonical markdown latest file and one canonical JSON latest file at the log root, while timestamped run files move into date folders.
+
+Reflected in: `docs/status/current.md`, `docs/roadmap.md`, and `docs/decisions.md`.
+
+Follow-up: Implement canonical verify log layout in the first bounded parallel bundle.

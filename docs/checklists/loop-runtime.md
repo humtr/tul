@@ -59,11 +59,10 @@ Invariants:
 
 ## Verify artifact filenames
 
-- [ ] `tul verify tul --fresh-clone` writes a short timestamped markdown file.
-- [ ] The short timestamped name exposes project, mode, timestamp, and commit hash near the beginning.
-- [ ] `tul-vf-latest.md` is updated for latest-run upload.
-- [ ] Legacy `tul-verify-latest.md` is still written during the compatibility window.
-
+- [x] `tul-vf-latest.md` is the canonical latest markdown upload file.
+- [x] `tul-vf-latest.json` is the canonical latest machine-readable file.
+- [ ] Timestamped run artifacts are stored under `logs/verify/<yymmdd>/` date folders.
+- [ ] Legacy `tul-verify-latest.*` aliases are no longer written after the canonical layout implementation.
 
 ## Native context checkpoint
 
@@ -93,9 +92,11 @@ Invariants:
 
 ## Update-integrated verify gate
 
+- [x] Update-integrated verify gate is installed.
+- [x] Handoff compatibility hotfix is installed.
+- [ ] A normal docs-only smoke package proves `tul update` can apply, commit, push, run post-update `verify fresh`, write `tul-vf-latest.md`, and generate handoff in one command.
 - [ ] Normal `tul update` prints update report before verify/handoff.
 - [ ] Normal `tul update` shows commit, push verification, and rollback before the verify gate.
 - [ ] Normal `tul update` runs post-update `verify fresh` unless `--no-verify`, `--no-commit`, or `--no-push` applies.
-- [ ] Verify gate writes `tul-vf-latest.md` and a timestamped verify markdown artifact.
 - [ ] Report, state, and handoff include verify gate result and artifact paths.
 - [ ] If the post-update verify gate fails, terminal output is still printed and the command exits non-zero.

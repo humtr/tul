@@ -4,7 +4,7 @@
 
 Stage 6 — accelerated self-host hardening.
 
-The project is moving from single-issue sequential patches to bounded bundles of parallel work. The roadmap is now a ready queue and bundle planner, not a static linear checklist.
+The roadmap is now a ready queue and bundle planner. Short-term tasks are intentionally stocked in advance and extracted from medium-term capability pressure. Lessons from each update can modify the ready queue, strategy, and, when justified, the manifest.
 
 ## Completed foundations
 
@@ -23,140 +23,84 @@ The project is moving from single-issue sequential patches to bounded bundles of
 - Stage 5.3 — state cleanup UX
 - Stage 5.4 — package authoring helper
 - Stage 5.5 — package authoring polish
+- Stage 6.0 — planning harness insertion
+- Stage 6.0.1 — verify artifact logging
+- Stage 6.0.2 — short verify artifact names
+- Stage 6.1a — active project context
+- Stage 6.1b — read-only native context and `tul verify fresh`
+- Stage 6.1c — guarded native update/import/rollback
+- Stage 6.1d — package manifest mismatch guidance
+- Stage 6.1e — update-integrated verify gate and handoff hotfix
+
+## Current smoke
+
+Package: `tul_parallel_entry_smoke_v1`
+
+Goal: confirm the one-command native loop after the update-integrated verify gate hotfix.
+
+Success criteria:
+
+- `tul update` applies this docs-only smoke package.
+- Commit and push succeed.
+- Post-update `verify fresh` runs automatically.
+- `tul-vf-latest.md` is updated to the smoke commit.
+- The working tree is clean after update.
+- The handoff includes verify artifact pointers.
 
 ## Ready queue
 
 Ready queue items can be bundled when they share a capability area and have compatible risk.
 
-- Planning harness insertion: manifest, strategy, learning log, decisions, planning loop.
-- Active project context: `tul use <project>`, `tul current`, context state file.
-- No-arg read-only commands: `tul status`, `tul verify`, `tul state`, `tul handoff`, `tul package latest`.
-- Short fresh verification syntax: `tul verify fresh` while keeping `--fresh-clone` compatibility.
-- No-arg mutating commands: `tul update`, `tul import`, `tul rollback` with conflict guards.
-- Context conflict UX: active project vs current-directory project safety messages.
-- Package mismatch guidance: explain incompatible package manifests and present next commands.
-- Verify artifact naming: save long verify output as markdown/json files with short upload-friendly names.
-- Update-integrated verify gate: `tul update` runs post-update `verify fresh` and writes uploadable artifacts.
+- Canonical verify artifact layout: latest files at log root; timestamped run files under date folders; no legacy duplicate `verify` names.
+- Verify release gate summary: keep terminal output compact while preserving commit/push/rollback visibility.
 - State compact output: latest state, latest published, latest rollbackable, cleanup suggestion.
+- Archive recommendations: reduce no-op/imported state clutter.
 - Package check diagnostics: clearer failure messages and package authoring guidance.
-- Windows parity pass: launcher shim, config paths, inbox roots, `update -l`, verify fresh clone.
+- Docs consistency checks: status, roadmap, manifest, strategy, and checklist alignment.
+- Windows parity pass: launcher shim, config paths, inbox roots, native update, verify fresh.
 
 ## Bundle candidates
 
-### Bundle 1 — Planning harness
+### Bundle A — Parallel entry smoke
 
-Package: `tul_planning_harness_v1`
-
-Scope:
-
-- README planning-harness pointers.
-- `docs/manifest.md`.
-- `docs/strategy.md`.
-- `docs/learning-log.md`.
-- `docs/decisions.md`.
-- `docs/protocols/planning-loop.md`.
-- `docs/checklists/planning-harness.md`.
-- project harness templates.
-
-### Bundle 1.5 — Verify artifact logging and naming
-
-Packages: `tul_verify_artifacts_v1`, then `tul_verify_artifact_names_v1`
+Package: `tul_parallel_entry_smoke_v1`
 
 Scope:
 
-- Persist `tul verify` output to markdown and JSON artifacts.
-- Use `/sdcard/termux/import/tul/logs/verify/` on Termux through platform `log_root`.
-- Prefer short upload-friendly names such as `tul-vf-f-260512-114123-f9c07f.md`.
-- Keep stable latest artifacts such as `tul-vf-latest.md`.
-- Keep legacy latest names only as temporary compatibility aliases.
-- Keep `--no-log` for exceptional runs.
+- docs-only update;
+- record canonical verify artifact layout decision;
+- record bootstrap lessons from update-integrated verify;
+- establish pass/fail criteria for parallel entry.
 
-### Bundle 2 — Native context v1a
+### Bundle B — Compact gate bundle v1
 
-Package: `tul_native_context_v1a`
+Package: `tul_stage6_compact_gate_bundle_v1`
 
-Scope:
+Initial parallel scope:
 
-- `tul use <project>`.
-- `tul current`.
-- active project context file at `~/.config/tul/context.json` or next to `$TUL_CONFIG`.
-- `default_project` support through `tul use <project> --default`.
-- `tul projects` output shows active/default markers.
-- `tul doctor` shows runtime context.
+1. Canonical verify log layout implementation.
+2. Release-gate summary polish.
+3. Compact state output.
+4. Docs/checklist consistency updates.
 
-Explicitly out of scope until later bundles:
+This is the first bounded parallel bundle after the smoke pass. It should stay small enough that a failure can still be triaged quickly.
 
-- no-arg `tul update`;
-- no-arg read-only commands;
-- package mismatch guidance.
-
-### Bundle 3 — Native context v1b
+### Bundle C — Authoring and diagnostics bundle
 
 Scope:
 
-- no-arg read-only commands.
-- `tul verify fresh` shorthand.
-- current-directory project inference.
-- read-only conflict banner.
+- package check diagnostics;
+- zip/check workflow polish;
+- clearer mismatch and authoring remediation messages.
 
-### Bundle 4 — Native context v1c
-
-Scope:
-
-- no-arg `tul update` as inferred project + latest matching package.
-- no-arg `tul import` and `tul rollback`.
-- mutating-command context conflict guard.
-- target inference banner for no-arg mutating commands.
-
-### Bundle 4.5 — Native context v1d
-
-Package: `tul_native_context_v1d`
+### Bundle D — Windows parity bundle
 
 Scope:
 
-- package mismatch classification and guidance.
-- matching, incompatible, invalid, and duplicate package candidate display.
-- next-command suggestions when downloaded packages target another project.
-- no-match errors include package manifest target details.
-
-### Bundle 5 — Update-integrated release gate
-
-Package: `tul_update_verify_gate_v1`
-
-Scope:
-
-- normal `tul update` runs post-update `verify fresh`;
-- update output preserves commit/push/rollback visibility before verification;
-- verify artifacts are recorded in report, state, and handoff;
-- `--no-verify` exists for exceptional recovery/debug paths.
-
-
-### Bundle 5.1 — Update-integrated release gate smoke
-
-Package: `tul_update_verify_gate_smoke_v1`
-
-Scope:
-
-- make a small docs-only change after `tul_update_verify_gate_v1`;
-- verify that the next normal `tul update` refreshes `tul-vf-latest.md` automatically;
-- record the bootstrap lesson that the package which installs update-integrated verify cannot prove itself in the same running process;
-- keep the next functional bundle focused on compact state and docs consistency.
-
-Acceptance:
-
-- `tul update` alone applies and publishes the smoke package;
-- `tul-vf-latest.md` is regenerated after the update;
-- the verify artifact HEAD matches the smoke package commit;
-- no separate `tul verify fresh` command is needed for normal evidence handoff.
-
-### Bundle 6 — State compactness and docs consistency
-
-Scope:
-
-- compact state output;
-- archive recommendation output;
-- docs consistency checks;
-- release-gate output polish based on real use.
+- Windows launcher shim verification;
+- Windows inbox/log/config paths;
+- `tul update` and post-update verify on Windows;
+- PowerShell fallback scripts.
 
 ## Extraction rules
 

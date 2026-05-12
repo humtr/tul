@@ -137,12 +137,23 @@ Decision: In the normal full-loop path, `tul update` runs a post-update fresh ve
 
 Consequences: The default self-host loop becomes one command shorter. The output order preserves user authority: update report first, commit/push/rollback visibility, fresh verification gate second, LLM handoff last.
 
-## ADR-013 — Self-hosting runtime changes need a following smoke package
+
+## ADR-013 — Canonical verify artifact layout
 
 Status: accepted
 
-Context: Some tul changes modify behavior that would only run after the current command process has already started. For example, the package that adds post-update fresh verification cannot make the already-running old update process execute the new post-update hook.
+Context: Verify artifacts replaced long terminal copy/paste, but the verify log root became cluttered when latest files and timestamped run files lived together. The temporary compatibility aliases also created two apparent naming families: `vf` and `verify`.
 
-Decision: When a package changes the behavior of the currently running self-host loop, use a following minimal smoke package to prove the new behavior under the next invocation. The smoke package should change low-risk docs and should have a clear artifact-based acceptance criterion.
+Decision: Keep exactly one canonical latest markdown file and one canonical latest JSON file at the verify log root: `<project>-vf-latest.md` and `<project>-vf-latest.json`. Move timestamped run artifacts into date folders directly under the verify log root, for example `logs/verify/260512/<project>-vf-f-260512-152110-9dae1b4.md`. Do not continue generating `tul-verify-latest.*` after the layout implementation.
 
-Consequences: Integrity improves because bootstrap limits are explicit. Users do not have to infer whether a behavior failed or merely could not prove itself during installation.
+Consequences: The user can upload the stable latest markdown for normal review, while historical runs remain available without cluttering the root directory. The first implementation must acknowledge that a package modifying verify artifact generation cannot make the running update process use the new layout until the next command.
+
+## ADR-014 — Parallel entry requires a normal update smoke after self-modifying update features
+
+Status: accepted
+
+Context: The update-integrated verify gate modifies the update pipeline itself. Its installation required one manual post-install verification because the old process could not use the new pipeline code while still running.
+
+Decision: Before starting larger parallel bundles, run one docs-only smoke package with normal `tul update`. The smoke passes only if commit, push, post-update fresh verify, latest artifact update, and handoff generation all succeed in one command.
+
+Consequences: Parallel work starts from a proven one-command loop rather than from an assumed loop. The smoke package is intentionally docs-only to isolate runtime behavior from unrelated code changes.
