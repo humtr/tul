@@ -44,6 +44,7 @@ from .manifest import validate_manifest
 from .package import candidate_record, discover_candidates, discover_package_inventory, import_package, invalid_candidate_record, manifest_data_from_archive, select_package, sha256_file
 from .pipeline import run_update
 from .report import build_report
+from .review import export_review_bundle, format_review_export
 from .state import (
     archive_inventory,
     archive_protected_paths,
@@ -244,6 +245,14 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("resume", help="recovery/debug: inspect latest state and suggest a safe next command")
     p.add_argument("target")
 
+    p = sub.add_parser("export", help="create transport artifacts for review/source handoff")
+    export_sub = p.add_subparsers(dest="export_command", required=True)
+
+    p_review = export_sub.add_parser("review", help="create the latest LLM review bundle")
+    p_review.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
+    p_review.add_argument("--out", help="output zip path; default: <import-root>/<project>-review-latest.zip")
+    p_review.add_argument("--no-state-update", action="store_true", help="do not record review bundle metadata in the latest state")
+
     p = sub.add_parser("archive", help="archive local tul work state")
     p.add_argument("target", nargs="?", help="optional project/path; omitted target uses guarded native context")
     p.add_argument("--all", action="store_true", help="archive all matching states, not just the latest")
@@ -411,6 +420,15 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         print("Sweep moved:")
         print("\n".join(moved) if moved else "nothing")
         return 0
+
+    if command == "export":
+        if args.export_command == "review":
+            ctx = read_project(args, command="export review")
+            out_path = Path(args.out).expanduser() if args.out else None
+            result = export_review_bundle(ctx, out_path=out_path, update_state=not args.no_state_update)
+            print(format_review_export(result))
+            return 0
+        raise TulError(f"unknown export command: {args.export_command}")
 
     if command == "update":
         inferred = infer_mutating_project(getattr(args, "target", None), command="update")

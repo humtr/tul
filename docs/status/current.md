@@ -54,21 +54,21 @@ Do not mark repo/source zip export as closed until a future explicit command rec
 
 ## Current next bundle
 
-Package: `tul_stage6_remove_misleading_source_zip_state_bundle_v1`
+Package: `tul_stage6_review_bundle_export_bundle_v1`
 
 Scope:
 
-1. Stop automatic hidden source zip export from `tul update`.
-2. Stop showing legacy `repo_zip_export` paths as successful artifacts in `tul state`.
-3. Keep `repozip.py` as unresolved implementation material for a future explicit source export.
-4. Preserve verify/state/handoff behavior apart from misleading source zip display.
-5. Keep review bundle and source bundle as future separate commands.
+1. Add explicit `tul export review`.
+2. Write `/sdcard/termux/import/tul/tul-review-latest.zip`.
+3. Include latest verify, state, report, handoff, git facts, changed-files, diff, and changed-file copies.
+4. Keep review export separate from `verify` and from the default `update` loop for now.
+5. Keep full source export as a separate future command.
 
 ## Next implementation queue
 
-1. Implement `tul export review` for compact diff-oriented upload bundles.
+1. Verify `tul export review` as an explicit command.
+2. Decide later whether successful `tul update` should run review export automatically.
 3. Implement `tul export source` for explicit source bundles with wrapper/root-layout checks.
-4. Decide later whether `tul update` should automatically run review export.
 
 ## Verify artifact convention
 

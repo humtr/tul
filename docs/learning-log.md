@@ -308,3 +308,12 @@ Observation: Showing `repo zip: /sdcard/termux/import/tul/tul-main.zip` in compa
 Lesson: Runtime state should display facts with clear evidence boundaries. If an export is not a closed capability, compact state should suppress the path or mark it unresolved rather than treating it as an artifact.
 
 Action: Remove hidden source zip export from the default update pipeline and suppress legacy `repo_zip_export` paths in state/report/handoff surfaces. Keep review/source export as future explicit commands.
+
+
+## Stage 6 — explicit review export should precede automatic export
+
+Observation: Hidden source zip export blurred review transport, source context, and backup semantics. The safer next step is an explicit `tul export review` command that creates a small diff-oriented bundle before any automatic post-update export is reconsidered.
+
+Impact: Review bundle export is separated from verify and from the default update loop. The command writes `tul-review-latest.zip` as a transport artifact, not a backup.
+
+Follow-up: Verify the explicit command, then decide whether successful `tul update` should call review export automatically.

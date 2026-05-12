@@ -202,3 +202,12 @@ Invariants:
 - [ ] `tul export review` creates a compact diff-oriented review bundle.
 - [ ] `tul export source` creates an explicit full source bundle with root-layout checks.
 - [ ] Any automatic post-update export is limited to review evidence until source export is proven.
+
+
+## Review bundle export checkpoint
+
+- [ ] `tul export review` creates `/sdcard/termux/import/tul/tul-review-latest.zip`.
+- [ ] Review bundle contains `tul-vf-latest.md`, `state.json`, `report.md`, `handoff.md`, `changed-files.txt`, and `diff.patch`.
+- [ ] Review bundle includes copies of changed files only under `files/`.
+- [ ] Review bundle is documented as a transport artifact, not a backup.
+- [ ] Review export remains separate from verify and update until explicit command behavior is verified.

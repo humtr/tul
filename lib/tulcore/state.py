@@ -347,6 +347,30 @@ def _has_legacy_repo_zip_export(data: dict[str, Any]) -> bool:
     return any(data.get(key) for key in ("repo_zip", "repo_zip_path", "latest_repo_zip"))
 
 
+def _review_bundle_export(data: dict[str, Any]) -> dict[str, Any] | None:
+    export = data.get("review_bundle_export")
+    if isinstance(export, dict):
+        return export
+    return None
+
+
+def _review_bundle_lines(data: dict[str, Any]) -> list[str]:
+    export = _review_bundle_export(data)
+    if not export:
+        return ["- review bundle: not generated"]
+    if export.get("ok") is False:
+        return [f"- review bundle: failed ({export.get('error') or export.get('error_type') or 'unknown error'})"]
+    path = export.get("path") or "unknown"
+    lines = [f"- review bundle: {path}"]
+    if export.get("sha256"):
+        lines.append(f"- review bundle sha256: {export['sha256']}")
+    if export.get("size_bytes") is not None:
+        lines.append(f"- review bundle bytes: {export['size_bytes']}")
+    if export.get("changed_file_count") is not None:
+        lines.append(f"- review bundle changed files: {export['changed_file_count']}")
+    return lines
+
+
 def summarize_compact_state(
     work_root: Path,
     *,
@@ -388,13 +412,13 @@ def summarize_compact_state(
         verify_artifact = _verify_artifact_value(data, project=project, work_root=work_root)
         if verify_artifact:
             lines.append(f"- verify: {verify_artifact}")
-        if _has_legacy_repo_zip_export(data):
-            lines.extend([
-                "",
-                "Exports:",
-                "- source bundle: unresolved (legacy repo zip path suppressed)",
-                "- review bundle: not generated",
-            ])
+        if _has_legacy_repo_zip_export(data) or _review_bundle_export(data):
+            lines.extend(["", "Exports:"])
+            if _has_legacy_repo_zip_export(data):
+                lines.append("- source bundle: unresolved (legacy repo zip path suppressed)")
+            else:
+                lines.append("- source bundle: explicit source export only")
+            lines.extend(_review_bundle_lines(data))
 
     lines.extend([
         "",
@@ -436,6 +460,12 @@ def summarize_state(path: Path, data: dict[str, Any]) -> str:
             lines.append(f"{key.replace('_', ' ').title()}: {data[key]}")
     if _has_legacy_repo_zip_export(data):
         lines.append("Source Export: unresolved (legacy repo zip path suppressed)")
+    review_export = _review_bundle_export(data)
+    if review_export:
+        if review_export.get("ok") is False:
+            lines.append(f"Review Bundle: failed ({review_export.get('error') or 'unknown error'})")
+        elif review_export.get("path"):
+            lines.append(f"Review Bundle: {review_export.get('path')}")
     if data.get("outcome") == "noop" or data.get("no_op") is True:
         lines.append("Push verified: not applicable for no-op")
     elif data.get("push_verified") is not None:

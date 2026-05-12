@@ -106,4 +106,10 @@ The next package should be a bounded bundle with a clear success gate, not a lar
 
 ## Source context handoff
 
-For package generation or code-level diagnosis, ask for source context when needed and verify its root layout before use. `tul-main.zip` is a transitional/manual source context file, not an automatically trusted update artifact. A future `tul export review` / `tul export source` split will replace this ambiguity.
+For compact change review, prefer the explicit review bundle:
+
+```bash
+tul export review
+```
+
+For package generation or code-level diagnosis, ask for source context when needed and verify its root layout before use. `tul-main.zip` is a transitional/manual source context file, not an automatically trusted update artifact. A future explicit `tul export source` command will replace this ambiguity.

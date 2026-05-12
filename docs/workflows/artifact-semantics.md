@@ -115,10 +115,10 @@ Full source export remains explicit until its root-layout, freshness, and proven
 
 ## Current implementation status
 
-`repozip.py` exists, but automatic `tul-main.zip` export is retired from the default update loop. J2 removes misleading source zip state output. Future implementation should add explicit review/source export commands with evidence instead of reviving hidden update-side source export.
+`repozip.py` exists, but automatic `tul-main.zip` export is retired from the default update loop. J2 removes misleading source zip state output. J3 adds explicit `tul export review` for diff-oriented review bundles. Future work should add explicit source export with root-layout checks instead of reviving hidden update-side source export.
 
 ## Next bundles
 
-1. Implement `tul export review` for diff-oriented review bundles.
-3. Implement `tul export source` for explicit source bundles with root-layout checks.
-4. Reconsider whether `tul update` should run review export automatically only after the review/source split is stable.
+1. Verify `tul export review` as an explicit command.
+2. Implement `tul export source` for explicit source bundles with root-layout checks.
+3. Reconsider whether `tul update` should run review export automatically only after the review bundle format is stable.

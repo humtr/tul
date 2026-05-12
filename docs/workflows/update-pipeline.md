@@ -99,7 +99,7 @@ precheck -> import -> validate -> apply -> checks -> sweep -> publish -> verify 
 Future export work is split by role:
 
 ```bash
-tul export review   # planned compact diff-oriented upload bundle
+tul export review   # explicit compact diff-oriented upload bundle
 tul export source   # planned explicit full source bundle with root-layout checks
 ```
 
@@ -117,13 +117,13 @@ Current corrected rule:
 - Review/source zip exports should be separate export responsibilities, not hidden inside verify.
 - A path in state is insufficient evidence of a valid source export.
 
-Future implementation should split:
+Current implementation provides explicit review export:
 
 ```bash
 tul export review
 ```
 
-from:
+Future implementation should split it from explicit source export:
 
 ```bash
 tul export source

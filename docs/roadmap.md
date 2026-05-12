@@ -68,28 +68,11 @@ Status: PASS.
 
 ### Bundle J2 — Remove misleading source zip state
 
-Package: `tul_stage6_remove_misleading_source_zip_state_bundle_v1`
+Status: PASS.
 
-Goal: remove the runtime signals that made a legacy `repo_zip_export` path look like a successful source/export artifact.
+### Bundle J3 — Review bundle export
 
-Scope:
-
-1. Remove automatic source zip export from the default update pipeline.
-2. Suppress legacy `repo_zip_export` paths in compact state and detailed state summaries.
-3. Show unresolved export status only as a warning when legacy state fields exist.
-4. Remove repo zip sections from report/handoff output.
-5. Update docs so review/source export remain explicit future work.
-
-Acceptance:
-
-- Release gate PASS.
-- `tul state` no longer prints `repo zip: /path` for legacy states.
-- Runtime snapshots no longer treat `tul-main.zip` as a successful artifact.
-- Update docs say source export is not part of verify and not hidden in update.
-
-## Next ready queue
-
-### J3 — Review bundle export
+Package: `tul_stage6_review_bundle_export_bundle_v1`
 
 Goal: implement `tul export review` for compact diff-oriented review bundles.
 
@@ -99,7 +82,16 @@ Expected latest path:
 /sdcard/termux/import/tul/tul-review-latest.zip
 ```
 
-Expected contents: latest verify, state, handoff, changed-files, diff, and changed-file copies.
+Expected contents: latest verify, state, report, handoff, git facts, changed-files, diff, and changed-file copies.
+
+Acceptance:
+
+- `tul export review` prints PASS and path/sha/size/file counts.
+- `/sdcard/termux/import/tul/tul-review-latest.zip` exists.
+- The zip contains `tul-vf-latest.md`, `state.json`, `report.md`, `handoff.md`, `changed-files.txt`, and `diff.patch`.
+- Review export remains separate from verify and update.
+
+## Next ready queue
 
 ### J4 — Explicit source bundle export
 

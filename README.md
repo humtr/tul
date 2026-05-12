@@ -156,6 +156,23 @@ sync precheck
 
 Split commands exist for debugging, recovery, and manual intervention. They must not replace the default full loop.
 
+
+## Review bundle export
+
+`tul-vf-latest.md` remains the primary release-gate artifact. When an LLM review needs a compact transport bundle, use the explicit review export command:
+
+```bash
+tul export review
+```
+
+The command writes:
+
+```text
+/sdcard/termux/import/tul/tul-review-latest.zip
+```
+
+The review bundle is not a backup and not a full source archive. It contains the latest verify/state/report/handoff artifacts, recent git facts, the latest changed-file list, `diff.patch`, and copies of changed files only.
+
 ## Runtime facts
 
 Do not treat README text as proof that a package was applied or pushed. Runtime facts belong in `tul handoff` output:

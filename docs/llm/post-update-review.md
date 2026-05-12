@@ -110,8 +110,25 @@ When summarizing the handoff, separate:
 Current Stage 6 export semantics are under correction. Treat artifacts as follows:
 
 - `tul-vf-latest.md`: release-gate and runtime snapshot evidence.
-- `tul-review-latest.zip`: planned future compact review/diff bundle, not yet baseline.
+- `tul-review-latest.zip`: explicit compact review/diff bundle created by `tul export review`.
 - `tul-source-latest.zip` or equivalent source export: planned future explicit source context, not backup.
 - `tul-main.zip`: historical/transitional name; do not treat it as automatically trusted evidence unless current runtime output includes freshness and root-layout evidence.
 
 A valid source bundle must have repo files at zip root, such as `README.md`, `.tul.yml`, `bin/tul`, and `lib/tulcore/__init__.py`. A wrapper such as `tul-main/README.md` is not the canonical source shape.
+
+
+## Optional review bundle
+
+When the receiving LLM needs changed-file evidence beyond `tul-vf-latest.md`, run:
+
+```bash
+tul export review
+```
+
+Then upload:
+
+```text
+/sdcard/termux/import/tul/tul-review-latest.zip
+```
+
+The review bundle is a transport artifact, not a backup and not a full source archive.
