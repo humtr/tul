@@ -20,6 +20,8 @@ def build_report(
     outcome: str | None = None,
     apply_plan: Path | None = None,
     apply_log: Path | None = None,
+    verify_fresh_ok: bool | None = None,
+    verify_artifacts: dict[str, str] | None = None,
 ) -> str:
     lines = [
         "# tul update report",
@@ -49,6 +51,20 @@ def build_report(
         lines.append(f"Push verified: {str(push_verified).lower()}")
     if rollback_command:
         lines.extend(["", "## Rollback", "", f"    {rollback_command}"])
+    if verify_fresh_ok is not None or verify_artifacts:
+        lines.extend(["", "## Verify fresh", ""])
+        if verify_fresh_ok is not None:
+            lines.append(f"Release gate: {'PASS' if verify_fresh_ok else 'FAIL'}")
+        if verify_artifacts:
+            latest_md = verify_artifacts.get("latest_markdown")
+            md = verify_artifacts.get("markdown")
+            latest_json = verify_artifacts.get("latest_json")
+            if latest_md:
+                lines.append(f"- Latest markdown: {latest_md}")
+            if md:
+                lines.append(f"- Timestamped markdown: {md}")
+            if latest_json:
+                lines.append(f"- Latest JSON: {latest_json}")
     if changed_files is not None:
         lines.extend(["", "## Changed files", ""])
         if changed_files:

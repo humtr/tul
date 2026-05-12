@@ -15,6 +15,8 @@ Primary loop:
 tul update
 ```
 
+In the normal full-loop path, `tul update` applies/checks/commits/pushes/verifies remote HEAD, then runs a compact post-update `verify fresh` gate and writes uploadable verify artifacts. Use `--no-verify` only for exceptional recovery/debug runs.
+
 Explicit forms remain valid and are recommended when context is ambiguous:
 
 ```bash

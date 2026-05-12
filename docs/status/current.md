@@ -1,19 +1,20 @@
 # Current status
 
-Latest known version after this package: `0.8.3-native-context-package-guidance`.
+Latest known version after this package: `0.8.4-update-verify-gate`.
 
-Current mode: Stage 6 native context step 4 — active project context, no-arg read-only commands, guarded no-arg mutating commands, and package manifest mismatch guidance are available.
+Current mode: Stage 6 release-gate integration — native context and package mismatch guidance are available, and normal `tul update` now runs a post-update fresh verification gate.
 
 ## Current verified loop
 
-The current normal self-host loop is:
+The current normal self-host loop is now:
 
 ```bash
 tul package latest
 tul update
-tul verify fresh
-tul handoff
+# upload /sdcard/termux/import/tul/logs/verify/tul-vf-latest.md when review evidence is needed
 ```
+
+`tul update` prints the update report first, including commit, push verification, and rollback. It then runs a compact `verify fresh` release gate, writes the markdown/json verify artifacts, and prints the LLM handoff.
 
 `PKG=...` should be exceptional. Normal use should prefer inbox discovery and native `tul update` when context is unambiguous.
 
@@ -35,14 +36,15 @@ Compatibility aliases such as `tul-verify-latest.md` are still written, but the 
 
 ## Current package
 
-`tul_native_context_v1d`
+`tul_update_verify_gate_v1`
 
 Implemented scope:
 
-- package discovery classifies matching, incompatible, and invalid inbox archives.
-- `tul package latest` and `tul package list` explain incompatible package targets.
-- no-match errors now show package manifest mismatch details and next command options.
-- previous v1a/v1b/v1c scope remains: `tul use`, `tul current`, read-only no-arg commands, `tul verify fresh`, and guarded no-arg update/import/rollback.
+- normal `tul update` runs post-update `verify fresh`;
+- fresh verify markdown/json artifacts are written automatically;
+- update report, state, and handoff include verify gate result and artifact paths;
+- terminal output order is update report → verify fresh summary → LLM handoff;
+- `--no-verify` is available for exceptional debugging paths.
 
 ## Next package
 
@@ -50,12 +52,12 @@ Next Stage 6 bundle
 
 Expected scope:
 
-- release gate summary for `tul verify`;
 - compact state output;
 - archive recommendations;
-- docs consistency checks.
+- docs consistency checks;
+- further release-gate polish if update output remains too verbose.
 
 ## Current risk notes
 
-- Native context package guidance is implemented; release-gate and state-compact output remain pending.
+- Native context package guidance is implemented. Update-integrated release-gate artifacts are implemented; state-compact output remains pending.
 - Stage X target onboarding remains deferred.

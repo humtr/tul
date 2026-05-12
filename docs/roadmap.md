@@ -36,7 +36,7 @@ Ready queue items can be bundled when they share a capability area and have comp
 - Context conflict UX: active project vs current-directory project safety messages.
 - Package mismatch guidance: explain incompatible package manifests and present next commands.
 - Verify artifact naming: save long verify output as markdown/json files with short upload-friendly names.
-- Verify release gate summary: top-line PASS/FAIL and remediation commands.
+- Update-integrated verify gate: `tul update` runs post-update `verify fresh` and writes uploadable artifacts.
 - State compact output: latest state, latest published, latest rollbackable, cleanup suggestion.
 - Package check diagnostics: clearer failure messages and package authoring guidance.
 - Windows parity pass: launcher shim, config paths, inbox roots, `update -l`, verify fresh clone.
@@ -119,14 +119,25 @@ Scope:
 - next-command suggestions when downloaded packages target another project.
 - no-match errors include package manifest target details.
 
-### Bundle 5 — Release gate and state compactness
+### Bundle 5 — Update-integrated release gate
+
+Package: `tul_update_verify_gate_v1`
 
 Scope:
 
-- verify release gate summary.
-- compact state output.
-- archive recommendation output.
-- docs consistency checks.
+- normal `tul update` runs post-update `verify fresh`;
+- update output preserves commit/push/rollback visibility before verification;
+- verify artifacts are recorded in report, state, and handoff;
+- `--no-verify` exists for exceptional recovery/debug paths.
+
+### Bundle 6 — State compactness and docs consistency
+
+Scope:
+
+- compact state output;
+- archive recommendation output;
+- docs consistency checks;
+- release-gate output polish based on real use.
 
 ## Extraction rules
 

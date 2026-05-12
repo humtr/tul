@@ -126,3 +126,13 @@ Context: With native `tul update`, users should not manually infer whether a dow
 Decision: Package discovery classifies matching, incompatible, and invalid archives. `tul package latest/list` expose the classification, and update failure messages include concrete next commands.
 
 Consequences: Normal package selection remains safe and manifest-driven while reducing user-side file inspection.
+
+## ADR-012 — Normal update includes a post-update fresh verification artifact
+
+Status: accepted
+
+Context: `tul update` already applies, checks, commits, pushes, verifies remote HEAD, reports rollback, and prints handoff. Requiring a separate `tul verify fresh` command after every successful update keeps the user as a log-transport bridge.
+
+Decision: In the normal full-loop path, `tul update` runs a post-update fresh verification gate after publish/no-op handling. It writes the same markdown/json verify artifacts as `tul verify fresh`, prints a compact PASS/FAIL summary, and records artifact paths in report, state, and handoff. Debug paths such as `--no-commit` or `--no-push` do not run the automatic fresh gate because the remote may intentionally not reflect local changes. `--no-verify` remains available as an exception.
+
+Consequences: The default self-host loop becomes one command shorter. The output order preserves user authority: update report first, commit/push/rollback visibility, fresh verification gate second, LLM handoff last.

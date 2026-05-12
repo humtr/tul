@@ -15,6 +15,7 @@ from .publish import publish_manifest_changes
 from .report import build_report, write_report
 from .state import record_error, set_phase
 from .sweep import sweep_repo
+from .verify import format_verify_gate, run_verify, write_verify_artifacts
 
 
 @dataclass
@@ -25,6 +26,9 @@ class UpdateResult:
     commit_hash: str | None
     push_verified: bool
     state_file: Path
+    verify_ok: bool | None = None
+    verify_text: str | None = None
+    verify_artifacts: dict[str, str] | None = None
 
 
 def run_update(
@@ -34,6 +38,7 @@ def run_update(
     no_commit: bool = False,
     no_push: bool = False,
     allow_dirty: bool = False,
+    verify_after: bool = True,
 ) -> UpdateResult:
     repo = ctx.repo_path
     state_file: Path | None = None
@@ -118,6 +123,21 @@ def run_update(
 
         push_value = publish.push_verified if publish.commit_hash and not no_push else None
         visible_changed_files = publish.changed_files or publish.staged_files
+
+        verify_result = None
+        verify_artifacts = None
+        verify_text = None
+        # In the normal full-loop path, include a fresh verification gate after
+        # publish/no-op handling so the terminal output and uploaded artifact both
+        # represent the final HEAD that the LLM should inspect next. Debug paths
+        # that intentionally skip commit or push would often make fresh remote
+        # verification misleading, so they do not run this automatic gate.
+        if verify_after and not no_commit and not no_push:
+            failed_at = "verify-fresh"
+            verify_result = run_verify(ctx, fresh_clone=True)
+            verify_artifacts = write_verify_artifacts(ctx, verify_result, fresh_clone=True)
+            verify_text = format_verify_gate(verify_result, verify_artifacts)
+
         report = build_report(
             repo=repo,
             project=ctx.project_id,
@@ -131,6 +151,8 @@ def run_update(
             outcome=publish.outcome,
             apply_plan=apply_plan,
             apply_log=apply_log,
+            verify_fresh_ok=verify_result.ok if verify_result is not None else None,
+            verify_artifacts=verify_artifacts,
         )
         report_path = imported.work_dir / "report.md"
         write_report(report_path, report)
@@ -155,6 +177,8 @@ def run_update(
             state_file=state_file,
             report_file=report_path,
             outcome=publish.outcome,
+            verify_fresh_ok=verify_result.ok if verify_result is not None else None,
+            verify_artifacts=verify_artifacts,
         )
         handoff_path = imported.work_dir / "handoff.md"
         handoff_path.write_text(handoff, encoding="utf-8", newline="\n")
@@ -168,6 +192,8 @@ def run_update(
             outcome=publish.outcome,
             no_op=publish.no_op,
             changed_files=visible_changed_files,
+            verify_fresh_ok=verify_result.ok if verify_result is not None else None,
+            verify_artifacts=verify_artifacts,
         )
         return UpdateResult(
             report=report,
@@ -176,6 +202,9 @@ def run_update(
             commit_hash=publish.commit_hash,
             push_verified=publish.push_verified,
             state_file=state_file,
+            verify_ok=verify_result.ok if verify_result is not None else None,
+            verify_text=verify_text,
+            verify_artifacts=verify_artifacts,
         )
     except Exception as exc:
         record_error(state_file, exc, failed_at=failed_at)

@@ -30,7 +30,8 @@ The runtime boundary is split into policy modules:
 6. `sweep.py` moves repo-local tul backup directories out of the repo.
 7. `publish.py` owns changed-file allowlist checks, explicit staging, commit, push, remote HEAD verification, rollback hint generation, and no-op detection.
 8. `state.py` records phase transitions, failures, no-op outcomes, and archive metadata.
-9. `report.py` and `handoff.py` render the human/LLM outputs.
+9. `verify.py` runs the post-update fresh verification gate in the normal full-loop path and writes markdown/json artifacts.
+10. `report.py` and `handoff.py` render the human/LLM outputs, including verify artifact pointers.
 
 Successful update still requires remote HEAD verification when commit/push is enabled.
 `--no-commit` and `--no-push` are recovery/debug exceptions, not the default workflow.
@@ -63,3 +64,19 @@ tul update tul --latest --dry-run
 ```
 
 Dry-run imports, validates, and writes `apply-plan.json`, but does not modify repo files.
+
+## Post-update fresh verification
+
+Normal `tul update` now runs a compact post-update fresh verification gate after publish/no-op handling. The terminal output order is:
+
+1. update report, including package, outcome, commit, push verification, rollback, changed files, and checks;
+2. compact `VERIFY FRESH` release gate with PASS/FAIL and artifact paths;
+3. LLM handoff with report, state, and verify artifact pointers.
+
+The full verification details are written as markdown and JSON artifacts under the platform verify log root. On Termux, the usual upload file is:
+
+```text
+/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+```
+
+`--no-verify` skips the post-update fresh gate. `--no-commit` and `--no-push` are recovery/debug exceptions and do not run the automatic fresh gate because the remote may intentionally not reflect local changes.

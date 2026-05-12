@@ -213,6 +213,44 @@ def format_verify_artifacts(paths: dict[str, str]) -> str:
     )
 
 
+
+def format_verify_gate(result: VerifyResult, artifacts: dict[str, str] | None = None) -> str:
+    """Return a compact release-gate summary for update output.
+
+    Full step details are persisted in the markdown/json artifacts; update output
+    should preserve commit/push/rollback visibility while still telling the user
+    whether the post-update fresh verification passed and which file to upload.
+    """
+    total = len(result.steps)
+    failed = [step for step in result.steps if not step.ok]
+    lines = [
+        "# tul verify fresh",
+        "",
+        f"Release gate: {'PASS' if result.ok else 'FAIL'}",
+        f"Project: {result.project}",
+        f"Branch: {result.branch or 'unknown'}",
+        f"HEAD: {result.head or 'unknown'}",
+        f"Remote HEAD: {result.remote_head or 'unknown'}",
+    ]
+    if result.clone_path:
+        lines.append(f"Fresh clone: {result.clone_path}")
+    lines.append(f"Steps: {total - len(failed)}/{total} pass")
+    if failed:
+        lines.extend(["", "## Failed steps"])
+        for step in failed:
+            lines.append(f"- {step.name}: {step.detail or 'failed'}")
+    if artifacts:
+        lines.extend([
+            "",
+            "## Upload artifact",
+            f"- Latest markdown: {artifacts.get('latest_markdown')}",
+            f"- Timestamped markdown: {artifacts.get('markdown')}",
+        ])
+        if artifacts.get('latest_json'):
+            lines.append(f"- Latest JSON: {artifacts.get('latest_json')}")
+    return "\n".join(lines) + "\n"
+
+
 def _verify_repo(repo: Path, result: VerifyResult, *, label: str) -> None:
     if not repo.exists():
         result.add(f"{label}: repo exists", False, f"missing: {repo}")

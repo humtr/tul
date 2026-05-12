@@ -62,6 +62,8 @@ def runtime_facts(
     state_file: Path | None = None,
     report_file: Path | None = None,
     outcome: str | None = None,
+    verify_fresh_ok: bool | None = None,
+    verify_artifacts: dict[str, str] | None = None,
 ) -> list[str]:
     branch = current_branch(repo)
     remote = None
@@ -102,6 +104,15 @@ def runtime_facts(
         lines.append(f"State file: {state_file}")
     if report_file:
         lines.append(f"Report file: {report_file}")
+    if verify_fresh_ok is not None:
+        lines.append(f"Verify fresh: {'PASS' if verify_fresh_ok else 'FAIL'}")
+    if verify_artifacts:
+        latest_md = verify_artifacts.get("latest_markdown")
+        md = verify_artifacts.get("markdown")
+        if latest_md:
+            lines.append(f"Verify latest markdown: {latest_md}")
+        if md:
+            lines.append(f"Verify timestamped markdown: {md}")
     if changed_files is not None:
         lines.extend(["", "## Changed files"])
         if changed_files:

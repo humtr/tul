@@ -149,6 +149,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-push", action="store_true")
     p.add_argument("--allow-dirty", action="store_true")
     p.add_argument("--dry-run", action="store_true", help="select/import/validate/plan the package without applying repo changes")
+    p.add_argument("--no-verify", action="store_true", help="skip automatic post-update fresh verification")
 
     p = sub.add_parser("publish", help="commit and push already-staged changes")
     p.add_argument("target")
@@ -423,11 +424,15 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             no_commit=args.no_commit,
             no_push=args.no_push,
             allow_dirty=args.allow_dirty,
+            verify_after=not args.no_verify,
         )
         print(result.report)
+        if result.verify_text:
+            print("\n--- VERIFY FRESH ---\n")
+            print(result.verify_text)
         print("\n--- LLM HANDOFF ---\n")
         print(result.handoff)
-        return 0
+        return 0 if result.verify_ok is not False else 1
 
     if command == "publish":
         ctx = resolve_project(args.target)

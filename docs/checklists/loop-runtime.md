@@ -90,3 +90,12 @@ Invariants:
 - [x] incompatible package targets are shown when present.
 - [x] invalid archives without readable root `tul-package.yml` are ignored with a reason.
 - [x] no-match errors provide next command options.
+
+## Update-integrated verify gate
+
+- [ ] Normal `tul update` prints update report before verify/handoff.
+- [ ] Normal `tul update` shows commit, push verification, and rollback before the verify gate.
+- [ ] Normal `tul update` runs post-update `verify fresh` unless `--no-verify`, `--no-commit`, or `--no-push` applies.
+- [ ] Verify gate writes `tul-vf-latest.md` and a timestamped verify markdown artifact.
+- [ ] Report, state, and handoff include verify gate result and artifact paths.
+- [ ] If the post-update verify gate fails, terminal output is still printed and the command exits non-zero.

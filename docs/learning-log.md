@@ -154,3 +154,13 @@ Impact: Human bridge work shifts from guessing which zip was selected to reading
 Reflected in: `lib/tulcore/package.py`, `lib/tulcore/cli.py`, `docs/commands.md`, and `docs/checklists/loop-runtime.md`.
 
 Follow-up: Add release-gate and compact-state summaries so the normal loop becomes easier to judge at a glance.
+
+## Stage 6.2 — update should produce its own verify artifact
+
+Observation: After `tul update` succeeds, the user still had to run `tul verify fresh` and upload a separate artifact. This preserves bridge work and makes the final commit/push result and verification result feel like two separate rituals.
+
+Impact: The normal update loop should produce the LLM-review artifact itself. The terminal output should show commit, push verification, rollback, then a concise fresh verification gate with the markdown artifact path.
+
+Reflected in: `tul_update_verify_gate_v1`, `lib/tulcore/pipeline.py`, `lib/tulcore/verify.py`, `docs/workflows/update-pipeline.md`.
+
+Follow-up: Keep full verify details in files, keep terminal output compact, and let users upload `tul-vf-latest.md` after a single `tul update`.
