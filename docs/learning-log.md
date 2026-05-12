@@ -340,3 +340,11 @@ Package discovery warning noise should be reduced by moving stale transport arti
 ## 2026-05-13 — Package hygiene external-root correction
 
 A dry-run showed that treating every invalid zip in `/sdcard/Download` as a quarantine candidate is too broad. The policy now treats shared external invalid archives as report-only and moves only valid matching tul packages into the project inbox.
+
+## 2026-05-13 — K track closes the immediate cleanup risk
+
+Observation: After review bundle export stabilized, the main remaining bridge friction was not another export feature but inbox/work-state clutter. Work states were safely reduced by no-op archive moves, and package downloads were moved into the project inbox without touching unrelated Download files.
+
+Lesson: Cleanup features should distinguish ownership boundaries. The tul project inbox is tul-owned; shared Download roots are only scan roots. Move/quarantine policy should be stricter than report policy.
+
+Action: Treat K1 and K2 as the Stage 6 stabilization cleanup baseline, then shift to Stage 7 planning rather than adding more K cleanup features by default.

@@ -30,7 +30,7 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
-For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. Source/review zip export semantics are currently under correction; do not treat `tul-main.zip` as canonical backup, as a successful update artifact, or as verified source evidence. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md).
+For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. When a compact transport bundle is needed, run `tul export review` and upload `/sdcard/termux/import/tul/tul-review-latest.zip`. Do not treat `tul-main.zip` as canonical backup or verified source evidence. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) and [`docs/workflows/stage6-stabilization-checkpoint.md`](docs/workflows/stage6-stabilization-checkpoint.md).
 
 ## Project identity
 
@@ -161,19 +161,25 @@ Split commands exist for debugging, recovery, and manual intervention. They must
 
 ## Package inbox hygiene
 
-Package discovery intentionally scans configured inbox roots only. When `tul package latest` reports duplicate matching packages or invalid archives, start with a dry-run hygiene review:
+Package discovery scans configured inbox roots, but shared folders such as `/sdcard/Download` are not tul-owned. Start with a dry-run:
 
 ```bash
 tul package hygiene
 ```
 
-The command selects invalid archives and older duplicate matching packages for quarantine. It never deletes files. After reviewing the list, move selected archives out of inbox roots with:
+Use ingest to move valid matching tul packages from shared roots into the tul project inbox:
+
+```bash
+tul package hygiene --ingest
+```
+
+Use quarantine only for project-inbox cleanup candidates:
 
 ```bash
 tul package hygiene --quarantine
 ```
 
-Quarantined packages are moved under the platform package-quarantine root. Keep `tul package latest` focused on current candidate packages rather than old failed downloads or duplicate bundles.
+Unrelated zip files in shared Download roots are report-only even if they do not contain a root `tul-package.yml`. Hygiene moves files; it does not delete them.
 
 ## Review bundle export
 

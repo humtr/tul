@@ -132,3 +132,7 @@ Then upload:
 ```
 
 The review bundle is a transport artifact, not a backup and not a full source archive. After export, `tul-vf-latest.md` should be refreshed so the runtime snapshot shows the review bundle path and evidence.
+
+## Stage 6 checkpoint review
+
+When reviewing a K3 or Stage 6 exit package, confirm that `docs/workflows/stage6-stabilization-checkpoint.md` agrees with the latest runtime facts and that no zip artifact is treated as backup evidence.

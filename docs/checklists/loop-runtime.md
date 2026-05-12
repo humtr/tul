@@ -215,8 +215,8 @@ Invariants:
 - [x] Review bundle includes copies of changed files only under `files/`.
 - [x] Review bundle is documented as a transport artifact, not a backup.
 - [x] Review export remains separate from verify and update until explicit command behavior is verified.
-- [ ] Review export metadata is visible in `tul state` after `tul export review`.
-- [ ] Review export refreshes `tul-vf-latest.md` runtime snapshots after explicit export.
+- [x] Review export metadata is visible in `tul state` after `tul export review`.
+- [x] Review export refreshes `tul-vf-latest.md` runtime snapshots after explicit export.
 
 ## Package inbox hygiene checkpoint
 
@@ -232,3 +232,16 @@ Invariants:
 - Use `tul package hygiene --ingest` only for valid matching tul packages outside the project inbox.
 - Use `tul package hygiene --quarantine` only after confirming project-inbox cleanup candidates.
 - Do not quarantine unrelated shared Download files.
+
+## Stage 6 stabilization checkpoint
+
+- [x] J1 artifact semantics checkpoint is closed.
+- [x] J2 misleading source zip state output is suppressed or marked unresolved.
+- [x] J3 explicit review bundle export is available.
+- [x] J4 review export rewrite and state integration are verified.
+- [x] K1 archive execution safety is verified with no-op archive moves only.
+- [x] K2 package inbox ingest policy is verified.
+- [x] Shared Download invalid archives are report-only by default.
+- [x] Valid matching tul packages can be ingested into the project inbox.
+- [x] Project-inbox quarantine remains explicit and move-based.
+- [x] Stage 6 can enter exit review before Stage 7 planning.

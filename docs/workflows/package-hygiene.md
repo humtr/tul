@@ -1,69 +1,64 @@
-# Package inbox hygiene
+# Package hygiene workflow
 
-Package inbox hygiene keeps `tul package latest` focused on current candidate packages without treating shared download folders as tul-owned storage. It is package transport hygiene, not package application, not source export, and not backup management.
+Package hygiene keeps shared download folders from polluting package selection without treating unrelated zip files as tul-owned files.
 
-## Storage roles
+## Roles
 
-- `/sdcard/Download` is a shared external download folder. Tul may scan it for valid package archives, but unrelated zip files are report-only.
-- `/sdcard/termux/import/tul/inbox` is the tul project package inbox. Valid matching tul package archives can be ingested here.
-- `/sdcard/termux/import/tul/package-quarantine/...` is for tul-owned package hygiene moves. Files are moved, not deleted.
+```text
+/sdcard/Download
+  Shared external download area. Scanable, but not tul-owned.
 
-## Commands
+/sdcard/termux/import
+  Shared import area. Scanable, but not always tul-owned.
 
-Start with a dry-run:
+/sdcard/termux/import/tul/inbox
+  Project-owned tul package inbox.
+
+/sdcard/termux/import/tul/package-quarantine/tul
+  Project-owned quarantine for moved package archives.
+```
+
+## Dry-run first
 
 ```bash
 tul package hygiene
 ```
 
-The dry-run separates candidates into three groups:
+The dry-run separates:
 
-- valid matching packages outside the project inbox that can be ingested;
-- duplicate or invalid archives already inside the project inbox that can be quarantined;
-- external invalid archives that are report-only and not selected for movement.
+- valid matching tul packages outside the project inbox that can be ingested;
+- project-inbox cleanup candidates;
+- shared external invalid archives that are report-only.
 
-Move valid matching packages from external roots into the project inbox:
+## Ingest valid tul packages
 
 ```bash
 tul package hygiene --ingest
 ```
 
-After review, quarantine stale project-inbox package archives:
+`--ingest` moves valid matching tul packages from shared external roots into the project inbox. It does not move unrelated zip files that lack `tul-package.yml`.
+
+## Quarantine project-inbox cleanup candidates
 
 ```bash
 tul package hygiene --quarantine
 ```
 
-`--ingest` and `--quarantine` may be combined, but the recommended flow is to run them separately after reviewing the dry-run output.
+`--quarantine` is limited to project-inbox cleanup candidates such as older duplicate matching package archives or invalid package archives already inside the tul project inbox. Files are moved, not deleted.
 
-## Selection policy
+## External invalid archives
 
-K2-fix selects only:
+Invalid zip files in shared roots such as `/sdcard/Download` are report-only by default. Examples include fonts, Android NDK downloads, subtitles, other project archives, and manually created source/review bundles.
 
-- valid matching tul packages outside the project inbox for ingest;
-- invalid archives inside the project inbox for quarantine;
-- older duplicate matching packages inside the project inbox for quarantine.
+Do not quarantine shared external invalid archives just because they lack a root `tul-package.yml`.
 
-K2-fix does not quarantine invalid archives from shared external roots such as `/sdcard/Download`. Files such as source zips, fonts, NDK archives, subtitles, or other project archives are report-only unless they are valid matching tul packages selected for ingest.
-
-For duplicate matching package groups in the project inbox, the newest package by filesystem mtime is kept by default. Use `--keep-duplicates N` to keep more than one recent duplicate per package name.
-
-## Safety rules
-
-- Default mode is dry-run.
-- Shared external invalid archives are never quarantined by default.
-- Ingest moves valid matching tul packages into the project inbox.
-- Quarantine moves only project-inbox cleanup candidates.
-- Files are moved, not deleted.
-- Current package selection remains based on configured inbox roots and manifest target matching.
-- Work/archive roots remain excluded from package discovery.
-
-## Related commands
+## Normal sequence
 
 ```bash
+tul package hygiene
+tul package hygiene --ingest
+tul package hygiene
 tul package latest
-tul package list
-tul package hygiene
-tul package hygiene --ingest
-tul package hygiene --quarantine
 ```
+
+Run `--quarantine` only when the dry-run shows project-inbox cleanup candidates.

@@ -113,3 +113,7 @@ tul export review
 ```
 
 For package generation or code-level diagnosis, ask for source context when needed and verify its root layout before use. `tul-main.zip` is a transitional/manual source context file, not an automatically trusted update artifact. A future explicit `tul export source` command will replace this ambiguity.
+
+## Stage 6 stabilization checkpoint
+
+Before proposing Stage 7 planning work, read `docs/workflows/stage6-stabilization-checkpoint.md` and confirm the latest `tul-vf-latest.md` release gate is PASS.

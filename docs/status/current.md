@@ -1,115 +1,69 @@
 # Current status
 
-Latest known version: `0.8.21-package-inbox-hygiene`.
+Latest known version: `0.8.23-stabilization-checkpoint`.
 
-Current mode: Stage 6 bounded parallel stabilization, K track. K1 archive execution safety is closed; K2 package inbox hygiene adds dry-run/quarantine handling for duplicate and invalid package archives.
+Current mode: Stage 6 bounded parallel stabilization checkpoint. The J artifact-semantics track and K cleanup track are closed enough to prepare Stage 6 exit review.
 
 ## Verified baseline
 
 Latest verified baseline:
 
 ```text
-HEAD: b07f4a2f29d7d46857923e847211f4e12b62f96d
-Remote HEAD: b07f4a2f29d7d46857923e847211f4e12b62f96d
+HEAD: d81989449b813256a4dcbbdd0be60b04180d6dd8
+Remote HEAD: d81989449b813256a4dcbbdd0be60b04180d6dd8
 Release gate: PASS
+Steps: 25 pass, 0 fail
 Working tree: clean
+Fresh clone verify: PASS
 ```
 
-The latest canonical review artifact remains:
+Canonical latest artifact:
 
 ```text
 /sdcard/termux/import/tul/tul-vf-latest.md
 ```
 
-## Artifact semantics checkpoint
+## Closed checkpoints
 
-The Stage 6 repo zip work exposed a design error: verify evidence, handoff evidence, source transfer, review transfer, and backup were being treated as one artifact family. This checkpoint freezes the corrected model before more implementation work.
+- Bundle B — compact gate/state: PASS.
+- Bundle C — authoring diagnostics: PASS.
+- Bundle D — archive cleanup dry-run: PASS.
+- Bundle E — handoff discoverability: PASS.
+- Bundle F — parallel-readiness gate: PASS.
+- Bundle G — import-root latest snapshot: PASS.
+- Bundle H — state verify path alignment: PASS.
+- Bundle I — source zip export attempt: verify passed, export semantics not closed.
+- Bundle J1 — artifact semantics checkpoint: PASS.
+- Bundle J2 — remove misleading source zip state: PASS.
+- Bundle J3 — explicit review bundle export: PASS.
+- Bundle J4 — review export rewrite/state integration: PASS.
+- K1 — archive execution safety: PASS.
+- K2 — package inbox ingest policy: PASS.
 
-Current rule:
+## Current artifact model
 
-- `tul-vf-latest.md` is release-gate and runtime snapshot evidence.
-- Timestamped verify artifacts under `logs/verify/YYMMDD/` are run history.
-- `tul state` is the latest decision view.
-- `tul handoff` is fresh-session orientation.
-- `tul-main.zip` is not accepted as a closed automatic export capability.
-- Zip artifacts are transport artifacts, not backups.
-- Git remote, commit hashes, and rollback state are the recovery authority.
+- `tul-vf-latest.md` is release-gate evidence with runtime snapshots.
+- `tul-review-latest.zip` is explicit review transport from `tul export review`.
+- Source export is not automatic and is not a backup.
+- Git remote, commit hashes, and rollback state remain the recovery authority.
 
-See `docs/workflows/artifact-semantics.md`.
+See `docs/workflows/artifact-semantics.md` and `docs/workflows/stage6-stabilization-checkpoint.md`.
 
-## Bundle I/J2 status correction
+## Current cleanup model
 
-Bundle I and its fixes proved commit/push/verify, but they did not close source zip export semantics. J2 removes the misleading runtime path display and detaches source zip export from the default update loop until explicit review/source export commands exist.
+- `tul archive --noop --dry-run --keep 3` is the inspection path.
+- `tul archive --noop --keep 3` is the only accepted actual archive move class at this checkpoint.
+- `tul package hygiene` reports shared external invalid archives without moving them.
+- `tul package hygiene --ingest` moves valid matching tul packages into the project inbox.
+- `tul package hygiene --quarantine` only applies to project-inbox cleanup candidates.
 
-Corrected status:
+## Next ready queue
 
-```text
-Bundle I initial: verify PASS, export incomplete
-Bundle I fix v2: verify PASS, path surfaced, export semantics unresolved
-Bundle J1: artifact vocabulary checkpoint PASS
-Bundle J2: remove misleading source zip state output PASS
-Bundle J3: explicit review bundle export PASS
-```
-
-Do not mark repo/source zip export as closed until a future explicit command records freshness, root layout, and provenance evidence.
-
-## Current next bundle
-
-Package: `tul_stage6_review_export_state_integration_bundle_v2`
-
-Scope:
-
-1. Keep `tul export review` as an explicit command.
-2. Record review bundle metadata in the latest state.
-3. Append review export evidence to the latest report and handoff artifacts.
-4. Refresh `tul-vf-latest.md` runtime snapshots after explicit review export.
-5. Do not attach review export automatically to `tul update` yet.
-
-## Next implementation queue
-
-1. Verify that `tul export review` leaves `review bundle: ...` evidence in `tul state`.
-2. Decide later whether successful `tul update` should run review export automatically.
-3. Implement `tul export source` for explicit source bundles with wrapper/root-layout checks.
-
-## Verify artifact convention
-
-Canonical latest files live directly under the tul import root:
-
-```text
-/sdcard/termux/import/tul/tul-vf-latest.md
-/sdcard/termux/import/tul/tul-vf-latest.json
-```
-
-Timestamped run artifacts live in YYMMDD date folders directly under the verify log root. There is no `runs/` layer and no legacy `tul-verify-latest.*` alias.
+1. Stage 6 exit review / stabilization checkpoint package.
+2. Stage 7 planning harness expansion for manifest, short-term/mid-term/long-term plans, and bounded parallel candidate management.
+3. Explicit source export, only if a future task needs full source transfer and root-layout checks.
+4. Windows parity, after the self-host loop remains stable across additional packages.
 
 ## Deferred
 
 Stage X target onboarding, including `humtr/ai`, remains deferred until tul's self-host loop reduces rather than multiplies bridge work.
-
-
-## K1 archive execution safety
-
-K1 narrows actual archive movement while preserving broad dry-run inspection. Actual moves are allowed only for `--noop` selections. Latest and latest rollbackable states are protected by the archive engine and skipped even if a selector would otherwise include them.
-
-Recommended execution path:
-
-```bash
-tul archive --noop --dry-run --keep 3
-tul archive --noop --keep 3
-```
-
-Do not move imported, failed, mixed, or broad `--all` state selections until separate cleanup policies are accepted.
-## K2 package inbox hygiene
-
-K2 adds a package hygiene command for inbox-root cleanup:
-
-```bash
-tul package hygiene
-tul package hygiene --quarantine
-```
-
-The dry-run selects invalid archives and older duplicate matching packages. `--quarantine` moves selected files under the platform package-quarantine root. Files are moved, not deleted. Incompatible packages remain visible but are not quarantined by default.
-
-## K2-fix package inbox ingest policy
-
-K2-fix redefines package hygiene around ingest and project-inbox cleanup. Shared Download invalid archives are report-only; valid matching tul packages can be ingested into the project inbox; quarantine is limited to project-inbox duplicates or invalid package archives.

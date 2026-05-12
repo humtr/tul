@@ -302,3 +302,17 @@ Accepted for K2. `tul package hygiene` defaults to dry-run and selects only inva
 ## Decision: shared Download is not tul-owned storage
 
 Tul may scan shared Download roots for valid matching package archives, but it must not quarantine unrelated invalid zips from those roots. Package hygiene uses ingest for valid matching tul packages and reserves quarantine for project-owned inbox cleanup.
+
+## 2026-05-13 — Stage 6 stabilization checkpoint
+
+Decision: Close the J artifact-semantics track and K cleanup track as the Stage 6 stabilization baseline.
+
+Accepted facts:
+
+- `tul-vf-latest.md` is the canonical post-update evidence artifact.
+- `tul export review` is the explicit compact review transport path.
+- `tul-main.zip` is not backup evidence and is not accepted as automatic source export.
+- Actual archive cleanup is currently limited to no-op state moves after dry-run inspection.
+- Package hygiene ingests valid tul packages from shared roots and treats unrelated shared invalid zip files as report-only.
+
+Next planning step: start Stage 7 around manifest, short-term/mid-term/long-term planning, and bounded parallel candidate management.
