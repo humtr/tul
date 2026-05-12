@@ -1,10 +1,8 @@
 # Current status
 
-Latest known version after this package: `0.7.5-verify-artifacts`.
+Latest known version after this package: `0.7.6-verify-artifact-names`.
 
-Latest completed stage: Stage 5.5 — package authoring polish.
-
-Current mode: Stage 6 baseline — planning harness inserted; verify artifact logging is the next bridge-reduction step before native-context implementation.
+Current mode: Stage 6 baseline — planning harness is inserted and verify output is artifact-backed.
 
 ## Current verified loop
 
@@ -17,20 +15,25 @@ tul verify tul --fresh-clone
 tul handoff tul
 ```
 
-`PKG=...` should be exceptional. Normal use should prefer inbox discovery and `-l`.
+`PKG=...` should be exceptional. Normal use should prefer inbox discovery and `-l` until native no-arg context is implemented.
+
+## Verify artifact upload convention
+
+`tul verify` writes markdown and JSON artifacts under the platform log root. On Termux, upload the short timestamped markdown file when comparing runs:
+
+```text
+/sdcard/termux/import/tul/logs/verify/tul-vf-f-<yymmdd>-<hhmmss>-<head>.md
+```
+
+If only the latest run matters, upload:
+
+```text
+/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+```
+
+Compatibility aliases such as `tul-verify-latest.md` are still written, but the shorter `tul-vf-*` names are preferred.
 
 ## Current next package
-
-`tul_verify_artifacts_v1`
-
-Purpose:
-
-- Insert manifest/strategy/roadmap/status/learning/decisions planning harness.
-- Preserve README as compact entrypoint.
-- Record Stage 6 as accelerated self-host hardening.
-- Keep `/ai` as Stage X.
-
-## Next after that
 
 `tul_native_context_v1a`
 
@@ -45,14 +48,5 @@ Native no-arg update and package mismatch guidance should be implemented in late
 
 ## Current risk notes
 
-- The uploaded source baseline does not contain `docs/manifest.md`, `docs/strategy.md`, `docs/learning-log.md`, or `docs/decisions.md`; this package introduces them.
 - Native context is not implemented yet and must not be documented as complete.
 - Stage X target onboarding remains deferred.
-
-## Verify artifacts
-
-`tul verify` writes markdown and JSON artifacts under the platform log root. On Termux, upload this file instead of pasting long terminal output:
-
-```text
-/sdcard/termux/import/tul/logs/verify/tul-verify-latest.md
-```

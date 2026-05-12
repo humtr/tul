@@ -49,3 +49,10 @@ Invariants:
 - [ ] Termux default artifact path is `/sdcard/termux/import/tul/logs/verify/`.
 - [ ] The stable latest file can be uploaded instead of pasting terminal output.
 - [ ] `--no-log` remains available for exceptional runs.
+
+## Verify artifact filenames
+
+- [ ] `tul verify tul --fresh-clone` writes a short timestamped markdown file.
+- [ ] The short timestamped name exposes project, mode, timestamp, and commit hash near the beginning.
+- [ ] `tul-vf-latest.md` is updated for latest-run upload.
+- [ ] Legacy `tul-verify-latest.md` is still written during the compatibility window.

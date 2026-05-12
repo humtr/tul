@@ -134,21 +134,28 @@ def write_verify_artifacts(
     fresh_clone: bool = False,
     log_dir: Path | None = None,
 ) -> dict[str, str]:
-    """Persist verify output as timestamped markdown and JSON artifacts.
+    """Persist verify output as short markdown and JSON artifacts.
 
-    Also writes stable `latest` copies so the user can upload one predictable
-    file instead of copying long terminal output.
+    Timestamped artifact names are optimized for mobile attachment UIs by
+    placing the project, verify marker, mode, timestamp, and short commit hash
+    near the beginning of the filename. Stable `latest` copies remain available
+    for scripts and repeated local use. Legacy `*-verify-latest.*` aliases are
+    written temporarily for compatibility with the 0.7.5 naming scheme.
     """
     root = verify_log_root(ctx, log_dir)
     mkdirp(root)
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now().strftime("%y%m%d-%H%M%S")
     mode = "fresh" if fresh_clone else "local"
-    head_short = (result.head or "unknown")[:12]
-    stem = f"{ctx.project_id}-verify-{mode}-{stamp}-{head_short}"
+    mode_key = "f" if fresh_clone else "l"
+    head_short = (result.head or "unknown")[:7]
+
+    stem = f"{ctx.project_id}-vf-{mode_key}-{stamp}-{head_short}"
     md_path = root / f"{stem}.md"
     json_path = root / f"{stem}.json"
-    latest_md = root / f"{ctx.project_id}-verify-latest.md"
-    latest_json = root / f"{ctx.project_id}-verify-latest.json"
+    latest_md = root / f"{ctx.project_id}-vf-latest.md"
+    latest_json = root / f"{ctx.project_id}-vf-latest.json"
+    legacy_latest_md = root / f"{ctx.project_id}-verify-latest.md"
+    legacy_latest_json = root / f"{ctx.project_id}-verify-latest.json"
 
     payload = result.to_dict()
     payload["artifact"] = {
@@ -159,6 +166,8 @@ def write_verify_artifacts(
         "json": str(json_path),
         "latest_markdown": str(latest_md),
         "latest_json": str(latest_json),
+        "legacy_latest_markdown": str(legacy_latest_md),
+        "legacy_latest_json": str(legacy_latest_json),
     }
 
     text = result.to_text()
@@ -168,6 +177,8 @@ def write_verify_artifacts(
     text += f"- JSON: {json_path}\n"
     text += f"- Latest markdown: {latest_md}\n"
     text += f"- Latest JSON: {latest_json}\n"
+    text += f"- Legacy latest markdown: {legacy_latest_md}\n"
+    text += f"- Legacy latest JSON: {legacy_latest_json}\n"
     text += "\n## Machine-readable summary\n\n```json\n"
     text += json.dumps(payload, indent=2, ensure_ascii=False)
     text += "\n```\n"
@@ -176,14 +187,17 @@ def write_verify_artifacts(
     json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     latest_md.write_text(text, encoding="utf-8", newline="\n")
     latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    legacy_latest_md.write_text(text, encoding="utf-8", newline="\n")
+    legacy_latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
     return {
         "markdown": str(md_path),
         "json": str(json_path),
         "latest_markdown": str(latest_md),
         "latest_json": str(latest_json),
+        "legacy_latest_markdown": str(legacy_latest_md),
+        "legacy_latest_json": str(legacy_latest_json),
     }
-
 
 def format_verify_artifacts(paths: dict[str, str]) -> str:
     return "\n".join(
@@ -193,6 +207,8 @@ def format_verify_artifacts(paths: dict[str, str]) -> str:
             f"- JSON: {paths['json']}",
             f"- Latest log: {paths['latest_markdown']}",
             f"- Latest JSON: {paths['latest_json']}",
+            f"- Legacy latest log: {paths['legacy_latest_markdown']}",
+            f"- Legacy latest JSON: {paths['legacy_latest_json']}",
         ]
     )
 

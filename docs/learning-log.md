@@ -103,3 +103,13 @@ Impact: The user becomes a log transport layer, which works against the human-br
 Reflected in: `tul verify` should persist markdown/json artifacts under the platform log root. On Termux, the expected path is `/sdcard/termux/import/tul/logs/verify/`.
 
 Follow-up: Prefer uploading `tul-verify-latest.md` over pasting full terminal logs.
+
+## 2026-05-12 — Verify artifact names need mobile-visible uniqueness
+
+Observation: Timestamped verify artifact names such as `tul-verify-fresh-20260512-114123-f9c07f038fcd.md` have a long common prefix. Mobile attachment UIs may hide the timestamp and commit suffix, making repeated uploads hard to distinguish.
+
+Impact: Upload-based review reduces copy/paste, but poor artifact names can reintroduce ambiguity across runs.
+
+Reflected in: `docs/workflows/verify.md`, `docs/status/current.md`, and `lib/tulcore/verify.py`.
+
+Follow-up: Prefer `tul-vf-f-<yymmdd>-<hhmmss>-<head>.md` for timestamped fresh verification artifacts and `tul-vf-latest.md` for stable latest review.

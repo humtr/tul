@@ -85,3 +85,13 @@ Context: `tul verify --fresh-clone` produces long output that is useful but cumb
 Decision: `tul verify` writes markdown and JSON artifacts by default. The terminal output remains visible, but the stable latest artifact can be uploaded for review.
 
 Consequences: The human bridge shifts from log copying to file handoff. This supports the long-term goal of minimizing repetitive bridge labor while preserving inspectability.
+
+## ADR-008 — Verify artifacts use short upload-friendly names
+
+Status: accepted
+
+Context: Verify artifacts replaced long terminal copy/paste, but long common filename prefixes made repeated uploads hard to distinguish in mobile attachment UIs. Stable `latest` filenames are useful for local automation, while unique timestamped filenames are better for uploaded review evidence.
+
+Decision: Generate short timestamped names using `<project>-vf-<mode>-<yymmdd>-<hhmmss>-<head>`, where `mode` is `f` for fresh-clone verification and `l` for local verification. Also generate stable `tul-vf-latest.*` files. Continue writing legacy `tul-verify-latest.*` aliases temporarily for compatibility.
+
+Consequences: The user can upload one short, unique markdown artifact without long terminal paste. Existing notes/scripts using the old latest filename continue working during the transition.

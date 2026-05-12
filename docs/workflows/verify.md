@@ -43,18 +43,27 @@ By default, `tul verify` now writes timestamped markdown and JSON artifacts in t
 /sdcard/termux/import/tul/logs/verify/
 ```
 
-Each run writes both timestamped files and stable latest files:
+Each run writes short timestamped files and stable latest files:
 
 ```text
-<project>-verify-local-<timestamp>-<head>.md
-<project>-verify-local-<timestamp>-<head>.json
-<project>-verify-fresh-<timestamp>-<head>.md
-<project>-verify-fresh-<timestamp>-<head>.json
+<project>-vf-l-<yymmdd>-<hhmmss>-<head>.md
+<project>-vf-l-<yymmdd>-<hhmmss>-<head>.json
+<project>-vf-f-<yymmdd>-<hhmmss>-<head>.md
+<project>-vf-f-<yymmdd>-<hhmmss>-<head>.json
+<project>-vf-latest.md
+<project>-vf-latest.json
+```
+
+The short names keep the timestamp and commit hash visible in mobile attachment UIs. For review, upload the short timestamped markdown artifact when comparing multiple runs. Upload `<project>-vf-latest.md` when only the newest run matters.
+
+Compatibility aliases are also written for now:
+
+```text
 <project>-verify-latest.md
 <project>-verify-latest.json
 ```
 
-This reduces long terminal copy/paste. For review, upload the latest markdown artifact instead of pasting the full verify output.
+These long `latest` aliases are deprecated and exist only to avoid breaking existing notes or scripts during the transition.
 
 Options:
 
