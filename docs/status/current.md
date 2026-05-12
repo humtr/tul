@@ -1,21 +1,21 @@
 # Current status
 
-Latest known version after this package: `0.8.1-native-context-readonly`.
+Latest known version after this package: `0.8.2-native-context-update`.
 
-Current mode: Stage 6 native context step 2 — active project context exists and read-only commands can infer project targets. No-arg update is still deferred.
+Current mode: Stage 6 native context step 3 — active project context exists, read-only commands infer targets, and guarded no-arg mutating commands are available for update/import/rollback.
 
 ## Current verified loop
 
 The current normal self-host loop is:
 
 ```bash
-tul package latest tul
-tul update tul -l
+tul package latest
+tul update
 tul verify fresh
-tul handoff tul
+tul handoff
 ```
 
-`PKG=...` should be exceptional. Normal use should prefer inbox discovery and `-l` until native no-arg context is implemented.
+`PKG=...` should be exceptional. Normal use should prefer inbox discovery and native `tul update` when context is unambiguous.
 
 ## Verify artifact upload convention
 
@@ -35,29 +35,27 @@ Compatibility aliases such as `tul-verify-latest.md` are still written, but the 
 
 ## Current package
 
-`tul_native_context_v1b`
+`tul_native_context_v1c`
 
 Implemented scope:
 
-- read-only no-arg project inference for `status`, `check`, `verify`, `state`, `handoff`, `report`, `package latest`, and `package list`.
-- `tul verify fresh` shorthand for fresh-clone verification.
-- current-directory project inference.
-- read-only conflict warning when active project and current directory project differ.
-- previous v1a scope remains: `tul use`, `tul current`, context storage, and default project support.
+- no-arg `tul update` as inferred project + latest matching package.
+- no-arg `tul import` and `tul rollback` with mutating context inference.
+- mutating-command conflict guard for active project vs current directory project.
+- target inference banner for no-arg mutating commands.
+- previous v1a/v1b scope remains: `tul use`, `tul current`, read-only no-arg commands, and `tul verify fresh`.
 
 ## Next package
 
-`tul_native_context_v1c`
+`tul_native_context_v1d`
 
 Expected scope:
 
-- no-arg mutating command inference for `tul update`;
-- context conflict guard for active project vs current directory;
-- explicit target/package selection banner.
-
-Package mismatch guidance remains a later sub-step after no-arg mutating commands are stable.
+- package manifest mismatch guidance;
+- classification of matching, incompatible, invalid, and duplicate downloaded packages;
+- clearer next-command suggestions when the newest downloaded zip targets another project.
 
 ## Current risk notes
 
-- Native context is partially implemented. Read-only commands infer targets; no-arg update is still not implemented.
+- Native context is mostly implemented for target inference. Package mismatch guidance is still pending.
 - Stage X target onboarding remains deferred.

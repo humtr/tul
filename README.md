@@ -65,35 +65,37 @@ The same harness should be portable to future target repositories such as `humtr
 
 ## Native context
 
-Stage 6 introduces native project context in bounded steps. The first step stores the active project without changing update semantics:
+Stage 6 introduces native project context in bounded steps. The current model supports an active project, read-only no-arg commands, `tul verify fresh`, and guarded no-arg `tul update` / `tul import` / `tul rollback` when the project can be inferred safely:
 
 ```bash
 tul use tul
 tul current
-tul projects
+tul status
+tul update
+tul verify fresh
+tul state
 ```
 
-For now, mutating commands still require an explicit target:
+No-arg mutating commands use explicit context guards. If the active project differs from the current-directory project, `tul` refuses to continue and prints concrete choices such as `tul update tul`, `tul update <cwd-project>`, or `tul use <cwd-project>`.
 
-```bash
-tul update tul -l
-tul verify tul --fresh-clone
-```
-
-Later bundles will add safe no-arg read-only commands, `tul verify fresh`, and finally guarded no-arg update.
+Package-target mismatch guidance remains a later bundle: the package manifest is already enforced, but richer explanations for incompatible downloaded zip files are still pending.
 
 ## Default command model
 
 ## Launcher / install sync
 
-Operational commands should be runnable from any directory through the configured project alias:
+Operational commands should be runnable from any directory once native context is set:
 
 ```bash
-tul status tul
-tul update tul --latest
-tul state tul
-tul handoff tul
+tul use tul
+tul status
+tul update
+tul verify fresh
+tul state
+tul handoff
 ```
+
+Explicit project arguments remain supported for clarity, recovery, and ambiguous contexts.
 
 If `tul` on PATH behaves differently from `python ~/prj/tul/bin/tul`, the user launcher is stale. Resync it with:
 
@@ -108,14 +110,14 @@ Use `tul doctor tul` to compare the PATH launcher with the repo launcher.
 Use the full-loop command:
 
 ```bash
-tul update <project>
+tul update
 ```
 
-When the package has already been downloaded into a configured inbox root, use the explicit latest form:
+`update` infers the project from explicit target, current directory, active project, default project, or the only configured project. It then selects the newest matching package from configured inbox roots. The explicit forms remain valid:
 
 ```bash
+tul update <project>
 tul update <project> --latest
-# or
 tul update <project> -l
 ```
 

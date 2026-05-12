@@ -156,6 +156,72 @@ def infer_project(target: str | None = None, *, command: str = "command", read_o
     )
 
 
+
+def infer_mutating_project(target: str | None = None, *, command: str = "command") -> InferredProject:
+    """Infer a project for mutating/recovery commands with conflict guards.
+
+    For explicit targets, this is the same as resolve_project(). For no-arg
+    commands, a current-directory project is allowed only when it does not
+    conflict with the stored active project. This prevents `tul update` from
+    silently applying to a different repo than the one the user selected with
+    `tul use`.
+    """
+    if target:
+        return InferredProject(resolve_project(target), "explicit target", [])
+
+    cwd_match = project_for_cwd()
+    active = active_project()
+    default = default_project()
+
+    if cwd_match:
+        project_id, repo = cwd_match
+        if active and active != project_id:
+            raise ConfigError(
+                "context conflict for mutating command.\n\n"
+                f"Active project: {active}\n"
+                f"Current directory project: {project_id}\n"
+                f"Current directory repo: {repo}\n\n"
+                "Refusing no-arg command because the target is ambiguous.\n"
+                "Choose one of:\n"
+                f"- tul {command} {active}\n"
+                f"- tul {command} {project_id}\n"
+                f"- tul use {project_id}\n"
+                f"- cd {resolve_project(active).repo_path if active else '<project-repo>'} && tul {command}"
+            )
+        return InferredProject(resolve_project(project_id), "current directory project", [])
+
+    if active:
+        return InferredProject(resolve_project(active), "active_project", [])
+
+    if default:
+        return InferredProject(resolve_project(default), "default_project", [])
+
+    project_ids = _configured_project_ids()
+    if len(project_ids) == 1:
+        return InferredProject(resolve_project(project_ids[0]), "only configured project", [])
+
+    options = [
+        "tul use <project>",
+        f"tul {command} <project>",
+        "tul projects",
+    ]
+    if project_ids:
+        options.append("configured projects: " + ", ".join(project_ids))
+    raise ConfigError(
+        "project target is ambiguous.\n"
+        "Choose one of:\n- " + "\n- ".join(options)
+    )
+
+
+def format_inference_summary(inferred: InferredProject, *, command: str = "command") -> str:
+    lines = ["# tul target"]
+    lines.append(f"Command: {command}")
+    lines.append(f"Project: {inferred.ctx.project_id}")
+    lines.append(f"Repo: {inferred.ctx.repo_path}")
+    lines.append(f"Reason: {inferred.reason}")
+    return "\n".join(lines)
+
+
 def format_inference_warnings(inferred: InferredProject) -> str:
     if not inferred.warnings:
         return ""
@@ -193,9 +259,9 @@ def format_current_context() -> str:
             lines.append(f"- error: {exc}")
     lines.append("Next:")
     if active or cwd_match or default:
-        lines.append("- tul status <project>")
-        lines.append("- tul update <project> -l")
-        lines.append("- tul verify <project> --fresh-clone")
+        lines.append("- tul status")
+        lines.append("- tul update")
+        lines.append("- tul verify fresh")
     else:
         lines.append("- tul use <project>")
         lines.append("- tul init <project>")

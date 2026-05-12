@@ -12,6 +12,12 @@ tul projects
 Primary loop:
 
 ```bash
+tul update
+```
+
+Explicit forms remain valid and are recommended when context is ambiguous:
+
+```bash
 tul update <project>
 tul update <project> -l
 tul update <project> --latest
@@ -20,9 +26,17 @@ tul update <project> --latest
 Package discovery:
 
 ```bash
+tul package latest
+tul package list
+tul package inspect /path/to/package.zip
+tul update --dry-run
+```
+
+Explicit target forms remain valid:
+
+```bash
 tul package latest tul
 tul package list tul
-tul package inspect /path/to/package.zip
 tul update tul --latest --dry-run
 ```
 
@@ -39,21 +53,34 @@ tul package check /sdcard/Download/NAME.zip --target tul
 Verification:
 
 ```bash
+tul verify
+tul verify fresh
+```
+
+Explicit forms remain valid:
+
+```bash
 tul verify tul
+tul verify tul fresh
 tul verify tul --fresh-clone
 ```
 
 Recovery/debug:
 
 ```bash
-tul state tul
-tul state tul --all --limit 5
-tul archive tul --noop --dry-run
-tul rollback tul
-tul import tul -l
+tul state
+tul state --all --limit 5
+tul rollback
+tul import
 ```
 
-Split commands are recovery/debug tools. The default workflow remains `tul update <project> -l`. Native no-arg update is not implemented yet; use `tul use` only to store the active project context until the later guarded no-arg bundles land.
+Archive still requires an explicit target until its recommendation/dry-run UX is tightened:
+
+```bash
+tul archive tul --noop --dry-run
+```
+
+Split commands are recovery/debug tools. The default workflow is now native `tul update` when a project can be inferred safely. Use explicit targets when context is ambiguous.
 
 ## Native read-only defaults
 
@@ -87,4 +114,17 @@ Resolution order for omitted read-only targets is:
 4. `default_project`;
 5. the only configured project.
 
-If the current directory project differs from the active project, read-only commands warn and use the current directory project. Mutating commands such as `tul update` still require an explicit project until the later context-conflict guard stage.
+If the current directory project differs from the active project, read-only commands warn and use the current directory project. Mutating commands such as `tul update`, `tul import`, and `tul rollback` refuse no-arg execution on conflict and print concrete choices.
+
+## Native mutating defaults
+
+Stage 6.1c introduces guarded defaults for mutating/recovery commands:
+
+```bash
+tul update
+tul update --dry-run
+tul import
+tul rollback
+```
+
+Resolution is the same as read-only commands, but active/current-directory conflicts abort instead of warning. No-arg `update` means inferred project + newest matching package from configured inbox roots.

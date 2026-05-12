@@ -24,7 +24,7 @@ from .authoring import (
 )
 from .checks import run_checks
 from .config import config_path, load_global_config, platform_paths, resolve_project
-from .context import active_project, context_path, format_current_context, format_inference_warnings, infer_project, set_active_project, set_default_project
+from .context import active_project, context_path, format_current_context, format_inference_summary, format_inference_warnings, infer_mutating_project, infer_project, set_active_project, set_default_project
 from .errors import TulError
 from .gitops import (
     changed_files,
@@ -142,7 +142,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("target")
 
     p = sub.add_parser("update", help="run the full package update loop")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
     p.add_argument("--package", dest="package_path")
     p.add_argument("-l", "--latest", action="store_true", help="use the newest matching package from configured inbox roots")
     p.add_argument("--no-commit", action="store_true")
@@ -202,7 +202,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_summary.add_argument("--json", action="store_true", help="print machine-readable summary")
 
     p = sub.add_parser("rollback", help="print a safe rollback command")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
     p.add_argument("commit", nargs="?", help="commit to revert; defaults to latest state commit when available")
 
     p = sub.add_parser("state", help="show local tul work state")
@@ -219,7 +219,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Split commands are recovery/debug tools; default workflow remains update.
     p = sub.add_parser("import", help="import, validate, and plan a package without applying it")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
     p.add_argument("--package", dest="package_path")
     p.add_argument("-l", "--latest", action="store_true", help="use newest matching package from configured inbox roots")
 
@@ -385,9 +385,9 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         print(f"Default project: {default_note}")
         print("Next:")
         print("- tul current")
-        print(f"- tul status {ctx.project_id}")
-        print(f"- tul update {ctx.project_id} -l")
-        print(f"- tul verify {ctx.project_id} --fresh-clone")
+        print("- tul status")
+        print("- tul update")
+        print("- tul verify fresh")
         return 0
 
     if command == "current":
@@ -402,7 +402,11 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         return 0
 
     if command == "update":
-        ctx = resolve_project(args.target)
+        inferred = infer_mutating_project(getattr(args, "target", None), command="update")
+        ctx = inferred.ctx
+        if not getattr(args, "target", None):
+            print(format_inference_summary(inferred, command="update"))
+            print()
         if args.latest and args.package_path:
             raise TulError("use either --package PATH or --latest, not both")
         # Omitting --package already selects the newest matching package from
@@ -501,7 +505,11 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             return 0
 
     if command == "rollback":
-        ctx = resolve_project(args.target)
+        inferred = infer_mutating_project(getattr(args, "target", None), command="rollback")
+        ctx = inferred.ctx
+        if not getattr(args, "target", None):
+            print(format_inference_summary(inferred, command="rollback"))
+            print()
         commit_id = args.commit
         paths = platform_paths(ctx.global_config)
         work_root = paths.get("work_root")
@@ -647,7 +655,11 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         return 0
 
     if command == "import":
-        ctx = resolve_project(args.target)
+        inferred = infer_mutating_project(getattr(args, "target", None), command="import")
+        ctx = inferred.ctx
+        if not getattr(args, "target", None):
+            print(format_inference_summary(inferred, command="import"))
+            print()
         if args.latest and args.package_path:
             raise TulError("use either --package PATH or --latest, not both")
         package_path = None if args.latest else args.package_path

@@ -3,13 +3,20 @@
 Before accepting a package:
 
 ```bash
-tul package latest tul
+tul package latest
 tul package check /sdcard/Download/<package>.zip --target tul
-tul update tul -l
-tul verify tul
-tul verify tul --fresh-clone
+tul update
+tul verify
+tul verify fresh
 # Upload instead of pasting long output:
-# /sdcard/termux/import/tul/logs/verify/tul-verify-latest.md
+# /sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+```
+
+Use explicit targets when context is ambiguous:
+
+```bash
+tul update tul -l
+tul verify tul --fresh-clone
 ```
 
 For package authoring:
@@ -60,12 +67,12 @@ Invariants:
 
 ## Native context checkpoint
 
-- [ ] `tul use tul` writes an active project context file.
-- [ ] `tul current` reports active/default/current-directory context.
-- [ ] `tul projects` marks active/default projects.
-- [ ] `tul doctor tul` reports runtime context.
-- [ ] `tul use tul --default` safely updates global `default_project`.
-- [ ] No-arg `tul update` is still unavailable until guarded mutating-command inference is implemented.
+- [x] `tul use tul` writes an active project context file.
+- [x] `tul current` reports active/default/current-directory context.
+- [x] `tul projects` marks active/default projects.
+- [x] `tul doctor tul` reports runtime context.
+- [x] `tul use tul --default` safely updates global `default_project`.
+- [x] No-arg `tul update` is available with guarded mutating-command inference.
 
 ## Native context checks
 
@@ -73,6 +80,6 @@ Invariants:
 - [x] `tul current` shows active/default/current-directory context.
 - [x] read-only commands can infer the project target when safe.
 - [x] `tul verify fresh` is accepted as shorthand for `--fresh-clone`.
-- [ ] mutating commands stop on active/cwd context conflict.
-- [ ] `tul update` can safely infer project and latest package.
+- [x] mutating commands stop on active/cwd context conflict.
+- [x] `tul update` can safely infer project and latest package.
 - [ ] package manifest mismatch guidance explains incompatible zip targets.

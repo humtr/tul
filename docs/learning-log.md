@@ -133,3 +133,14 @@ Impact: Native context is staged: active project storage, read-only inference, m
 Reflected in: `docs/roadmap.md`, `docs/commands.md`, and native context v1b.
 
 Follow-up: Implement no-arg `tul update` only with explicit conflict and package selection banners.
+
+
+## Stage 6 — no-arg mutating commands need visible target inference
+
+Observation: Moving from `tul update tul -l` to `tul update` reduces bridge work, but the command must show which project was inferred and why.
+
+Impact: Native mutating commands require a target inference banner and must refuse execution when active project and current-directory project conflict.
+
+Reflected in: `tul_native_context_v1c`, `docs/commands.md`, `docs/status/current.md`, and `docs/checklists/loop-runtime.md`.
+
+Follow-up: Add package manifest mismatch guidance so that incompatible downloaded zip files produce actionable choices instead of a generic no-match error.

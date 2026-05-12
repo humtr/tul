@@ -105,3 +105,14 @@ Context: Repeating project names and long flags preserves bridge work. However, 
 Decision: Implement native context in stages. First store active context. Then allow no-arg read-only commands and `tul verify fresh`. Only later allow no-arg mutating commands with conflict guards and package-target mismatch guidance.
 
 Consequences: Users get shorter safe commands early, while update/import/rollback defaults remain guarded until the model is proven.
+
+
+## ADR-011 — No-arg mutating commands require explicit inference banners
+
+Status: accepted
+
+Context: The project is reducing repeated target and package flags. `tul update` is the desired native command, but silent inference would make it harder to audit which project is being changed.
+
+Decision: No-arg mutating commands may infer the project only when context is unambiguous. They must print a target inference banner and must abort when active project and current-directory project conflict.
+
+Consequences: `tul update`, `tul import`, and `tul rollback` can be short in the common case while preserving inspectability and user authority. Package-target mismatch guidance remains the next safety layer.

@@ -99,13 +99,22 @@ Scope:
 - current-directory project inference.
 - read-only conflict banner.
 
-### Bundle 4 — Native context v1c/d
+### Bundle 4 — Native context v1c
 
 Scope:
 
 - no-arg `tul update` as inferred project + latest matching package.
+- no-arg `tul import` and `tul rollback`.
 - mutating-command context conflict guard.
+- target inference banner for no-arg mutating commands.
+
+### Bundle 4.5 — Native context v1d
+
+Scope:
+
 - package mismatch classification and guidance.
+- matching, incompatible, invalid, and duplicate package candidate display.
+- next-command suggestions when downloaded packages target another project.
 
 ### Bundle 5 — Release gate and state compactness
 
