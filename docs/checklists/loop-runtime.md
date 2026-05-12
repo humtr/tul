@@ -133,6 +133,7 @@ Invariants:
 - [x] `tul package check` validates that apply destinations and `commit.files` align.
 - [x] `tul package check --target tul` keeps apply-plan validation for compatible packages.
 - [x] No-match package guidance suggests both inspect and check commands.
+
 ## Archive cleanup dry-run checkpoint
 
 - [x] `tul state` cleanup guidance points to dry-run before moving files.
@@ -141,3 +142,13 @@ Invariants:
 - [x] Archive dry-run output shows source and archive destination directories.
 - [x] Archive dry-run output identifies latest and latest rollbackable reference states.
 - [x] Actual state moves require re-running without `--dry-run`.
+
+## Handoff discoverability checkpoint
+
+- [x] README points fresh LLM sessions to `docs/llm/entrypoint.md`.
+- [x] README and entrypoint point post-update reviewers to `docs/llm/post-update-review.md`.
+- [x] Compact handoff includes `docs/llm/post-update-review.md` in read-next pointers.
+- [x] Handoff protocol separates runtime facts from durable repo guidance.
+- [x] Post-update review guidance states when `tul-vf-latest.md` is sufficient.
+- [x] Post-update review guidance states when `tul state` is needed.
+- [x] Post-update review guidance states when a fresh repo zip is needed.

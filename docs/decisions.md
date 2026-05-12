@@ -187,3 +187,13 @@ Context: Work state directories accumulate during self-host testing. They are cl
 Decision: State cleanup guidance starts with `tul archive --noop --dry-run --keep N`. Archive output should show inventory, selected cleanup class, keep count, source and destination directories, and latest/latest-rollbackable reference states. Omitted project targets may use guarded native context, matching other mutating commands. Actual moves require an explicit rerun without `--dry-run`.
 
 Consequences: Users can reduce work-state clutter without losing inspection authority. Cleanup remains reversible in the sense that state directories are moved to the configured archive root rather than deleted. Automatic deletion and archive pruning are deferred.
+
+## ADR-018 — Handoff discoverability uses repo pointers, not larger terminal dumps
+
+Status: accepted
+
+Context: Compact handoff and verify artifacts reduce bridge work, but a fresh LLM session can still ask for too much evidence or start from the wrong document. Expanding terminal handoff into a large prompt would reintroduce clutter and make every update harder to read.
+
+Decision: Keep handoff compact and add a repo-resident post-update review guide. Compact handoff, README, the LLM entrypoint, and the handoff protocol should all point to the same review path. `tul-vf-latest.md` is the normal release-gate evidence; `tul state` is requested only for state-sensitive behavior; a current repo zip is requested when producing the next package or diagnosing code-level failures.
+
+Consequences: Fresh LLM sessions can review successful updates with less user bridge work while still finding the correct repo documents when implementation is needed. Future discoverability improvements should add or refine repo pointers before increasing terminal output size.

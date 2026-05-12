@@ -1,8 +1,8 @@
 # Current status
 
-Latest known version: `0.8.8-archive-cleanup-dryrun-bundle`.
+Latest known version: `0.8.9-handoff-discoverability-bundle`.
 
-Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, and archive dry-run guidance are available. The compact gate and authoring diagnostics bundles have passed release gate and are now normal loop baseline behavior.
+Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, and archive dry-run guidance are baseline behavior. Bundle B, Bundle C, and Bundle D have passed release gate. The active bounded package is the handoff discoverability bundle.
 
 ## Current verified loop
 
@@ -18,17 +18,17 @@ tul update
 
 ## Current bundle
 
-Package: `tul_stage6_archive_cleanup_dryrun_bundle_v1`
+Package: `tul_stage6_handoff_discoverability_bundle_v1`
 
-Commit message: `Improve archive cleanup dry-run output`
+Commit message: `Improve handoff discoverability`
 
 Scope:
 
-1. Make `tul state` recommend archive dry-run before cleanup.
-2. Allow `tul archive` to use guarded native context when the project target is omitted.
-3. Print work-state inventory, selected cleanup class, keep count, archive root, and protected reference states.
-4. Improve `tul archive --noop --dry-run --keep N` output without adding automatic destructive cleanup.
-5. Preserve verify, update, rollback, package authoring, and Windows behavior for later bundles.
+1. Add a dedicated post-update review guide for fresh LLM sessions.
+2. Make README, LLM entrypoint, handoff docs, and handoff output point to the same review path.
+3. Clarify when `tul-vf-latest.md`, `tul state`, or a repo zip is sufficient evidence.
+4. Refresh roadmap, checklist, learning log, and decisions for Bundle E.
+5. Preserve update, verify, package, archive, rollback, and Windows behavior for later bundles.
 
 ## Verify artifact convention
 
@@ -89,12 +89,24 @@ tul archive --noop --dry-run --keep 3
 
 The dry-run output should show inventory counts, selected state directories, destination archive directories, latest state, and latest rollbackable state before any files are moved. Actual archive moves remain explicit by re-running without `--dry-run` after review.
 
+## Handoff discoverability convention
+
+Fresh LLM sessions should use this review path:
+
+1. `tul-vf-latest.md` for release-gate facts.
+2. `tul state` output for state/rollback/cleanup facts when relevant.
+3. `docs/llm/entrypoint.md` for repo read order.
+4. `docs/llm/post-update-review.md` for evidence economy and next-command selection.
+5. `docs/status/current.md` and `docs/roadmap.md` for current bundle state.
+
+A repo zip is needed for package generation or code-level diagnosis, not for every successful update review.
+
 ## Next likely bundles
 
-- handoff discoverability bundle;
 - parallel-readiness gate bundle;
 - Windows parity bundle;
-- parallel-readiness gate bundle.
+- state cleanup policy expansion for imported/failed states;
+- handoff/runtime prompt polish if fresh-session reviews still miss context.
 
 ## Deferred
 

@@ -15,14 +15,15 @@ The first operational target is **`humtr/ai`**. This repo, **`humtr/tul`**, is t
 If you are an LLM, coding agent, or a new session reviewing this repo, start here:
 
 1. Read [`docs/llm/entrypoint.md`](docs/llm/entrypoint.md).
-2. Read [`docs/manifest.md`](docs/manifest.md) for vision, invariants, and change rules.
-3. Read [`docs/status/current.md`](docs/status/current.md) for the current checkpoint.
-4. Read [`docs/strategy.md`](docs/strategy.md) for the medium-term capability map.
-5. Read [`docs/roadmap.md`](docs/roadmap.md) for the short-term ready queue and bundle candidates.
-6. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
-7. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
-8. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
-9. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
+2. Read [`docs/llm/post-update-review.md`](docs/llm/post-update-review.md) when reviewing a just-applied package or verify artifact.
+3. Read [`docs/manifest.md`](docs/manifest.md) for vision, invariants, and change rules.
+4. Read [`docs/status/current.md`](docs/status/current.md) for the current checkpoint.
+5. Read [`docs/strategy.md`](docs/strategy.md) for the medium-term capability map.
+6. Read [`docs/roadmap.md`](docs/roadmap.md) for the short-term ready queue and bundle candidates.
+7. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
+8. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
+9. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
+10. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 

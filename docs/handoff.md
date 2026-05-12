@@ -2,19 +2,39 @@
 
 `tul handoff <project>` prints a compact handoff by default.
 
+Compact handoff is a bridge artifact, not the full project contract. It should contain current runtime facts plus pointers to repo-resident documents that a fresh LLM can read.
+
+## Compact handoff contents
+
 Compact handoff includes:
 
-- repo URL
-- branch
-- local HEAD
-- remote HEAD after fetch
-- working tree status
-- active package if available
-- commit hash if available
-- push verification if available
-- rollback command if available
-- state/report paths if available
-- pointers to durable repo documents
+- repo URL;
+- branch;
+- local HEAD;
+- remote HEAD after fetch;
+- working tree status;
+- active package if available;
+- outcome if available;
+- commit hash if available;
+- push verification if available;
+- rollback command if available;
+- state/report paths if available;
+- verify artifact paths if available;
+- pointers to durable repo documents.
+
+## Read-next priority
+
+A fresh LLM should start with:
+
+1. the user-provided `tul-vf-latest.md` artifact, when present;
+2. pasted `tul state` output, when the task involves state, rollback, cleanup, or archive behavior;
+3. `docs/llm/entrypoint.md`;
+4. `docs/llm/post-update-review.md`;
+5. `docs/status/current.md`;
+6. `docs/roadmap.md`;
+7. `docs/checklists/loop-runtime.md`.
+
+## Full and instruction modes
 
 Full handoff is available with:
 
@@ -29,4 +49,4 @@ tul handoff <project> --instructions
 tul instructions [project]
 ```
 
-The README should stay concise. Runtime facts should stay in handoff output. Durable status and planning should stay in `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
+The README should stay concise. Runtime facts should stay in handoff output and verify artifacts. Durable status and planning should stay in `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.

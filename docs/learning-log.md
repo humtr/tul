@@ -235,3 +235,13 @@ Impact: Archive cleanup should start with `tul archive --noop --dry-run --keep N
 Reflected in: `lib/tulcore/state.py`, `lib/tulcore/cli.py`, `docs/workflows/state-cleanup.md`, and `docs/checklists/loop-runtime.md`.
 
 Follow-up: After observing dry-run output over repeated bundles, decide whether imported/failed cleanup guidance needs a separate bundle. Keep actual deletion and archive pruning out of this dry-run bundle.
+
+### Stage 6.6 — Handoff discoverability is a runtime/document boundary problem
+
+Observation: Once update, verify, state, package diagnostics, and archive dry-run were stable, the remaining bridge friction was not another runtime mutation. The fresh LLM session needed a clearer path for deciding whether `tul-vf-latest.md`, `tul state`, or a repo zip was required.
+
+Impact: Repo-resident docs should make the evidence economy explicit. A successful update review usually needs only the latest verify artifact. State-sensitive bundles need pasted `tul state` output. New package generation or code-level diagnosis needs the current repo zip.
+
+Reflected in: `docs/llm/post-update-review.md`, `docs/llm/entrypoint.md`, `docs/handoff.md`, `docs/protocols/llm-handoff-protocol.md`, and `lib/tulcore/handoff.py`.
+
+Follow-up: If fresh LLM sessions still miss bundle boundaries, add a parallel-readiness gate document rather than expanding terminal handoff output.

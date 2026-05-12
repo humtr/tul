@@ -4,7 +4,7 @@
 
 Stage 6 — bounded parallel self-host hardening.
 
-The roadmap is a ready queue and bundle planner. The update-integrated verify gate has passed smoke and is now the normal loop baseline. The compact gate and authoring diagnostics bounded packages have passed. The active bounded package is `tul_stage6_archive_cleanup_dryrun_bundle_v1`.
+The roadmap is a ready queue and bundle planner. The update-integrated verify gate, compact gate/state output, authoring diagnostics, and archive dry-run guidance have passed release gate and are baseline behavior. The active bounded package is `tul_stage6_handoff_discoverability_bundle_v1`.
 
 ## Completed foundations
 
@@ -34,6 +34,7 @@ The roadmap is a ready queue and bundle planner. The update-integrated verify ga
 - Stage 6.1f — normal update smoke for post-update fresh verification
 - Stage 6.2 — compact verify gate and state output
 - Stage 6.4 — package authoring diagnostics
+- Stage 6.5 — archive cleanup dry-run guidance
 
 ## Recently completed bundles
 
@@ -49,48 +50,54 @@ Package: `tul_stage6_authoring_diagnostics_bundle_v1`
 
 Result: release gate passed. Package check now catches nested roots, missing payload sources, unreferenced payload files, and apply/commit file drift before update.
 
-## Active bundle
-
 ### Bundle D — Archive cleanup dry-run bundle
 
 Package: `tul_stage6_archive_cleanup_dryrun_bundle_v1`
 
+Result: release gate passed. `tul state` points to dry-run cleanup, and `tul archive --noop --dry-run --keep 3` prints inventory, protected reference states, and source/destination directories without moving files.
+
+## Active bundle
+
+### Bundle E — Handoff discoverability bundle
+
+Package: `tul_stage6_handoff_discoverability_bundle_v1`
+
 Scope:
 
-1. Make `tul state` recommend `tul archive --noop --dry-run --keep 3` before cleanup.
-2. Let `tul archive` use the same guarded native context pattern as other mutating commands when target is omitted.
-3. Improve archive dry-run output with inventory counts, selector, keep count, source/destination directories, and protected reference states.
-4. Refresh state cleanup workflow and runtime checklist docs.
+1. Add `docs/llm/post-update-review.md` as the fresh-session review path.
+2. Make README, entrypoint, handoff docs, and handoff output agree on read-next priority.
+3. Clarify when `tul-vf-latest.md`, `tul state`, and repo zip are each necessary.
+4. Keep the bundle docs-first and avoid runtime behavior changes beyond handoff pointers.
 
 Success criteria:
 
-- `tul archive --noop --dry-run --keep 3` works from the active/current tul repo without a repeated project argument.
-- Dry-run output states that no files were moved.
-- Output identifies latest state and latest rollbackable state as protected reference states.
-- `tul state` cleanup guidance points to dry-run first.
+- `docs/llm/post-update-review.md` exists and explains evidence economy.
+- Compact handoff points to the post-update review guide.
+- README and LLM entrypoint include the post-update review guide.
+- Loop checklist includes a handoff discoverability checkpoint.
 - Normal `tul update` still produces a release-gate PASS artifact after applying this bundle.
 
 ## Ready queue
 
 Ready queue items can be bundled when they share a capability area and have compatible risk.
 
-- Handoff discoverability: make repo-resident state easier for a fresh LLM to find.
-- Package check diagnostics: clearer failure messages and package authoring guidance.
-- Docs consistency checks: status, roadmap, manifest, strategy, and checklist alignment.
+- Parallel-readiness gate: define how multiple bounded bundles are ordered, checked, and rejected on file conflict.
 - Windows parity pass: launcher shim, config paths, inbox roots, native update, verify fresh.
-- State cleanup polish: better archive defaults and clearer stale failure detection.
+- State cleanup policy expansion: imported/failed cleanup guidance after dry-run behavior has been observed.
+- Docs consistency checks: status, roadmap, manifest, strategy, and checklist alignment.
 
 ## Bundle candidates
 
-### Bundle E — Handoff discoverability bundle
+### Bundle F — Parallel-readiness gate bundle
 
 Scope:
 
-- repo-visible handoff and current-state discovery;
-- LLM entrypoint improvements for post-update review;
-- checklist pointers for next-command selection.
+- package conflict checklist;
+- touched-file overlap rules;
+- verify/state/handoff acceptance for multiple small bundles;
+- guidance on when to serialize instead of parallelize.
 
-### Bundle F — Windows parity bundle
+### Bundle G — Windows parity bundle
 
 Scope:
 
