@@ -4,9 +4,9 @@ This document is the medium-term capability map for `tul`. The roadmap extracts 
 
 ## Current mode
 
-Stage 7 — planning consolidation and bounded parallel operations.
+Stage 7 — terminology hardening and bounded parallel operations after planning consolidation.
 
-Stage 6 closed the self-host stabilization baseline. Stage 7 should not rush into runtime behavior changes. Its first job is to make the planning ledger strong enough that several candidate workstreams can be designed in parallel while applied packages remain sequential, reviewable, and rollbackable.
+Stage 6 closed the self-host stabilization baseline, and Stage 7 planning consolidation is applied. Stage 7 should not rush into runtime behavior changes. Its current job is to make the artifact vocabulary strong enough that source-context and future source-export work do not reintroduce review/source/backup ambiguity.
 
 The operating rule is:
 
@@ -42,13 +42,11 @@ parallel planning, sequential gated update
 
 ## Near-term capability pressure
 
-The next pressure cluster is **Stage 7 planning control**:
+The next pressure cluster is **Stage 7 terminology control**:
 
-- close Stage 6 as a verified stabilization baseline;
-- align manifest, strategy, roadmap, status, checklists, learning log, and decisions;
-- maintain a bundle candidate matrix with Green/Yellow/Orange/Red classes;
-- define touched-file and acceptance-gate conflict rules;
-- separate planning work from runtime implementation work;
-- preserve the source/review/backup artifact distinctions.
+- keep runtime baseline, review bundle, source context, future source export, and backup/recovery authority distinct;
+- mark `tul export source` as proposed and not currently runnable until implementation closes;
+- keep GitHub-generated source archives usable as source context without elevating them into tul runtime artifacts;
+- preserve the Green/Yellow/Orange/Red candidate matrix and sequential release gate.
 
-After this planning consolidation, implementation work can proceed in smaller packages: explicit source export, docs drift checks, review/source provenance hardening, Windows parity, or cleanup expansion.
+After this terminology baseline, implementation work can proceed in smaller packages: explicit source-export spec, source-export implementation, docs drift checks, review/source provenance hardening, Windows parity, or cleanup expansion.

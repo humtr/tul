@@ -65,12 +65,12 @@ Stage 7 uses **parallel planning, sequential gated update**:
 
 ```text
 many candidate plans may be drafted or compared in parallel
-→ one package is generated from the latest verified source baseline
+→ one package is generated from the latest verified runtime baseline plus matching source context
 → one package is applied through tul update
 → one release gate closes the new baseline
 ```
 
-The first Stage 7 package is a planning consolidation package. It may update many coordination documents in one commit, but it should not change runtime behavior. Subsequent implementation packages must be classified as Green, Yellow, Orange, or Red before generation. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md).
+The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b714dab33a45079e19` when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes. The next Stage 7 checkpoint is terminology hardening: remove ambiguity between runtime baseline, review bundle, source context, future source export, and backup/recovery authority. Subsequent implementation packages must be classified as Green, Yellow, Orange, or Red before generation. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md) and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md).
 
 
 ## Non-negotiable invariants
@@ -277,10 +277,10 @@ It contains release-gate evidence plus compact runtime snapshots. Zip artifacts 
 
 - verify artifact: release-gate evidence;
 - review bundle: explicit compact diff-oriented upload artifact from `tul export review`;
-- source bundle: future explicit full source context for package generation;
+- source export: proposed future explicit full source context for package generation; not implemented yet;
 - backup: Git remote, commit hashes, and rollback state.
 
-See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md). Ask for a repo/source zip only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it. A GitHub-generated source archive can be source context, but backup and recovery authority remains Git remote plus commit hashes and rollback state.
+See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md). Ask for source context only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it. A GitHub-generated source archive can be source context, but backup and recovery authority remains Git remote plus commit hashes and rollback state. Do not ask the user to run `tul export source` until a source-export implementation package has been applied and verified.
 
 
 ## K1 archive execution safety

@@ -155,7 +155,7 @@ Invariants:
 - [x] Handoff protocol separates runtime facts from durable repo guidance.
 - [x] Post-update review guidance states when `tul-vf-latest.md` is sufficient.
 - [x] Post-update review guidance states when `tul state` is needed.
-- [x] Post-update review guidance states when a fresh repo zip is needed.
+- [x] Post-update review guidance states when source context is needed.
 
 ## Parallel readiness checkpoint
 
@@ -171,7 +171,7 @@ Invariants:
 
 ## Import-root latest snapshot checkpoint
 
-- [x] Stable latest verify markdown/json live beside `tul-main.zip` in the tul import root.
+- [x] Stable latest verify markdown/json live in the tul import root, possibly beside manually supplied source-context archives.
 - [x] Timestamped run artifacts remain under `logs/verify/YYMMDD/`.
 - [x] Latest markdown includes `## Runtime snapshots`.
 - [x] Latest markdown includes compact `tul state`.
@@ -192,7 +192,7 @@ Invariants:
 - [x] Automatic `tul-main.zip` source export is not considered closed.
 - [x] Legacy source zip paths are not displayed as successful artifacts in compact state.
 - [x] `tul export review` creates a compact diff-oriented review bundle.
-- [ ] `tul export source` creates an explicit full source bundle with root-layout checks.
+- [ ] Future `tul export source` creates an explicit full source export with root-layout checks. It is not implemented yet.
 - [ ] Any automatic post-update export is limited to review evidence until source export is proven.
 
 ## Artifact semantics checkpoint
@@ -204,7 +204,7 @@ Invariants:
 - [x] Automatic `tul-main.zip` export is not considered closed.
 - [x] Misleading source zip state output is removed or clearly marked as unresolved.
 - [x] `tul export review` creates a compact diff-oriented review bundle.
-- [ ] `tul export source` creates an explicit full source bundle with root-layout checks.
+- [ ] Future `tul export source` creates an explicit full source export with root-layout checks. It is not implemented yet.
 - [ ] Any automatic post-update export is limited to review evidence until source export is proven.
 
 
@@ -258,5 +258,5 @@ Invariants:
 - [x] Runtime behavior changes are excluded from the planning consolidation package.
 - [x] Review bundle and source bundle semantics remain separated.
 - [x] GitHub-generated `tul-main.zip` can be source context but not backup or tul-proven source export.
-- [ ] Future `tul export source` has an accepted spec before implementation.
+- [ ] Future `tul export source` has an accepted spec before implementation and is not described as runnable before then.
 - [ ] Any automatic review/source export is approved in a separate package.

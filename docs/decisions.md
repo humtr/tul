@@ -238,7 +238,7 @@ Consequences: The user can rely on `tul-vf-latest.md` and `tul-main.zip` living 
 
 ## ADR-020 — Successful updates refresh a stable repo zip
 
-Status: accepted
+Status: superseded by ADR-022 and ADR-023
 
 Context: The latest verify markdown now lives beside `tul-main.zip` and includes compact state/handoff snapshots. Package generation still needs a current repo zip, and asking the user to manually recreate it after every successful update keeps one avoidable human bridge step in the loop.
 
@@ -247,6 +247,8 @@ Decision: After a successful full `tul update` with commit, push, and fresh veri
 Consequences: The next package-generation session normally needs only the side-by-side pair `tul-vf-latest.md` and `tul-main.zip`. If repo zip export fails after the release gate passed, the failure is visible in state/runtime snapshots but does not retroactively make the release gate fail.
 
 ## ADR-021 — Repo zip export is post-verify metadata, recorded before final handoff
+
+Status: superseded by ADR-022 and ADR-023
 
 Context: Repo zip export is a convenience artifact for the next LLM package-generation turn. It should be refreshed after successful verification, but a failure to write the zip after commit/push/verify should not retroactively change the release gate.
 
@@ -337,3 +339,14 @@ Context: A `tul-main.zip` downloaded from GitHub is a valid source archive for r
 Decision: A GitHub-generated `tul-main.zip` can be used as manual source baseline/context for package generation when it plausibly corresponds to the verified HEAD. It must not be treated as backup, rollback authority, review bundle, or a tul-proven explicit source export. Future `tul export source` must record root layout, freshness, HEAD provenance, sha256, bytes, file count, and exclusions.
 
 Consequences: Package-generation sessions can use GitHub source zips without pretending they are runtime evidence. Runtime truth remains `tul-vf-latest.md`; recovery authority remains Git remote plus commit hashes and rollback state.
+
+
+## ADR-028 — Source context and source export are separate terms
+
+Status: accepted
+
+Context: After Stage 7 planning consolidation, the user pointed out that `tul export source` was not a valid current command. A repo-wide terminology audit also found that `repo zip`, `source zip`, `source bundle`, `source context`, and `source export` could still be read as interchangeable.
+
+Decision: Use `source context` for currently available file contents used in package generation or code-level diagnosis. Use `source export` only for a future tul-generated artifact with explicit provenance and root-layout evidence. `tul export source` is proposed, not implemented. A GitHub-generated `tul-main.zip` can be manual source context, but it is not review evidence, backup authority, or a tul-proven source export.
+
+Consequences: Documentation and help text must not ask the user to run `tul export source` until an implementation package has closed. Future source-export work must serialize after terminology/spec baselines and must prove command wiring, output path, root layout, HEAD provenance, sha256, bytes, file count, and exclusions.

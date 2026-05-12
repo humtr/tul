@@ -84,4 +84,4 @@ tul update <project> --package /path/to/package.zip
 
 ## Evidence economy
 
-For a successful update review, `tul-vf-latest.md` is usually enough. Ask for `tul state` only when state/rollback/cleanup behavior is part of the review. Ask for a repo zip only when producing the next package or diagnosing a code-level failure.
+For a successful update review, `tul-vf-latest.md` is usually enough. Ask for `tul state` only when state/rollback/cleanup behavior is part of the review. Ask for source context only when producing the next package or diagnosing a code-level failure. Source context may be a GitHub-generated archive, fresh clone, or future source export; it is not backup evidence.

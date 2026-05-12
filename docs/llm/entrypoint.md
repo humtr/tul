@@ -29,7 +29,7 @@ Use this order unless the user gives a narrower task:
 8. Read `docs/checklists/loop-runtime.md` for acceptance criteria.
 9. Read implementation files only when generating or reviewing a package.
 
-Do not ask for a repo zip just to confirm a successful update when `tul-vf-latest.md` already proves release-gate status and includes runtime snapshots. Ask for standalone `tul state` or `tul handoff` only if the latest artifact is stale or missing those snapshots. Ask for source context when producing the next package or when the failure is code-level, and verify the zip root layout before using it. A GitHub-generated `tul-main.zip` can be manual source context, but it is not a tul runtime backup or a tul-proven explicit source export.
+Do not ask for source context just to confirm a successful update when `tul-vf-latest.md` already proves release-gate status and includes runtime snapshots. Ask for standalone `tul state` or `tul handoff` only if the latest artifact is stale or missing those snapshots. Ask for source context when producing the next package or when the failure is code-level, and verify archive/root layout before using it. A GitHub-generated `tul-main.zip` can be manual source context, but it is not a tul runtime backup or a tul-proven explicit source export.
 
 ## Durable read order
 
@@ -113,7 +113,7 @@ For compact change review, prefer the explicit review bundle:
 tul export review
 ```
 
-For package generation or code-level diagnosis, ask for source context when needed and verify its root layout before use. A GitHub-generated `tul-main.zip` is acceptable manual source context when it plausibly corresponds to the verified HEAD, but it is not a tul runtime backup or a tul-proven explicit source export. A future explicit `tul export source` command should replace this ambiguity.
+For package generation or code-level diagnosis, ask for source context when needed and verify its root layout before use. A GitHub-generated `tul-main.zip` is acceptable manual source context when it plausibly corresponds to the verified HEAD, but it is not a tul runtime backup or a tul-proven explicit source export. A future explicit `tul export source` command may replace this ambiguity, but it is not implemented yet and must not be suggested as a runnable command.
 
 ## Stage 7 planning checkpoint
 

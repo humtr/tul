@@ -64,7 +64,7 @@ By default, `tul verify` writes markdown and JSON artifacts in the platform veri
 /sdcard/termux/import/tul/logs/verify/
 ```
 
-Canonical latest files are kept directly under the tul import root so they sit beside `tul-main.zip`:
+Canonical latest files are kept directly under the tul import root. They may sit beside manually supplied source-context archives such as a GitHub-generated `tul-main.zip`, but verify does not create source archives:
 
 ```text
 <project>-vf-latest.md

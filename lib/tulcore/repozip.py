@@ -1,4 +1,10 @@
-"""Repo zip export helpers."""
+"""Retired repo zip export helpers.
+
+This module remains for historical compatibility with the Stage 6 source-zip
+experiment. It is not wired into the default update loop and does not expose a
+current `tul export source` CLI command. Future source-export work should add
+explicit provenance, root-layout, and acceptance-gate checks before use.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -37,9 +43,9 @@ class RepoZipExport:
 
 
 def repo_zip_root(ctx: ProjectContext) -> Path:
-    """Return the directory for the stable repo zip export.
+    """Return the legacy directory for the retired repo zip export helper.
 
-    The default is the tul import root, derived from `platform.work_root`.
+    This legacy helper derived the tul import root from `platform.work_root`.
     For the common Termux layout this produces:
 
     `/sdcard/termux/import/tul/tul-main.zip`
@@ -59,11 +65,11 @@ def repo_zip_path(ctx: ProjectContext) -> Path:
 
 
 def export_repo_zip(ctx: ProjectContext, *, out_path: Path | None = None) -> RepoZipExport:
-    """Write a stable repo zip export for the current repo.
+    """Write a legacy repo zip export for the current repo.
 
-    The export is intentionally a latest pointer, not a timestamped archive. It
-    is written outside the repo by default and excludes Git metadata, caches,
-    build outputs, previous zip files, and common transient directories.
+    This helper is retained but not exposed as a current CLI command. Do not
+    treat its output as a tul-proven source export unless a future package adds
+    explicit command wiring, provenance, and verification semantics.
     """
     repo = ctx.repo_path.resolve()
     target = out_path or repo_zip_path(ctx)

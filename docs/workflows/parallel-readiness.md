@@ -8,7 +8,7 @@ Use current-turn evidence in this order:
 
 1. `tul-vf-latest.md` for release-gate facts and embedded state/handoff snapshots.
 2. `tul state` output for latest package, rollbackable commit, cleanup, and handoff state.
-3. Source context such as a GitHub-generated `tul-main.zip`, explicit source bundle, or fresh clone contents for code-level package generation.
+3. Source context such as a GitHub-generated `tul-main.zip`, manually created source zip, fresh clone contents, or future explicit source export for code-level package generation.
 4. Repo documents for durable guidance.
 
 Do not use prior chat memory as the source of truth when these inputs disagree.
@@ -79,7 +79,7 @@ Serialize when two candidate bundles change the meaning or production of:
 
 - `tul-vf-latest.md`;
 - `tul-review-latest.zip`;
-- future `tul-source-latest.zip`;
+- future `tul-source-latest.zip` after implementation;
 - state/report/handoff artifact evidence;
 - backup or rollback authority.
 
@@ -98,7 +98,7 @@ Intentionally excluded files:
 Acceptance criteria:
 Parallel class: Green / Yellow / Orange / Red
 Serialize because: ...
-Proceed condition: latest verify PASS + source context at target HEAD when code generation is needed
+Proceed condition: latest verify PASS + source context plausibly matching target HEAD when code generation is needed
 ```
 
 ## Acceptance gates
@@ -139,7 +139,7 @@ Stage 7 remains bounded parallel, not unrestricted parallel. The safe rhythm is:
 1. close one package with verify/state evidence;
 2. declare the new baseline commit;
 3. classify the next bundle;
-4. generate one package from the current verified source context;
+4. generate one package from the current verified runtime baseline plus matching source context;
 5. apply with `tul update`;
 6. review the new `tul-vf-latest.md`;
 7. request `tul state` or `tul handoff` only when the bundle touched those surfaces.

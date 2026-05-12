@@ -2,17 +2,17 @@
 
 ## Current mode
 
-Stage 7 planning consolidation. Stage 6 is treated as closed when the current `tul-vf-latest.md` confirms release gate PASS, matching HEAD/Remote HEAD, clean working tree, and fresh clone verification.
+Stage 7 terminology hardening after planning consolidation. Stage 6 is closed, and the first Stage 7 planning package is applied and verified. The next short-term risk is vocabulary drift: docs and help text must not make a proposed source-export command look implemented.
 
 ## Verified baseline
 
 ```text
-HEAD: 5086c982ae5d52c586049d4fb21c8e7d4ada006d
-Remote HEAD: 5086c982ae5d52c586049d4fb21c8e7d4ada006d
+HEAD: 79d27fb07ce52666acb603b714dab33a45079e19
+Remote HEAD: 79d27fb07ce52666acb603b714dab33a45079e19
 Release gate: PASS
 Steps: 25 pass, 0 fail
 Fresh clone verify: PASS
-Latest package: tul-stage6-stabilization-checkpoint-bundle-v1
+Latest package: tul-stage7-planning-consolidation-bundle-v1
 ```
 
 The runtime baseline remains the latest user-provided `tul-vf-latest.md` when it is newer than this document.
@@ -48,6 +48,7 @@ The runtime baseline remains the latest user-provided `tul-vf-latest.md` when it
 - Stage 6 J track — artifact semantics and explicit review export
 - Stage 6 K track — archive execution safety and package inbox hygiene
 - Stage 6 stabilization checkpoint — verified baseline closure
+- Stage 7 planning consolidation — verified at `79d27fb07ce52666acb603b714dab33a45079e19`
 
 ## Stage 6 closure status
 
@@ -74,21 +75,22 @@ Stage 7 does not mean unrestricted parallel implementation. It means several can
 
 ## Stage 7 ready queue
 
-1. **Planning consolidation package**: sync manifest, strategy, roadmap, status, decisions, learning log, checklists, artifact semantics, and parallel-readiness around Stage 7 objectives.
-2. **Acceptance gate template package**: make per-bundle gate declarations copy-ready if the first package leaves that too implicit.
-3. **Explicit source export spec package**: define exact root layout, freshness, HEAD provenance, sha256, and file-exclusion rules before implementation.
-4. **Explicit source export implementation package**: implement `tul export source` only after the spec is accepted.
-5. **Docs drift checker package**: check that docs/status/current.md and roadmap baseline do not contradict the latest release facts.
+1. **Terminology audit package**: clarify runtime baseline, review bundle, source context, proposed source export, GitHub-generated source archive, and backup/recovery authority across docs and help/docstrings.
+2. **Explicit source export spec package**: define exact root layout, freshness, HEAD provenance, sha256, bytes, and file-exclusion rules before implementation.
+3. **Explicit source export implementation package**: implement `tul export source` only after the spec is accepted.
+4. **Docs drift checker package**: check that docs/status/current.md and roadmap baseline do not contradict the latest release facts.
+5. **Acceptance gate template refinement package**: make per-bundle gate declarations more copy-ready if later packages need it.
 6. **Windows parity smoke package**: verify PowerShell apply/install/update behavior once self-host planning has stabilized.
 
 ## Stage 7 candidate matrix
 
 | Candidate | Class | Likely files | Serialize because |
 |---|---|---|---|
-| Planning consolidation | Yellow | README, manifest, strategy, roadmap, status, checklists, decisions, learning log, workflow docs | Owns coordination docs and current status |
+| Planning consolidation | Closed | README, manifest, strategy, roadmap, status, checklists, decisions, learning log, workflow docs | Verified baseline is `79d27fb...` |
+| Terminology audit | Yellow | README, status, roadmap, decisions, workflow docs, CLI help/docstrings | Owns artifact vocabulary and current status |
 | Acceptance gate template refinement | Green/Yellow | checklists, templates, post-update review guide | Yellow if it touches current status or roadmap |
-| Source export spec-only | Green | artifact semantics, roadmap, new workflow doc | Does not touch runtime files |
-| Explicit `tul export source` implementation | Orange | `lib/tulcore/repozip.py`, `lib/tulcore/cli.py`, docs | Runtime/export behavior must serialize |
+| Source export spec-only | Green/Yellow | artifact semantics, source-context workflow doc, roadmap | Yellow if it revises current queue/status |
+| Explicit `tul export source` implementation | Orange | `lib/tulcore/repozip.py`, `lib/tulcore/cli.py`, docs | Runtime/export behavior must serialize after spec acceptance |
 | Docs drift checker | Orange | checks or verify-related modules, docs | May affect release gate semantics |
 | Review export automation | Red | update pipeline, review, state, verify docs | Changes default post-update behavior |
 | Archive policy expansion | Red | archive/sweep/state docs and code | Moves runtime evidence; must have separate dry-run proof |
@@ -96,15 +98,15 @@ Stage 7 does not mean unrestricted parallel implementation. It means several can
 
 ## Short-term plan
 
-- Land one large planning consolidation package.
-- Treat the new commit as the Stage 7 planning baseline only after release gate PASS and fresh clone PASS.
-- Generate subsequent packages one at a time from the new verified source baseline.
+- Land one terminology audit package before any source-export implementation.
+- Treat the new commit as the Stage 7 terminology baseline only after release gate PASS and fresh clone PASS.
+- Generate subsequent packages one at a time from the new verified runtime baseline plus matching source context.
 - Prefer docs/spec packages before runtime implementation packages.
 
 ## Mid-term plan
 
 - Add explicit source export only if package-generation sessions repeatedly need full source context beyond review bundles.
-- Add docs-drift checks if roadmap/status drift recurs after Stage 7 consolidation.
+- Add docs-drift checks if roadmap/status drift recurs after Stage 7 terminology hardening.
 - Improve Windows parity after self-host behavior stays stable across several packages.
 
 ## Long-term plan

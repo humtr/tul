@@ -1,21 +1,21 @@
 # Current status
 
-Latest known version: `0.8.24-stage7-planning`.
+Latest known version: `0.8.25-stage7-terminology`.
 
-Current mode: Stage 7 planning consolidation. Stage 6 is closed as the verified stabilization baseline. Stage 7 now organizes short-term, mid-term, and long-term plans plus bounded parallel candidate management.
+Current mode: Stage 7 terminology hardening after planning consolidation. Stage 6 is closed as the verified stabilization baseline. The first Stage 7 planning consolidation package is applied and verified. The current task is to remove artifact-vocabulary ambiguity before any source-export implementation.
 
 ## Verified baseline
 
 Latest verified baseline from the current `tul-vf-latest.md` artifact:
 
 ```text
-HEAD: 5086c982ae5d52c586049d4fb21c8e7d4ada006d
-Remote HEAD: 5086c982ae5d52c586049d4fb21c8e7d4ada006d
+HEAD: 79d27fb07ce52666acb603b714dab33a45079e19
+Remote HEAD: 79d27fb07ce52666acb603b714dab33a45079e19
 Release gate: PASS
 Steps: 25 pass, 0 fail
 Working tree: clean
 Fresh clone verify: PASS
-Latest package: tul-stage6-stabilization-checkpoint-bundle-v1
+Latest package: tul-stage7-planning-consolidation-bundle-v1
 ```
 
 Canonical latest artifact:
@@ -43,16 +43,17 @@ When a newer artifact is provided by the user, treat it as the runtime source of
 - K1 — archive execution safety: PASS.
 - K2 — package inbox ingest policy: PASS.
 - K3 — Stage 6 stabilization checkpoint: PASS.
+- Stage 7 planning consolidation — PASS at `79d27fb07ce52666acb603b714dab33a45079e19`.
 
-## Current artifact model
+## Current artifact vocabulary
 
-- `tul-vf-latest.md` is release-gate evidence with runtime snapshots.
-- `tul-review-latest.zip` is explicit review transport from `tul export review`.
-- A GitHub-generated `tul-main.zip` can be manual source context when package generation needs full repo contents, but it is not a tul runtime backup or a tul-proven explicit source export.
-- Future source export must be explicit and must record root layout, freshness, HEAD provenance, sha256, bytes, and exclusions.
-- Git remote, commit hashes, and rollback state remain the recovery authority.
+- Runtime baseline: the latest `tul-vf-latest.md` evidence for HEAD, Remote HEAD, release gate, working tree, and fresh clone status.
+- Review bundle: currently implemented explicit transport artifact from `tul export review`, written as `tul-review-latest.zip`.
+- Source context: manually supplied repo contents used for package generation or code-level diagnosis. A GitHub-generated `tul-main.zip` can serve this role after root layout and intended commit are checked.
+- Source export: proposed future tul command and artifact. `tul export source` is not implemented in the current CLI.
+- Backup/recovery authority: Git remote, commit hashes, and tul rollback state. Zip artifacts are not backup authority.
 
-See `docs/workflows/artifact-semantics.md`, `docs/workflows/parallel-readiness.md`, and `docs/workflows/stage7-bounded-parallel-planning.md`.
+See `docs/workflows/artifact-semantics.md`, `docs/workflows/source-context-and-export.md`, `docs/workflows/parallel-readiness.md`, and `docs/workflows/stage7-bounded-parallel-planning.md`.
 
 ## Current cleanup model
 
@@ -67,27 +68,26 @@ See `docs/workflows/artifact-semantics.md`, `docs/workflows/parallel-readiness.m
 Recommended package:
 
 ```text
-tul-stage7-planning-consolidation-bundle-v1
+tul-stage7-terminology-audit-bundle-v1
 ```
 
 Goal:
 
 ```text
-Commit the Stage 7 planning system in one package: Stage 6 baseline closure, roadmap alignment, manifest cleanup, short/mid/long plan, bundle matrix, conflict matrix, and acceptance gates.
+Clarify artifact and source vocabulary across docs and code comments before implementing any source-export command.
 ```
 
 Parallel class: Yellow.
 
-Reason: this package touches coordination docs. It may consolidate many plans in one commit, but no competing package should edit `docs/status/current.md`, `docs/roadmap.md`, `docs/manifest.md`, `docs/decisions.md`, or `docs/learning-log.md` until the new baseline is verified.
+Reason: this package touches coordination docs and artifact vocabulary. It may update documentation and help/docstrings in one commit, but it must not change runtime behavior or add a `tul export source` command.
 
 ## Next ready queue
 
-1. Apply the Stage 7 planning consolidation package and close it with `tul-vf-latest.md`.
-2. If more planning detail is needed, refine acceptance gate templates without touching runtime code.
-3. Specify `tul export source` before implementing it.
-4. Implement `tul export source` only if the spec is accepted and source context remains a repeated bridge cost.
-5. Consider docs drift checking if planning/status baselines drift again.
-6. Run Windows parity smoke only after several self-host packages remain stable.
+1. Apply the Stage 7 terminology audit package and close it with `tul-vf-latest.md`.
+2. If needed, add a source-export spec package that defines root layout, freshness, HEAD provenance, sha256, bytes, file count, and exclusions.
+3. Implement `tul export source` only after the spec is accepted and source context remains a repeated bridge cost.
+4. Consider docs drift checking if planning/status baselines drift again.
+5. Run Windows parity smoke only after several self-host packages remain stable.
 
 ## Deferred
 

@@ -96,11 +96,16 @@ The current update order is:
 precheck -> import -> validate -> apply -> checks -> sweep -> publish -> verify -> report/state/handoff -> latest snapshot rewrite
 ```
 
-Future export work is split by role:
+Export work is split by role:
 
 ```bash
-tul export review   # explicit compact diff-oriented upload bundle; records state/report/latest evidence
-tul export source   # planned explicit full source bundle with root-layout checks
+tul export review   # implemented compact diff-oriented upload bundle; records state/report/latest evidence
+```
+
+Planned future command, not currently implemented:
+
+```text
+tul export source   # proposed explicit full source bundle with root-layout checks
 ```
 
 Neither command is a backup authority. Recovery remains Git remote + commit hashes + tul rollback state.
@@ -114,7 +119,7 @@ Current corrected rule:
 - `verify.py` owns release-gate artifacts only.
 - `state.py` owns decision-state summaries only.
 - `handoff.py` owns fresh-session orientation only.
-- Review/source zip exports should be separate export responsibilities, not hidden inside verify.
+- Review export and future source export should be separate responsibilities, not hidden inside verify.
 - A path in state is insufficient evidence of a valid source export.
 
 Current implementation provides explicit review export:
@@ -123,10 +128,10 @@ Current implementation provides explicit review export:
 tul export review
 ```
 
-Future implementation should split it from explicit source export:
+Future implementation may add explicit source export, but the command does not exist yet:
 
-```bash
-tul export source
+```text
+tul export source  # planned only; do not run yet
 ```
 
-and should only consider automatic post-update review export after the review bundle format is stable.
+Automatic post-update review export should only be considered after the review bundle format is stable.

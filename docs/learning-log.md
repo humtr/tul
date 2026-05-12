@@ -365,3 +365,12 @@ Observation: A GitHub-generated `tul-main.zip` can be the best available source 
 Lesson: Do not collapse source context, review evidence, backup, and runtime truth into one artifact. A manual source archive can be useful without becoming canonical recovery authority.
 
 Action: Keep `tul-main.zip` usable as source context while documenting that backup/recovery authority remains Git remote plus commit hashes and rollback state, and that future `tul export source` needs its own provenance evidence.
+
+
+## 2026-05-13 — Terminology drift can make future commands look implemented
+
+Observation: After the Stage 7 planning package, `tul export source` was still only a proposed future command, but several planning and workflow documents could be read as if it were already runnable. The user explicitly reported that the argument did not exist.
+
+Lesson: Planning documents may name future commands, but they must label implementation status at the point of use. Source context, future source export, review bundle, runtime baseline, and backup authority must remain separate terms.
+
+Action: Add a terminology audit package before source-export implementation. Update docs and help/docstrings so `tul export review` is the only current export command and `tul export source` is a future command that must not be suggested until implemented and verified.

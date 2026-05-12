@@ -27,7 +27,7 @@ parallel planning, sequential gated update
 This means:
 
 1. Many candidate scopes may be compared.
-2. One package is generated from the latest verified source baseline.
+2. One package is generated from the latest verified runtime baseline plus matching source context.
 3. One package is applied with `tul update`.
 4. One release gate closes the new baseline.
 5. Only then may the next package be generated or applied.
@@ -89,8 +89,8 @@ Do not split artifact vocabulary and artifact implementation into competing pack
 |---|---|---|
 | Stage 7 planning consolidation | Yellow | First |
 | Acceptance gate template refinement | Green/Yellow | After consolidation baseline |
-| Source export spec-only | Green | After consolidation baseline |
-| Explicit `tul export source` implementation | Orange | After spec-only baseline |
+| Source export spec-only | Green/Yellow | After terminology baseline |
+| Explicit `tul export source` implementation | Orange | After terminology and spec-only baselines |
 | Docs drift checker | Orange | After planning docs stabilize |
 | Review export automation | Red | Later decision only |
 | Archive policy expansion | Red | Separate dry-run evidence first |
@@ -137,7 +137,7 @@ The resulting latest artifact must show:
 The first Stage 7 planning package should exclude:
 
 - runtime behavior changes;
-- source export implementation;
+- source export implementation or runnable `tul export source` guidance;
 - review export automation;
 - verify/pipeline/package hygiene/archive engine changes;
 - external repo onboarding;

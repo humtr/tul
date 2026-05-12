@@ -257,7 +257,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("resume", help="recovery/debug: inspect latest state and suggest a safe next command")
     p.add_argument("target")
 
-    p = sub.add_parser("export", help="create transport artifacts for review/source handoff")
+    p = sub.add_parser("export", help="create explicit transport artifacts; currently supports review bundles")
     export_sub = p.add_subparsers(dest="export_command", required=True)
 
     p_review = export_sub.add_parser("review", help="create the latest LLM review bundle")

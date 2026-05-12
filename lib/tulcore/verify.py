@@ -132,7 +132,8 @@ def verify_log_root(ctx: ProjectContext, explicit: Path | None = None) -> Path:
 
     The stable latest markdown/json pair is intentionally written outside this
     run-log root by `verify_latest_root()`, so the import root can hold
-    `tul-main.zip` and `tul-vf-latest.md` side by side.
+    runtime evidence beside manually supplied source-context archives. Verify
+    does not create `tul-main.zip` or any other source archive.
     """
     if explicit is not None:
         return explicit.expanduser().resolve()
@@ -182,9 +183,9 @@ def write_verify_artifacts(
     """Persist verify output as canonical markdown and JSON artifacts.
 
     Timestamped run artifacts are stored under the verify run-log root in a
-    YYMMDD date folder. Stable latest markdown/json files are written to the
-    import root so `tul-main.zip` and `tul-vf-latest.md` can be uploaded from
-    the same directory.
+    YYMMDD date folder. Stable latest markdown/json files are written to the import root. They may
+    be uploaded from the same directory as manually supplied source-context
+    archives, but verify itself only writes verify artifacts.
 
     Legacy `*-verify-latest.*` aliases are intentionally not generated.
     """

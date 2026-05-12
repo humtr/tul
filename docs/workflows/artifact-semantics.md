@@ -4,10 +4,10 @@ This document freezes the Stage 7 artifact vocabulary after the Stage 6 source/r
 
 ## Current baseline
 
-Verified baseline at Stage 7 opening:
+Verified baseline after Stage 7 planning consolidation:
 
 ```text
-5086c982ae5d52c586049d4fb21c8e7d4ada006d
+79d27fb07ce52666acb603b714dab33a45079e19
 ```
 
 Known runtime facts:
@@ -17,7 +17,19 @@ Known runtime facts:
 - `tul-vf-latest.md` includes compact `tul state` and `tul handoff` snapshots.
 - `tul export review` writes `/sdcard/termux/import/tul/tul-review-latest.zip` and records review bundle evidence in state/report/handoff.
 - Automatic `tul-main.zip` export is not a closed capability.
+- `tul export source` is a proposed future command. It is not implemented in the current CLI.
 - A GitHub-generated `tul-main.zip` may be used as manual source context if the root layout and intended commit are understood, but it is not a tul runtime backup or a tul-proven explicit source export.
+
+## Standard vocabulary
+
+| Term | Current meaning |
+|---|---|
+| Runtime baseline | The latest `tul-vf-latest.md` evidence for HEAD, Remote HEAD, release gate, working tree, and fresh clone status. |
+| Review bundle | Implemented compact diff/review transport created by `tul export review`. |
+| Source context | File contents used for code-level diagnosis or package generation. This may come from a GitHub source archive, a fresh clone, or a future source export. |
+| Source export | Proposed future tul command/artifact for full source context with provenance. Not implemented yet. |
+| GitHub source archive | Manual source context, usually with a wrapper root such as `tul-main/`. Not tul-proven runtime evidence. |
+| Backup/recovery authority | Git remote, commit hashes, and tul rollback state. Zip artifacts are not backup authority. |
 
 ## Artifact roles
 
@@ -80,15 +92,29 @@ export-manifest.json
 
 The review bundle is not a backup and not a full source archive. It carries the smallest useful evidence for change tracking and LLM review.
 
-### Source bundle
+### Source context
 
-Purpose: full repo source context for package generation or code-level diagnosis.
+Purpose: full repo source contents for package generation or code-level diagnosis.
 
-Future explicit command:
+Current accepted source-context providers:
 
-```bash
+- a GitHub-generated source archive such as `tul-main.zip`, after checking root layout and intended commit;
+- a fresh clone at the verified commit;
+- a manually created source zip, if its generation command and root layout are understood.
+
+Source context is not automatically runtime evidence. A source archive can be useful for reading files without becoming backup authority.
+
+### Source export
+
+Purpose: future tul-generated full repo source context with provenance.
+
+Planned command, not currently implemented:
+
+```text
 tul export source
 ```
+
+Do not ask the user to run `tul export source` until a source-export implementation package has been applied and verified.
 
 Future latest path:
 
@@ -96,7 +122,7 @@ Future latest path:
 /sdcard/termux/import/tul/tul-source-latest.zip
 ```
 
-A tul-proven source bundle must record:
+A tul-proven source export must record:
 
 - command that produced it;
 - HEAD and remote HEAD at export time when available;
@@ -106,7 +132,7 @@ A tul-proven source bundle must record:
 - file count;
 - exclusion rules.
 
-A canonical tul source bundle should have repo files at zip root, for example:
+A canonical tul source export should have repo files at zip root, for example:
 
 ```text
 README.md
@@ -134,18 +160,19 @@ update -> verify -> export source zip
 The safer model is:
 
 ```text
-update -> verify -> state/handoff -> optional explicit review export -> optional explicit source export
+update -> verify -> state/handoff -> optional explicit review export -> future optional explicit source export
 ```
 
-Full source export remains explicit until its root-layout, freshness, and provenance checks are implemented and verified.
+Full source export remains explicit and unimplemented until its root-layout, freshness, and provenance checks are specified, implemented, and verified.
 
 ## Current implementation status
 
-`repozip.py` exists, but automatic `tul-main.zip` export is retired from the default update loop. J2 removed misleading source zip state output. J3 added explicit `tul export review` for diff-oriented review bundles. J4 records the explicit review export in state/report/handoff and refreshes latest runtime snapshots. Stage 7 should add explicit source export only after the spec and acceptance gate are accepted.
+`repozip.py` exists as a retired helper from the source-zip experiment, but it is not wired into the default update loop and does not expose a current `tul export source` CLI command. J2 removed misleading source zip state output. J3 added explicit `tul export review` for diff-oriented review bundles. J4 records the explicit review export in state/report/handoff and refreshes latest runtime snapshots. Stage 7 should add explicit source export only after the spec and acceptance gate are accepted.
 
 ## Next bundles
 
 1. Keep review export explicit and evidence-backed.
-2. Write a source export spec before implementation.
-3. Implement `tul export source` for explicit source bundles with root-layout checks if source context remains a repeated bridge cost.
-4. Reconsider automatic review export only after explicit behavior remains stable across additional packages.
+2. Keep terminology clear: runtime baseline, review bundle, source context, proposed source export, and backup are separate roles.
+3. Write a source export spec before implementation.
+4. Implement `tul export source` for explicit source exports with root-layout checks only after the spec package closes.
+5. Reconsider automatic review export only after explicit behavior remains stable across additional packages.

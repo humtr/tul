@@ -1,6 +1,6 @@
 # LLM post-update review guide
 
-This guide is for a fresh LLM session receiving `tul-vf-latest.md`, a repo zip, or additional terminal output after a package has been applied. Current latest markdown includes the release gate plus compact `tul state` and `tul handoff` snapshots.
+This guide is for a fresh LLM session receiving `tul-vf-latest.md`, source context, or additional terminal output after a package has been applied. Current latest markdown includes the release gate plus compact `tul state` and `tul handoff` snapshots.
 
 ## Source hierarchy
 
@@ -9,7 +9,7 @@ Use this order when facts differ:
 1. User-provided terminal artifacts from the current turn, especially `/sdcard/termux/import/tul/tul-vf-latest.md`.
 2. Runtime snapshots inside `tul-vf-latest.md`, especially `### tul state` and `### tul handoff`.
 3. User-provided standalone `tul state` or `tul handoff` output when newer than the latest artifact.
-4. Source context such as a manually provided repo zip or fresh clone contents when code-level work is needed.
+4. Source context such as a GitHub-generated source archive, manually created source zip, or fresh clone contents when code-level work is needed.
 5. Durable repo documents such as `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
 6. `docs/workflows/artifact-semantics.md` for the current artifact vocabulary.
 7. Prior chat summaries, only as context.
@@ -111,10 +111,10 @@ Current Stage 7 artifact semantics are separated by role. Treat artifacts as fol
 
 - `tul-vf-latest.md`: release-gate and runtime snapshot evidence.
 - `tul-review-latest.zip`: explicit compact review/diff bundle created by `tul export review`.
-- `tul-source-latest.zip` or equivalent source export: planned future explicit source context, not backup.
+- `tul-source-latest.zip` or equivalent source export: planned future explicit source context, not currently implemented, not backup.
 - `tul-main.zip`: may be a GitHub-generated manual source archive. It can support code/package generation when its root layout and intended commit are understood, but it is not backup evidence and not a tul-proven explicit source export.
 
-A future tul-proven source bundle should have repo files at zip root, such as `README.md`, `.tul.yml`, `bin/tul`, and `lib/tulcore/__init__.py`. A wrapper such as `tul-main/README.md` is common for GitHub-generated archives, but it is not the canonical tul source-export shape.
+A future tul-proven source export should have repo files at zip root, such as `README.md`, `.tul.yml`, `bin/tul`, and `lib/tulcore/__init__.py`. A wrapper such as `tul-main/README.md` is common for GitHub-generated archives, but it is not the canonical tul source-export shape.
 
 
 ## Optional review bundle
