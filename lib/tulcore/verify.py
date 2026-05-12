@@ -67,8 +67,20 @@ class VerifyResult:
             "steps": [step.to_dict() for step in self.steps],
         }
 
-    def to_text(self) -> str:
-        lines = ["# tul verify", "", f"Project: {self.project}", f"Repo: {self.repo}"]
+    def step_counts(self) -> tuple[int, int]:
+        failed = sum(1 for step in self.steps if not step.ok)
+        return len(self.steps) - failed, failed
+
+    def to_text(self, artifacts: dict[str, str] | None = None) -> str:
+        passed, failed = self.step_counts()
+        lines = [
+            "# tul verify",
+            "",
+            f"Release gate: {'PASS' if self.ok else 'FAIL'}",
+            "",
+            f"Project: {self.project}",
+            f"Repo: {self.repo}",
+        ]
         if self.branch:
             lines.append(f"Branch: {self.branch}")
         if self.head:
@@ -77,7 +89,10 @@ class VerifyResult:
             lines.append(f"Remote HEAD: {self.remote_head}")
         if self.clone_path:
             lines.append(f"Fresh clone: {self.clone_path}")
+        lines.append(f"Steps: {passed} pass, {failed} fail")
         lines.append(f"Result: {'pass' if self.ok else 'fail'}")
+        if artifacts:
+            lines.extend(["", format_verify_artifacts(artifacts)])
         lines.append("")
         lines.append("## Steps")
         for step in self.steps:
@@ -134,51 +149,54 @@ def write_verify_artifacts(
     fresh_clone: bool = False,
     log_dir: Path | None = None,
 ) -> dict[str, str]:
-    """Persist verify output as short markdown and JSON artifacts.
+    """Persist verify output as canonical markdown and JSON artifacts.
 
-    Timestamped artifact names are optimized for mobile attachment UIs by
-    placing the project, verify marker, mode, timestamp, and short commit hash
-    near the beginning of the filename. Stable `latest` copies remain available
-    for scripts and repeated local use. Legacy `*-verify-latest.*` aliases are
-    written temporarily for compatibility with the 0.7.5 naming scheme.
+    The verify log root keeps only the stable latest markdown/json pair.
+    Timestamped run artifacts are stored directly under a YYMMDD date folder.
+    Legacy `*-verify-latest.*` aliases are intentionally not generated.
     """
     root = verify_log_root(ctx, log_dir)
     mkdirp(root)
-    stamp = datetime.now().strftime("%y%m%d-%H%M%S")
+    now = datetime.now()
+    date_key = now.strftime("%y%m%d")
+    time_key = now.strftime("%H%M%S")
     mode = "fresh" if fresh_clone else "local"
     mode_key = "f" if fresh_clone else "l"
     head_short = (result.head or "unknown")[:7]
 
-    stem = f"{ctx.project_id}-vf-{mode_key}-{stamp}-{head_short}"
-    md_path = root / f"{stem}.md"
-    json_path = root / f"{stem}.json"
+    run_root = mkdirp(root / date_key)
+    stem = f"{ctx.project_id}-vf-{mode_key}-{date_key}-{time_key}-{head_short}"
+    md_path = run_root / f"{stem}.md"
+    json_path = run_root / f"{stem}.json"
     latest_md = root / f"{ctx.project_id}-vf-latest.md"
     latest_json = root / f"{ctx.project_id}-vf-latest.json"
-    legacy_latest_md = root / f"{ctx.project_id}-verify-latest.md"
-    legacy_latest_json = root / f"{ctx.project_id}-verify-latest.json"
 
     payload = result.to_dict()
     payload["artifact"] = {
         "mode": mode,
-        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "created_at": now.isoformat(timespec="seconds"),
         "log_root": str(root),
+        "run_root": str(run_root),
         "markdown": str(md_path),
         "json": str(json_path),
         "latest_markdown": str(latest_md),
         "latest_json": str(latest_json),
-        "legacy_latest_markdown": str(legacy_latest_md),
-        "legacy_latest_json": str(legacy_latest_json),
     }
 
-    text = result.to_text()
+    artifacts = {
+        "markdown": str(md_path),
+        "json": str(json_path),
+        "latest_markdown": str(latest_md),
+        "latest_json": str(latest_json),
+    }
+    text = result.to_text(artifacts)
     text += "\n\n## Artifact metadata\n"
     text += f"- Mode: {mode}\n"
+    text += f"- Run root: {run_root}\n"
     text += f"- Markdown: {md_path}\n"
     text += f"- JSON: {json_path}\n"
     text += f"- Latest markdown: {latest_md}\n"
     text += f"- Latest JSON: {latest_json}\n"
-    text += f"- Legacy latest markdown: {legacy_latest_md}\n"
-    text += f"- Legacy latest JSON: {legacy_latest_json}\n"
     text += "\n## Machine-readable summary\n\n```json\n"
     text += json.dumps(payload, indent=2, ensure_ascii=False)
     text += "\n```\n"
@@ -187,28 +205,17 @@ def write_verify_artifacts(
     json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     latest_md.write_text(text, encoding="utf-8", newline="\n")
     latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
-    legacy_latest_md.write_text(text, encoding="utf-8", newline="\n")
-    legacy_latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
-    return {
-        "markdown": str(md_path),
-        "json": str(json_path),
-        "latest_markdown": str(latest_md),
-        "latest_json": str(latest_json),
-        "legacy_latest_markdown": str(legacy_latest_md),
-        "legacy_latest_json": str(legacy_latest_json),
-    }
+    return artifacts
 
 def format_verify_artifacts(paths: dict[str, str]) -> str:
     return "\n".join(
         [
             "## Verify artifacts",
-            f"- Log: {paths['markdown']}",
-            f"- JSON: {paths['json']}",
             f"- Latest log: {paths['latest_markdown']}",
             f"- Latest JSON: {paths['latest_json']}",
-            f"- Legacy latest log: {paths['legacy_latest_markdown']}",
-            f"- Legacy latest JSON: {paths['legacy_latest_json']}",
+            f"- Run log: {paths['markdown']}",
+            f"- Run JSON: {paths['json']}",
         ]
     )
 
@@ -221,33 +228,28 @@ def format_verify_gate(result: VerifyResult, artifacts: dict[str, str] | None = 
     should preserve commit/push/rollback visibility while still telling the user
     whether the post-update fresh verification passed and which file to upload.
     """
-    total = len(result.steps)
+    passed, failed_count = result.step_counts()
     failed = [step for step in result.steps if not step.ok]
     lines = [
         "# tul verify fresh",
         "",
         f"Release gate: {'PASS' if result.ok else 'FAIL'}",
+        "",
         f"Project: {result.project}",
+        f"Repo: {result.repo}",
         f"Branch: {result.branch or 'unknown'}",
         f"HEAD: {result.head or 'unknown'}",
         f"Remote HEAD: {result.remote_head or 'unknown'}",
     ]
     if result.clone_path:
         lines.append(f"Fresh clone: {result.clone_path}")
-    lines.append(f"Steps: {total - len(failed)}/{total} pass")
+    lines.append(f"Steps: {passed} pass, {failed_count} fail")
     if failed:
         lines.extend(["", "## Failed steps"])
         for step in failed:
             lines.append(f"- {step.name}: {step.detail or 'failed'}")
     if artifacts:
-        lines.extend([
-            "",
-            "## Upload artifact",
-            f"- Latest markdown: {artifacts.get('latest_markdown')}",
-            f"- Timestamped markdown: {artifacts.get('markdown')}",
-        ])
-        if artifacts.get('latest_json'):
-            lines.append(f"- Latest JSON: {artifacts.get('latest_json')}")
+        lines.extend(["", format_verify_artifacts(artifacts)])
     return "\n".join(lines) + "\n"
 
 

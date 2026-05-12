@@ -6,7 +6,7 @@ Before accepting a package:
 tul package latest
 tul package check /sdcard/Download/<package>.zip --target tul
 tul update
-tul verify
+# If the package modifies verify.py and the immediate post-update artifact still uses the old bootstrap layout:
 tul verify fresh
 # Upload instead of pasting long output:
 # /sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
@@ -37,32 +37,38 @@ Invariants:
 - No force push.
 - Repo policy belongs in `.tul.yml`.
 - Environment paths and aliases belong in global config.
+- Root verify latest artifacts are `tul-vf-latest.md/json` only.
+- Timestamped verify run artifacts live under `logs/verify/<YYMMDD>/` without a `runs/` layer.
 
 ## Planning harness checkpoint
 
-- [ ] README links to the planning harness.
-- [ ] `docs/manifest.md` exists and states vision/invariants.
-- [ ] `docs/strategy.md` exists and defines capability map.
-- [ ] `docs/roadmap.md` contains ready queue and bundle candidates.
-- [ ] `docs/status/current.md` names current mode and next package.
-- [ ] `docs/learning-log.md` records known execution lessons.
-- [ ] `docs/decisions.md` records accepted planning decisions.
-- [ ] `docs/protocols/planning-loop.md` defines top-down and bottom-up planning.
+- [x] README links to the planning harness or LLM entrypoint documents.
+- [x] `docs/manifest.md` exists and states vision/invariants.
+- [x] `docs/strategy.md` exists and defines capability map.
+- [x] `docs/roadmap.md` contains ready queue and bundle candidates.
+- [x] `docs/status/current.md` names current mode and next package.
+- [x] `docs/learning-log.md` records known execution lessons.
+- [x] `docs/decisions.md` records accepted planning decisions.
+- [x] `docs/protocols/planning-loop.md` defines top-down and bottom-up planning.
 
 ## Verify artifact checkpoint
 
-- [ ] `tul verify tul` prints artifact paths.
-- [ ] `tul verify tul --fresh-clone` writes markdown and JSON artifacts.
-- [ ] Termux default artifact path is `/sdcard/termux/import/tul/logs/verify/`.
-- [ ] The stable latest file can be uploaded instead of pasting terminal output.
-- [ ] `--no-log` remains available for exceptional runs.
+- [x] `tul verify tul` prints artifact paths.
+- [x] `tul verify tul --fresh-clone` writes markdown and JSON artifacts.
+- [x] `tul verify fresh` is accepted as shorthand for fresh-clone verification.
+- [x] Termux default artifact path is `/sdcard/termux/import/tul/logs/verify/`.
+- [x] The stable latest file can be uploaded instead of pasting terminal output.
+- [x] `--no-log` remains available for exceptional runs.
 
 ## Verify artifact filenames
 
 - [x] `tul-vf-latest.md` is the canonical latest markdown upload file.
 - [x] `tul-vf-latest.json` is the canonical latest machine-readable file.
-- [ ] Timestamped run artifacts are stored under `logs/verify/<yymmdd>/` date folders.
-- [ ] Legacy `tul-verify-latest.*` aliases are no longer written after the canonical layout implementation.
+- [x] Fresh run artifacts use `tul-vf-f-YYMMDD-HHMMSS-<head7>.md/json`.
+- [x] Local run artifacts use `tul-vf-l-YYMMDD-HHMMSS-<head7>.md/json`.
+- [x] Timestamped run artifacts are stored under `logs/verify/<YYMMDD>/` date folders.
+- [x] Legacy `tul-verify-latest.*` aliases are no longer written after the canonical layout implementation.
+- [x] Artifact metadata contains no legacy latest paths.
 
 ## Native context checkpoint
 
@@ -77,26 +83,34 @@ Invariants:
 
 - [x] `tul use <project>` stores an active project.
 - [x] `tul current` shows active/default/current-directory context.
-- [x] read-only commands can infer the project target when safe.
+- [x] Read-only commands can infer the project target when safe.
 - [x] `tul verify fresh` is accepted as shorthand for `--fresh-clone`.
-- [x] mutating commands stop on active/cwd context conflict.
+- [x] Mutating commands stop on active/cwd context conflict.
 - [x] `tul update` can safely infer project and latest package.
-- [x] package manifest mismatch guidance explains incompatible zip targets.
+- [x] Package manifest mismatch guidance explains incompatible zip targets.
 
 ## Package guidance checkpoint
 
 - [x] `tul package latest` displays selected matching package and selection reason.
-- [x] incompatible package targets are shown when present.
-- [x] invalid archives without readable root `tul-package.yml` are ignored with a reason.
-- [x] no-match errors provide next command options.
+- [x] Incompatible package targets are shown when present.
+- [x] Invalid archives without readable root `tul-package.yml` are ignored with a reason.
+- [x] No-match errors provide next command options.
 
 ## Update-integrated verify gate
 
 - [x] Update-integrated verify gate is installed.
 - [x] Handoff compatibility hotfix is installed.
-- [ ] A normal docs-only smoke package proves `tul update` can apply, commit, push, run post-update `verify fresh`, write `tul-vf-latest.md`, and generate handoff in one command.
-- [ ] Normal `tul update` prints update report before verify/handoff.
-- [ ] Normal `tul update` shows commit, push verification, and rollback before the verify gate.
-- [ ] Normal `tul update` runs post-update `verify fresh` unless `--no-verify`, `--no-commit`, or `--no-push` applies.
-- [ ] Report, state, and handoff include verify gate result and artifact paths.
-- [ ] If the post-update verify gate fails, terminal output is still printed and the command exits non-zero.
+- [x] A normal docs-only smoke package proves `tul update` can apply, commit, push, run post-update `verify fresh`, write `tul-vf-latest.md`, and generate handoff in one command.
+- [x] Normal `tul update` prints update report before verify/handoff.
+- [x] Normal `tul update` shows commit, push verification, and rollback before the verify gate.
+- [x] Normal `tul update` runs post-update `verify fresh` unless `--no-verify`, `--no-commit`, or `--no-push` applies.
+- [x] Report, state, and handoff include verify gate result and artifact paths.
+- [x] If the post-update verify gate fails, terminal output is still printed and the command exits non-zero.
+
+## State output checkpoint
+
+- [x] Default `tul state` is compact decision output.
+- [x] Default `tul state` shows latest state and latest rollbackable commit separately.
+- [x] `tul state --all --limit 5` preserves full state summaries.
+- [x] `tul state --json` preserves machine-readable output.
+- [x] Compact state output includes cleanup guidance for no-op/imported state clutter.

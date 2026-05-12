@@ -1,12 +1,12 @@
 # Current status
 
-Latest known version: `0.8.5-update-handoff-hotfix`.
+Latest known version: `0.8.6-compact-gate-bundle`.
 
-Current mode: Stage 6 gate stabilization. Native context is available, package mismatch guidance is available, and update-integrated fresh verification has been installed and hotfixed.
+Current mode: Stage 6 bounded parallel bundle entry. Native context, package mismatch guidance, and update-integrated fresh verification are available. The update-integrated verify gate has passed smoke and is now treated as the normal loop baseline.
 
 ## Current verified loop
 
-The intended normal self-host loop is now:
+The intended normal self-host loop is:
 
 ```bash
 tul package latest
@@ -14,18 +14,20 @@ tul update
 # upload /sdcard/termux/import/tul/logs/verify/tul-vf-latest.md when review evidence is needed
 ```
 
-`tul update` should print the update report first, including commit, push verification, rollback, changed files, and checks. It should then run a compact post-update `verify fresh` gate, write markdown/json verify artifacts, and print the LLM handoff.
+`tul update` should print the update report first, including commit, push verification, rollback, changed files, and checks. It should then run a compact post-update `verify fresh` gate, write markdown/json verify artifacts, and print the LLM handoff. Because this package changes `verify.py`, the update process that applies it may still use the old verify layout for its own immediate post-update gate; one manual `tul verify fresh` after application confirms the new layout.
 
-## Current smoke package
+## Current bundle
 
-`tul_parallel_entry_smoke_v1`
+Package: `tul_stage6_compact_gate_bundle_v1`
 
-Purpose:
+Commit message: `Compact verify gate and state output`
 
-- prove that a normal docs-only package can be applied with one `tul update` command;
-- prove that post-update `verify fresh` runs automatically after the commit/push path;
-- prove that `tul-vf-latest.md` is updated to the new package commit without requiring a separate manual verify command;
-- record the canonical verify artifact layout decision before parallel bundles resume.
+Scope:
+
+1. Canonical verify log layout implementation.
+2. Verify release-gate summary polish.
+3. Compact default `tul state` output.
+4. Docs/checklist consistency update for Stage 6 bounded parallel entry.
 
 ## Verify artifact convention
 
@@ -36,31 +38,34 @@ Canonical latest files remain directly under the verify log root:
 /sdcard/termux/import/tul/logs/verify/tul-vf-latest.json
 ```
 
-Timestamped run artifacts should move to date folders directly under the verify log root:
+Timestamped run artifacts live in YYMMDD date folders directly under the verify log root. There is no `runs/` layer:
 
 ```text
-/sdcard/termux/import/tul/logs/verify/260512/tul-vf-f-260512-152110-9dae1b4.md
-/sdcard/termux/import/tul/logs/verify/260512/tul-vf-f-260512-152110-9dae1b4.json
+/sdcard/termux/import/tul/logs/verify/260512/tul-vf-f-260512-153345-a1dcc39.md
+/sdcard/termux/import/tul/logs/verify/260512/tul-vf-f-260512-153345-a1dcc39.json
+/sdcard/termux/import/tul/logs/verify/260512/tul-vf-l-260512-153345-a1dcc39.md
+/sdcard/termux/import/tul/logs/verify/260512/tul-vf-l-260512-153345-a1dcc39.json
 ```
 
-Do not continue writing both `tul-vf-latest.*` and `tul-verify-latest.*`. `tul-vf-latest.md/json` are the canonical latest artifacts.
+Do not write both `vf` and `verify` naming families. `tul-vf-latest.md/json` are the only canonical latest artifacts. Legacy `tul-verify-latest.*` aliases are no longer generated.
 
-## Parallel entry condition
+## State output convention
 
-Parallel Stage 6 bundles may start after this smoke package passes with one `tul update` command and the uploaded latest verify artifact points at the smoke commit.
+Default `tul state` is a decision view: latest state, latest rollbackable commit, important artifacts, cleanup suggestion, and pointers to full history commands.
 
-## Next after smoke
+Long state output remains available with:
 
-First bounded parallel bundle:
+```bash
+tul state --all --limit 5
+tul state --json
+```
 
-`tul_stage6_compact_gate_bundle_v1`
+## Next likely bundles
 
-Candidate scope:
-
-- canonical verify log layout implementation;
-- release-gate summary polish;
-- compact state output;
-- docs/status/roadmap/checklist consistency update.
+- authoring and diagnostics bundle;
+- Windows parity bundle;
+- archive recommendation polish;
+- additional state cleanup UX if no-op/imported states keep accumulating.
 
 ## Deferred
 

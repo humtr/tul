@@ -92,9 +92,9 @@ Status: accepted
 
 Context: Verify artifacts replaced long terminal copy/paste, but long common filename prefixes made repeated uploads hard to distinguish in mobile attachment UIs. Stable `latest` filenames are useful for local automation, while unique timestamped filenames are better for uploaded review evidence.
 
-Decision: Generate short timestamped names using `<project>-vf-<mode>-<yymmdd>-<hhmmss>-<head>`, where `mode` is `f` for fresh-clone verification and `l` for local verification. Also generate stable `tul-vf-latest.*` files. Continue writing legacy `tul-verify-latest.*` aliases temporarily for compatibility.
+Decision: Generate short timestamped names using `<project>-vf-<mode>-<yymmdd>-<hhmmss>-<head>`, where `mode` is `f` for fresh-clone verification and `l` for local verification. Also generate stable `tul-vf-latest.*` files. This naming decision is now combined with ADR-013, which removes legacy `tul-verify-latest.*` aliases.
 
-Consequences: The user can upload one short, unique markdown artifact without long terminal paste. Existing notes/scripts using the old latest filename continue working during the transition.
+Consequences: The user can upload one short, unique markdown artifact without long terminal paste. Stable review automation should use `tul-vf-latest.md/json`.
 
 ## ADR-010 — Native context is staged from read-only to mutating commands
 
@@ -157,3 +157,13 @@ Context: The update-integrated verify gate modifies the update pipeline itself. 
 Decision: Before starting larger parallel bundles, run one docs-only smoke package with normal `tul update`. The smoke passes only if commit, push, post-update fresh verify, latest artifact update, and handoff generation all succeed in one command.
 
 Consequences: Parallel work starts from a proven one-command loop rather than from an assumed loop. The smoke package is intentionally docs-only to isolate runtime behavior from unrelated code changes.
+
+## ADR-015 — Default state output is compact; full history is explicit
+
+Status: accepted
+
+Context: Update state files are essential for rollback, diagnosis, and handoff review, but the default state output became too verbose for the normal self-host loop. No-op and imported states can also be newer than the latest rollbackable commit.
+
+Decision: `tul state` defaults to a compact decision view showing the latest state, latest rollbackable commit, key artifacts, cleanup suggestion, and explicit commands for full history. `tul state --all` preserves the long state summaries, and `tul state --json` preserves machine-readable state output.
+
+Consequences: Routine inspection becomes shorter without losing diagnostic depth. Rollbackability remains visible even when the newest state is a no-op, imported, failed, or otherwise non-rollbackable state.

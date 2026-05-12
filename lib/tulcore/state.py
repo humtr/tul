@@ -229,6 +229,88 @@ def archive_latest_state(work_root: Path, archive_root: Path, *, project: str | 
     return archived[0] if archived else None
 
 
+def _display(value: Any, default: str = "none") -> str:
+    if value is None or value == "":
+        return default
+    return str(value)
+
+
+def _push_verified_value(data: dict[str, Any]) -> str:
+    if data.get("outcome") == "noop" or data.get("no_op") is True:
+        return "not applicable"
+    value = data.get("push_verified")
+    if value is None:
+        return "not applicable"
+    return str(bool(value)).lower()
+
+
+def _verify_artifact_value(data: dict[str, Any]) -> str | None:
+    artifacts = data.get("verify_artifacts")
+    if isinstance(artifacts, dict):
+        for key in ("latest_markdown", "markdown", "latest_json", "json"):
+            if artifacts.get(key):
+                return str(artifacts[key])
+    for key in ("verify", "verify_markdown", "verify_latest_markdown", "latest_verify"):
+        if data.get(key):
+            return str(data[key])
+    return None
+
+
+def summarize_compact_state(
+    work_root: Path,
+    *,
+    project: str,
+    rollback_command: str = "tul rollback",
+) -> str:
+    latest = latest_state(work_root, project=project)
+    rollbackable = latest_state_with_commit(work_root, project=project)
+    total_states = len(iter_states(work_root, project=project))
+
+    lines = ["# tul state", "", f"Project: {project}"]
+    if not latest:
+        lines.extend(["", "Latest state:", "- none"])
+    else:
+        path, data = latest
+        lines.extend([
+            "",
+            "Latest state:",
+            f"- phase: {_display(data.get('phase'), 'unknown')}",
+            f"- outcome: {_display(data.get('outcome'))}",
+            f"- package: {_display(data.get('package_name') or data.get('package'))}",
+            f"- commit: {_display(data.get('commit'))}",
+            f"- push verified: {_push_verified_value(data)}",
+            "",
+            "Latest rollbackable:",
+        ])
+        if rollbackable:
+            rollback_path, rollback_data = rollbackable
+            lines.extend([
+                f"- commit: {_display(rollback_data.get('commit'))}",
+                f"- command: {rollback_command}",
+            ])
+        else:
+            lines.extend(["- commit: none", f"- command: {rollback_command}"])
+        lines.extend(["", "Artifacts:", f"- state: {path}"])
+        for key in ("report", "handoff"):
+            if data.get(key):
+                lines.append(f"- {key}: {data[key]}")
+        verify_artifact = _verify_artifact_value(data)
+        if verify_artifact:
+            lines.append(f"- verify: {verify_artifact}")
+
+    lines.extend([
+        "",
+        "Cleanup:",
+        f"- work states: {total_states}",
+        "- suggestion: tul archive --noop --keep 3",
+        "",
+        "For full history:",
+        "- tul state --all --limit 5",
+        "- tul state --json",
+    ])
+    return "\n".join(lines)
+
+
 def summarize_state(path: Path, data: dict[str, Any]) -> str:
     lines = [
         f"State file: {path}",

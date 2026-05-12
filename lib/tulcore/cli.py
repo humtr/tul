@@ -44,9 +44,9 @@ from .manifest import validate_manifest
 from .package import candidate_record, discover_candidates, discover_package_inventory, import_package, invalid_candidate_record, manifest_data_from_archive, select_package, sha256_file
 from .pipeline import run_update
 from .report import build_report
-from .state import archive_latest_state, archive_states, iter_states, latest_state, latest_state_with_commit, state_commit, summarize_state, set_phase
+from .state import archive_latest_state, archive_states, iter_states, latest_state, latest_state_with_commit, state_commit, summarize_compact_state, summarize_state, set_phase
 from .sweep import sweep_repo
-from .verify import format_verify_artifacts, run_verify, write_verify_artifacts
+from .verify import run_verify, write_verify_artifacts
 
 
 def repo_root_from_module() -> Path:
@@ -333,10 +333,7 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
                 payload["artifacts"] = artifacts
             print(json.dumps(payload, indent=2, ensure_ascii=False))
         else:
-            print(result.to_text())
-            if artifacts:
-                print()
-                print(format_verify_artifacts(artifacts))
+            print(result.to_text(artifacts))
         return 0 if result.ok else 1
 
     if command == "doctor":
@@ -558,6 +555,26 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             payload = [{"state_file": str(path), **data} for path, data in states if path is not None]
             print(json.dumps(payload[0] if not args.all else payload, indent=2, ensure_ascii=False))
             return 0
+        if not args.all:
+            print(summarize_compact_state(work_root, project=ctx.project_id))
+            latest_item = states[0]
+            if latest_item is not None:
+                _, data = latest_item
+                if data.get("phase") == "failed":
+                    print()
+                    print("Repo status at inspection:")
+                    branch = current_branch(ctx.repo_path)
+                    try:
+                        fetch(ctx.repo_path, branch)
+                    except Exception:
+                        pass
+                    print(f"- HEAD: {head(ctx.repo_path)}")
+                    print(f"- Remote HEAD: {remote_head(ctx.repo_path, branch) or 'unavailable'}")
+                    clean = not is_dirty(ctx.repo_path)
+                    print(f"- Working tree: {'clean' if clean else 'dirty'}")
+                    if clean:
+                        print("- Note: the latest failed state may be stale or from a repeated/no-op update attempt.")
+            return 0
         if args.all and args.limit is not None:
             print(f"Showing {len(states)}/{total_states} state(s) for {ctx.project_id}.")
             print()
@@ -568,15 +585,6 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             if index:
                 print("\n---\n")
             print(summarize_state(path, data))
-            if not args.all and not data.get("commit"):
-                rollbackable = latest_state_with_commit(work_root, project=ctx.project_id)
-                if rollbackable:
-                    rollback_path, rollback_data = rollbackable
-                    print()
-                    print("Latest rollbackable state:")
-                    print(f"- commit: {rollback_data.get('commit')}")
-                    print(f"- state: {rollback_path}")
-                    print(f"- command: tul rollback {ctx.project_id}")
             if data.get("phase") == "failed":
                 print()
                 print("Repo status at inspection:")

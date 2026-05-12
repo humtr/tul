@@ -102,7 +102,7 @@ Impact: The user becomes a log transport layer, which works against the human-br
 
 Reflected in: `tul verify` should persist markdown/json artifacts under the platform log root. On Termux, the expected path is `/sdcard/termux/import/tul/logs/verify/`.
 
-Follow-up: Prefer uploading `tul-verify-latest.md` over pasting full terminal logs.
+Follow-up: Prefer uploading the current canonical latest artifact `tul-vf-latest.md` over pasting full terminal logs.
 
 ## 2026-05-12 — Verify artifact names need mobile-visible uniqueness
 
@@ -185,3 +185,33 @@ Impact: The artifact system should keep one canonical markdown latest file and o
 Reflected in: `docs/status/current.md`, `docs/roadmap.md`, and `docs/decisions.md`.
 
 Follow-up: Implement canonical verify log layout in the first bounded parallel bundle.
+
+### Stage 6.2 smoke — update-integrated verify gate passed
+
+Observation: The normal `tul update` loop can now apply a package, publish the result, run post-update `verify fresh`, write `tul-vf-latest.md/json`, and produce a handoff in one command.
+
+Impact: Stage 6 can move from single smoke packages into bounded parallel bundles, as long as each bundle stays small and independently verifiable.
+
+Reflected in: `docs/status/current.md`, `docs/roadmap.md`, `docs/checklists/loop-runtime.md`.
+
+Follow-up: Keep using `tul package latest` and `tul update` as the default loop; reserve split commands for diagnostics and recovery.
+
+### Stage 6.3 — verify layout should separate latest from historical runs
+
+Observation: Storing latest artifacts and timestamped run artifacts together at the verify log root creates clutter. Writing both `vf` and legacy `verify` latest aliases makes the canonical handoff path ambiguous.
+
+Impact: Latest artifacts should stay stable at the root while timestamped runs move into YYMMDD folders. Legacy latest aliases should stop being generated and should not appear in artifact metadata.
+
+Reflected in: `lib/tulcore/verify.py`, `docs/workflows/verify.md`, `docs/decisions.md`.
+
+Follow-up: After applying a package that modifies `verify.py`, run `tul verify fresh` once if the immediate post-update artifact still reflects the old bootstrap code.
+
+### Stage 6.3 — default state output should be a decision view
+
+Observation: Full state dumps are useful for diagnosis but too long for routine post-update decisions, especially when no-op or imported states accumulate.
+
+Impact: Default `tul state` should show latest state, latest rollbackable commit, artifacts, and cleanup guidance. Full history remains available behind `--all` and JSON remains available behind `--json`.
+
+Reflected in: `lib/tulcore/state.py`, `lib/tulcore/cli.py`, `docs/checklists/loop-runtime.md`.
+
+Follow-up: Continue improving archive recommendations after observing actual no-op/imported-state clutter.
