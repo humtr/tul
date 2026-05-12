@@ -41,7 +41,7 @@ from .gitops import (
 from .handoff import generate_handoff
 from .init import init_project
 from .manifest import validate_manifest
-from .package import candidate_record, discover_candidates, import_package, manifest_data_from_archive, select_package, sha256_file
+from .package import candidate_record, discover_candidates, discover_package_inventory, import_package, invalid_candidate_record, manifest_data_from_archive, select_package, sha256_file
 from .pipeline import run_update
 from .report import build_report
 from .state import archive_latest_state, archive_states, iter_states, latest_state, latest_state_with_commit, state_commit, summarize_state, set_phase
@@ -703,16 +703,25 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
 
 
 
-def _candidate_records_for_context(ctx) -> list[dict]:
+def _package_inventory_for_context(ctx) -> dict:
     branch = current_branch(ctx.repo_path)
     expected_branch = ctx.expected_branch or branch
-    candidates = discover_candidates(
+    inventory = discover_package_inventory(
         ctx.global_config,
         project=ctx.project_id,
         repo=ctx.expected_repo,
         branch=expected_branch,
     )
-    return [candidate_record(item) for item in candidates]
+    return {
+        "branch": expected_branch,
+        "matching": [candidate_record(item) for item in inventory.matching],
+        "incompatible": [candidate_record(item) for item in inventory.incompatible],
+        "invalid": [invalid_candidate_record(item) for item in inventory.invalid],
+    }
+
+
+def _candidate_records_for_context(ctx) -> list[dict]:
+    return _package_inventory_for_context(ctx)["matching"]
 
 
 def _duplicate_package_names(records: list[dict]) -> dict[str, list[str]]:
@@ -723,18 +732,25 @@ def _duplicate_package_names(records: list[dict]) -> dict[str, list[str]]:
 
 
 def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, latest_only: bool = False) -> None:
-    records = _candidate_records_for_context(ctx)
+    inventory = _package_inventory_for_context(ctx)
+    records = inventory["matching"]
+    incompatible = inventory["incompatible"]
+    invalid = inventory["invalid"]
     selected = records[0] if records else None
     payload = {
         "project": ctx.project_id,
         "repo": ctx.expected_repo,
-        "branch": ctx.expected_branch or current_branch(ctx.repo_path),
+        "branch": inventory["branch"],
         "inbox_roots": [str(root) for root in (platform_paths(ctx.global_config).get("inbox_roots") or [])],
         "selection_rule": "newest matching archive by filesystem mtime from configured inbox roots only",
         "selected": selected,
         "duplicates": _duplicate_package_names(records),
         "candidates": records[: max(limit, 0)],
+        "incompatible": incompatible[: max(limit, 0)],
+        "invalid": invalid[: max(limit, 0)],
         "total_candidates": len(records),
+        "total_incompatible": len(incompatible),
+        "total_invalid": len(invalid),
     }
     if as_json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -752,21 +768,59 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
     print()
     if not records:
         print("No matching packages found.")
+        if incompatible:
+            print()
+            print("Incompatible package(s) were found:")
+            for item in incompatible[: max(limit, 0)]:
+                target = item.get("target") or {}
+                print(f"- {item.get('path')}")
+                print(f"  name: {item.get('name')}")
+                print(f"  target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
+                print(f"  reason: {item.get('reason')}")
+        if invalid:
+            print()
+            print("Invalid archive(s) ignored:")
+            for item in invalid[: max(limit, 0)]:
+                print(f"- {item.get('path')}")
+                print(f"  reason: {item.get('reason')}")
+        print()
+        print("Options:")
+        print(f"- download a package targeting project={ctx.project_id} repo={ctx.expected_repo} branch={payload['branch']}")
+        print(f"- inspect a package: tul package inspect <package.zip>")
+        print(f"- use an explicit compatible package: tul update {ctx.project_id} --package <package.zip>")
         return
     print(f"Selected: {selected['path']}")
-    print(f"Reason: newest matching candidate; mtime={selected['mtime']}")
+    print(f"Reason: newest matching candidate; mtime={selected['mtime']}; {selected.get('reason') or 'target match'}")
     duplicates = payload["duplicates"]
+    warnings: list[str] = []
     if duplicates:
+        for name, paths in duplicates.items():
+            warnings.append(f"duplicate matching package name: {name} ({len(paths)} files)")
+    if incompatible:
+        selected_mtime = float(selected.get("mtime_epoch") or 0)
+        newer_incompatible = [item for item in incompatible if float(item.get("mtime_epoch") or 0) > selected_mtime]
+        if newer_incompatible:
+            warnings.append(f"{len(newer_incompatible)} newer incompatible package(s) exist")
+        else:
+            warnings.append(f"{len(incompatible)} incompatible package(s) ignored")
+    if invalid:
+        warnings.append(f"{len(invalid)} invalid archive(s) ignored")
+    if warnings:
         print()
         print("Warnings:")
-        for name, paths in duplicates.items():
-            print(f"- duplicate package name: {name}")
-            for path in paths:
-                print(f"  - {path}")
+        for item in warnings:
+            print(f"- {item}")
+        if incompatible:
+            print("Incompatible examples:")
+            for item in incompatible[:3]:
+                target = item.get("target") or {}
+                print(f"  - {item.get('path')}")
+                print(f"    target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
+                print(f"    reason: {item.get('reason')}")
     if latest_only:
         return
     print()
-    print(f"Candidates shown: {min(limit, len(records))}/{len(records)}")
+    print(f"Matching candidates shown: {min(limit, len(records))}/{len(records)}")
     for index, item in enumerate(records[: max(limit, 0)], start=1):
         marker = " selected" if index == 1 else ""
         target = item.get("target") or {}
@@ -776,6 +830,22 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
         print(f"  target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
         if commit.get("message"):
             print(f"  commit: {commit.get('message')}")
+    if incompatible:
+        print()
+        print(f"Incompatible packages shown: {min(limit, len(incompatible))}/{len(incompatible)}")
+        for index, item in enumerate(incompatible[: max(limit, 0)], start=1):
+            target = item.get("target") or {}
+            print(f"[{index}] {item.get('name')}  {item.get('mtime')}")
+            print(f"  path: {item.get('path')}")
+            print(f"  target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
+            print(f"  reason: {item.get('reason')}")
+    if invalid:
+        print()
+        print(f"Invalid archives shown: {min(limit, len(invalid))}/{len(invalid)}")
+        for index, item in enumerate(invalid[: max(limit, 0)], start=1):
+            print(f"[{index}] {item.get('name')}  {item.get('mtime')}")
+            print(f"  path: {item.get('path')}")
+            print(f"  reason: {item.get('reason')}")
 
 
 def print_package_inspect(package_path: Path, *, as_json: bool = False) -> None:

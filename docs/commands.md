@@ -128,3 +128,13 @@ tul rollback
 ```
 
 Resolution is the same as read-only commands, but active/current-directory conflicts abort instead of warning. No-arg `update` means inferred project + newest matching package from configured inbox roots.
+
+## Package manifest mismatch guidance
+
+Stage 6.1d makes package discovery explain why downloaded archives are or are not candidates for the inferred project. `tul package latest` and `tul package list` classify inbox archives as:
+
+- matching: `target.project`, `target.repo`, and `target.branch` match the inferred project;
+- incompatible: a readable `tul-package.yml` exists, but its target points to another project, repo, or branch;
+- invalid: the archive is present but has no readable root `tul-package.yml`.
+
+If `tul update` cannot find a matching package, the error now includes incompatible package examples and concrete next commands.

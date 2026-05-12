@@ -116,3 +116,13 @@ Context: The project is reducing repeated target and package flags. `tul update`
 Decision: No-arg mutating commands may infer the project only when context is unambiguous. They must print a target inference banner and must abort when active project and current-directory project conflict.
 
 Consequences: `tul update`, `tul import`, and `tul rollback` can be short in the common case while preserving inspectability and user authority. Package-target mismatch guidance remains the next safety layer.
+
+## ADR-008 — Package mismatch guidance belongs in discovery, not only update failure
+
+Status: accepted
+
+Context: With native `tul update`, users should not manually infer whether a downloaded package targets the active project.
+
+Decision: Package discovery classifies matching, incompatible, and invalid archives. `tul package latest/list` expose the classification, and update failure messages include concrete next commands.
+
+Consequences: Normal package selection remains safe and manifest-driven while reducing user-side file inspection.

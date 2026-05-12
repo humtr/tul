@@ -110,11 +110,14 @@ Scope:
 
 ### Bundle 4.5 — Native context v1d
 
+Package: `tul_native_context_v1d`
+
 Scope:
 
 - package mismatch classification and guidance.
 - matching, incompatible, invalid, and duplicate package candidate display.
 - next-command suggestions when downloaded packages target another project.
+- no-match errors include package manifest target details.
 
 ### Bundle 5 — Release gate and state compactness
 

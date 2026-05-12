@@ -1,8 +1,8 @@
 # Current status
 
-Latest known version after this package: `0.8.2-native-context-update`.
+Latest known version after this package: `0.8.3-native-context-package-guidance`.
 
-Current mode: Stage 6 native context step 3 — active project context exists, read-only commands infer targets, and guarded no-arg mutating commands are available for update/import/rollback.
+Current mode: Stage 6 native context step 4 — active project context, no-arg read-only commands, guarded no-arg mutating commands, and package manifest mismatch guidance are available.
 
 ## Current verified loop
 
@@ -35,27 +35,27 @@ Compatibility aliases such as `tul-verify-latest.md` are still written, but the 
 
 ## Current package
 
-`tul_native_context_v1c`
+`tul_native_context_v1d`
 
 Implemented scope:
 
-- no-arg `tul update` as inferred project + latest matching package.
-- no-arg `tul import` and `tul rollback` with mutating context inference.
-- mutating-command conflict guard for active project vs current directory project.
-- target inference banner for no-arg mutating commands.
-- previous v1a/v1b scope remains: `tul use`, `tul current`, read-only no-arg commands, and `tul verify fresh`.
+- package discovery classifies matching, incompatible, and invalid inbox archives.
+- `tul package latest` and `tul package list` explain incompatible package targets.
+- no-match errors now show package manifest mismatch details and next command options.
+- previous v1a/v1b/v1c scope remains: `tul use`, `tul current`, read-only no-arg commands, `tul verify fresh`, and guarded no-arg update/import/rollback.
 
 ## Next package
 
-`tul_native_context_v1d`
+Next Stage 6 bundle
 
 Expected scope:
 
-- package manifest mismatch guidance;
-- classification of matching, incompatible, invalid, and duplicate downloaded packages;
-- clearer next-command suggestions when the newest downloaded zip targets another project.
+- release gate summary for `tul verify`;
+- compact state output;
+- archive recommendations;
+- docs consistency checks.
 
 ## Current risk notes
 
-- Native context is mostly implemented for target inference. Package mismatch guidance is still pending.
+- Native context package guidance is implemented; release-gate and state-compact output remain pending.
 - Stage X target onboarding remains deferred.

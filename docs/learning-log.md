@@ -144,3 +144,13 @@ Impact: Native mutating commands require a target inference banner and must refu
 Reflected in: `tul_native_context_v1c`, `docs/commands.md`, `docs/status/current.md`, and `docs/checklists/loop-runtime.md`.
 
 Follow-up: Add package manifest mismatch guidance so that incompatible downloaded zip files produce actionable choices instead of a generic no-match error.
+
+## Stage 6.1d — Package target mismatch guidance
+
+Observation: Native `tul update` is only safe if package discovery explains why a downloaded zip matches or does not match the inferred project.
+
+Impact: Human bridge work shifts from guessing which zip was selected to reading explicit matching/incompatible/invalid package classifications.
+
+Reflected in: `lib/tulcore/package.py`, `lib/tulcore/cli.py`, `docs/commands.md`, and `docs/checklists/loop-runtime.md`.
+
+Follow-up: Add release-gate and compact-state summaries so the normal loop becomes easier to judge at a glance.

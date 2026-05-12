@@ -82,4 +82,11 @@ Invariants:
 - [x] `tul verify fresh` is accepted as shorthand for `--fresh-clone`.
 - [x] mutating commands stop on active/cwd context conflict.
 - [x] `tul update` can safely infer project and latest package.
-- [ ] package manifest mismatch guidance explains incompatible zip targets.
+- [x] package manifest mismatch guidance explains incompatible zip targets.
+
+## Package guidance checkpoint
+
+- [x] `tul package latest` displays selected matching package and selection reason.
+- [x] incompatible package targets are shown when present.
+- [x] invalid archives without readable root `tul-package.yml` are ignored with a reason.
+- [x] no-match errors provide next command options.

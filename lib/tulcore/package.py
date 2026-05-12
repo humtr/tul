@@ -20,10 +20,25 @@ class PackageCandidate:
     source: Path
     manifest_data: dict
     mtime: float
+    reason: str = ""
 
     @property
     def name(self) -> str:
         return str(self.manifest_data.get("name") or self.source.stem)
+
+
+@dataclass
+class InvalidPackageCandidate:
+    source: Path
+    mtime: float
+    reason: str
+
+
+@dataclass
+class PackageDiscovery:
+    matching: list[PackageCandidate]
+    incompatible: list[PackageCandidate]
+    invalid: list[InvalidPackageCandidate]
 
 
 @dataclass
@@ -105,29 +120,109 @@ def candidate_record(candidate: PackageCandidate) -> dict:
             "message": commit.get("message"),
             "files": commit.get("files") or [],
         },
+        "reason": candidate.reason,
     }
 
-def discover_candidates(global_config: dict, *, project: str, repo: str | None, branch: str | None) -> list[PackageCandidate]:
+
+def invalid_candidate_record(candidate: InvalidPackageCandidate) -> dict:
+    try:
+        size = candidate.source.stat().st_size
+    except OSError:
+        size = None
+    return {
+        "path": str(candidate.source),
+        "name": candidate.source.stem,
+        "mtime": datetime.fromtimestamp(candidate.mtime).astimezone().isoformat(timespec="seconds"),
+        "mtime_epoch": candidate.mtime,
+        "size": size,
+        "reason": candidate.reason,
+    }
+
+
+def _archive_paths(global_config: dict) -> list[Path]:
     paths = platform_paths(global_config)
-    candidates: list[PackageCandidate] = []
+    archives: list[Path] = []
     for root in paths.get("inbox_roots") or []:
         if not root.exists() or not root.is_dir():
             continue
         for path in sorted(root.glob("*")):
-            if path.suffix.lower() != ".zip" and not path.name.lower().endswith(".tar.gz"):
-                continue
-            data = _manifest_from_archive(path)
-            if not data:
-                continue
-            target = data.get("target") or {}
-            if str(target.get("project")) != str(project):
-                continue
-            if repo and str(target.get("repo")) != str(repo):
-                continue
-            if branch and str(target.get("branch")) != str(branch):
-                continue
-            candidates.append(PackageCandidate(source=path, manifest_data=data, mtime=path.stat().st_mtime))
-    return sorted(candidates, key=lambda item: item.mtime, reverse=True)
+            if path.suffix.lower() == ".zip" or path.name.lower().endswith(".tar.gz"):
+                archives.append(path)
+    return archives
+
+
+def _target_mismatches(data: dict, *, project: str, repo: str | None, branch: str | None) -> list[str]:
+    target = data.get("target") or {}
+    mismatches: list[str] = []
+    if str(target.get("project")) != str(project):
+        mismatches.append(f"target.project={target.get('project')!r} expected {project!r}")
+    if repo and str(target.get("repo")) != str(repo):
+        mismatches.append(f"target.repo={target.get('repo')!r} expected {repo!r}")
+    if branch and str(target.get("branch")) != str(branch):
+        mismatches.append(f"target.branch={target.get('branch')!r} expected {branch!r}")
+    return mismatches
+
+
+def discover_package_inventory(global_config: dict, *, project: str, repo: str | None, branch: str | None) -> PackageDiscovery:
+    matching: list[PackageCandidate] = []
+    incompatible: list[PackageCandidate] = []
+    invalid: list[InvalidPackageCandidate] = []
+    for path in _archive_paths(global_config):
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            continue
+        data = _manifest_from_archive(path)
+        if not data:
+            invalid.append(InvalidPackageCandidate(source=path, mtime=mtime, reason="missing or unreadable root tul-package.yml"))
+            continue
+        mismatches = _target_mismatches(data, project=project, repo=repo, branch=branch)
+        if mismatches:
+            incompatible.append(PackageCandidate(source=path, manifest_data=data, mtime=mtime, reason="; ".join(mismatches)))
+        else:
+            matching.append(PackageCandidate(source=path, manifest_data=data, mtime=mtime, reason="target.project/repo/branch match"))
+    key = lambda item: item.mtime
+    return PackageDiscovery(
+        matching=sorted(matching, key=key, reverse=True),
+        incompatible=sorted(incompatible, key=key, reverse=True),
+        invalid=sorted(invalid, key=key, reverse=True),
+    )
+
+
+def discover_candidates(global_config: dict, *, project: str, repo: str | None, branch: str | None) -> list[PackageCandidate]:
+    return discover_package_inventory(global_config, project=project, repo=repo, branch=branch).matching
+
+
+def _format_no_match_error(global_config: dict, *, project: str, repo: str | None, branch: str | None, discovery: PackageDiscovery) -> str:
+    roots = platform_paths(global_config).get("inbox_roots") or []
+    lines = [
+        f"no matching package found for project={project!r} repo={repo!r} branch={branch!r}",
+        "",
+        "Inbox roots:",
+    ]
+    lines.extend(f"- {root}" for root in roots)
+    if discovery.incompatible:
+        lines.append("")
+        lines.append("Found incompatible package(s):")
+        for item in discovery.incompatible[:5]:
+            target = item.manifest_data.get("target") or {}
+            lines.append(f"- {item.source}")
+            lines.append(f"  name: {item.name}")
+            lines.append(f"  target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
+            lines.append(f"  reason: {item.reason}")
+    if discovery.invalid:
+        lines.append("")
+        lines.append("Ignored invalid archive(s):")
+        for item in discovery.invalid[:5]:
+            lines.append(f"- {item.source}")
+            lines.append(f"  reason: {item.reason}")
+    lines.append("")
+    lines.append("Options:")
+    lines.append("- download a package whose tul-package.yml target matches this project/repo/branch")
+    lines.append("- run: tul package list <project>")
+    lines.append("- run: tul package inspect <package.zip>")
+    lines.append("- use an explicit compatible package: tul update <project> --package <package.zip>")
+    return "\n".join(lines)
 
 
 def select_package(global_config: dict, *, explicit: str | None, project: str, repo: str | None, branch: str | None) -> Path:
@@ -136,12 +231,10 @@ def select_package(global_config: dict, *, explicit: str | None, project: str, r
         if not path.exists():
             raise PackageError(f"package does not exist: {path}")
         return path
-    candidates = discover_candidates(global_config, project=project, repo=repo, branch=branch)
-    if not candidates:
-        roots = platform_paths(global_config).get("inbox_roots") or []
-        root_list = "\n".join(f"- {root}" for root in roots)
-        raise PackageError(f"no matching package found in inbox roots:\n{root_list}")
-    return candidates[0].source
+    discovery = discover_package_inventory(global_config, project=project, repo=repo, branch=branch)
+    if not discovery.matching:
+        raise PackageError(_format_no_match_error(global_config, project=project, repo=repo, branch=branch, discovery=discovery))
+    return discovery.matching[0].source
 
 
 def import_package(source: Path, global_config: dict) -> ImportedPackage:
