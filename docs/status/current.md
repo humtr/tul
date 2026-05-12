@@ -1,8 +1,8 @@
 # Current status
 
-Latest known version: `0.8.11-import-root-latest-snapshot-bundle`.
+Latest known version: `0.8.12-state-verify-path-alignment-bundle`.
 
-Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, handoff discoverability, and parallel-readiness gating are baseline behavior. Bundle B, Bundle C, Bundle D, Bundle E, and Bundle F have passed release gate. The active bounded package is the import-root latest snapshot bundle.
+Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, handoff discoverability, and parallel-readiness gating are baseline behavior. Bundle B, Bundle C, Bundle D, Bundle E, Bundle F, and Bundle G have passed release gate. The active bounded package is the state verify path alignment bundle.
 
 ## Current verified loop
 
@@ -18,17 +18,17 @@ tul update
 
 ## Current bundle
 
-Package: `tul_stage6_import_root_latest_snapshot_bundle_v1`
+Package: `tul_stage6_state_verify_path_alignment_bundle_v1`
 
-Commit message: `Move verify latest to import root`
+Commit message: `Align state verify latest path`
 
 Scope:
 
-1. Move the stable latest verify markdown/json pair to the tul import root beside `tul-main.zip`.
-2. Keep timestamped run artifacts in `logs/verify/YYMMDD/`.
-3. Include compact `tul state` and `tul handoff` snapshots in `tul-vf-latest.md`.
-4. Rewrite the post-update verify markdown after final handoff-ready state is written.
-5. Refresh review, verify, roadmap, checklist, learning log, and decisions docs.
+1. Keep import-root `tul-vf-latest.md/json` as the canonical latest verify artifact pair.
+2. Align compact `tul state` artifact display with the import-root latest path.
+3. Normalize stale bootstrap state references from `logs/verify/<project>-vf-latest.md` to the current import-root latest path in decision-view output.
+4. Preserve timestamped run artifacts under `logs/verify/YYMMDD/`.
+5. Refresh status, roadmap, checklist, learning log, decisions, and verify workflow docs.
 
 ## Verify artifact convention
 
@@ -49,6 +49,14 @@ The latest markdown includes the release gate plus compact `tul state` and `tul 
 ```
 
 Do not write both `vf` and `verify` naming families. `tul-vf-latest.md/json` are the only canonical latest artifacts and live at the import root. Legacy `tul-verify-latest.*` aliases are no longer generated.
+
+Compact state should display the canonical latest verify markdown path:
+
+```text
+/sdcard/termux/import/tul/tul-vf-latest.md
+```
+
+If an older handoff-ready state recorded the bootstrap-time `logs/verify/tul-vf-latest.md` path, compact state normalizes that stale latest pointer for display. Timestamped run artifacts are not rewritten or hidden.
 
 ## State output convention
 

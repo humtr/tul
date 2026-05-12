@@ -129,3 +129,17 @@ Scope:
 ## Deferred: Stage X
 
 `humtr/ai` onboarding is intentionally deferred. It should resume only after tul's self-host harness, verification, package discovery, state recovery, and native context are stable enough to reduce rather than multiply bridge work.
+
+
+### Stage 6 Bundle H — state verify path alignment
+
+Goal: align compact `tul state` and embedded runtime snapshots with the import-root latest verify path introduced by Bundle G.
+
+Scope:
+
+1. Normalize stale bootstrap-time `logs/verify/<project>-vf-latest.md` references in compact state output.
+2. Keep timestamped run artifacts unchanged under `logs/verify/YYMMDD/`.
+3. Keep import-root `tul-vf-latest.md/json` as the canonical latest upload pair.
+4. Avoid modifying verify, update, rollback, archive, or push behavior.
+
+Next candidate: export a current `tul-main.zip` automatically after a successful update, with explicit excludes and safe defaults.

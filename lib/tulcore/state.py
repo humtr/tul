@@ -293,15 +293,45 @@ def _push_verified_value(data: dict[str, Any]) -> str:
     return str(bool(value)).lower()
 
 
-def _verify_artifact_value(data: dict[str, Any]) -> str | None:
+def _canonical_verify_latest_path(
+    value: str,
+    *,
+    project: str | None = None,
+    work_root: Path | None = None,
+) -> str:
+    """Return the current import-root latest path for stale latest references.
+
+    Bundle G moved stable latest verify artifacts from `logs/verify/` to the
+    tul import root. A state written during the bootstrap update can still
+    contain the former `logs/verify/<project>-vf-latest.md` path. Compact state
+    is a decision view, so display the canonical current latest path when the
+    stored value is recognizably the stale latest pointer. Timestamped run
+    artifacts are preserved as-is.
+    """
+    if not project or work_root is None:
+        return value
+    path = Path(value)
+    if path.name not in {f"{project}-vf-latest.md", f"{project}-vf-latest.json"}:
+        return value
+    if path.parent.name == "verify" and path.parent.parent.name == "logs":
+        return str(Path(work_root).parent / path.name)
+    return value
+
+
+def _verify_artifact_value(
+    data: dict[str, Any],
+    *,
+    project: str | None = None,
+    work_root: Path | None = None,
+) -> str | None:
     artifacts = data.get("verify_artifacts")
     if isinstance(artifacts, dict):
         for key in ("latest_markdown", "markdown", "latest_json", "json"):
             if artifacts.get(key):
-                return str(artifacts[key])
+                return _canonical_verify_latest_path(str(artifacts[key]), project=project, work_root=work_root)
     for key in ("verify", "verify_markdown", "verify_latest_markdown", "latest_verify"):
         if data.get(key):
-            return str(data[key])
+            return _canonical_verify_latest_path(str(data[key]), project=project, work_root=work_root)
     return None
 
 
@@ -343,7 +373,7 @@ def summarize_compact_state(
         for key in ("report", "handoff"):
             if data.get(key):
                 lines.append(f"- {key}: {data[key]}")
-        verify_artifact = _verify_artifact_value(data)
+        verify_artifact = _verify_artifact_value(data, project=project, work_root=work_root)
         if verify_artifact:
             lines.append(f"- verify: {verify_artifact}")
 

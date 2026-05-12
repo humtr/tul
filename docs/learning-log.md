@@ -266,3 +266,12 @@ Impact: Stable latest artifacts should live beside `tul-main.zip`, while timesta
 Reflected in: `lib/tulcore/verify.py`, `lib/tulcore/pipeline.py`, `docs/workflows/verify.md`, `docs/llm/post-update-review.md`, and `docs/checklists/loop-runtime.md`.
 
 Follow-up: After applying this bundle, verify that `/sdcard/termux/import/tul/tul-vf-latest.md` exists, contains `## Runtime snapshots`, and that `tul state` points to the import-root latest file.
+
+
+## 2026-05-12 — State verify path alignment
+
+Observation: Bundle G correctly moved the stable latest verify artifacts to the tul import root and embedded runtime snapshots, but the handoff-ready state created during the bootstrap update could still contain the former `logs/verify/tul-vf-latest.md` pointer.
+
+Decision: Treat compact `tul state` as a decision view. When the stored path is recognizably the stale latest pointer under `logs/verify/`, display the canonical import-root latest path instead. Do not rewrite or hide timestamped run artifacts.
+
+Follow-up: Consider a separate export bundle that writes `/sdcard/termux/import/tul/tul-main.zip` after successful updates when the next step requires a repo zip.

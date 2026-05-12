@@ -104,3 +104,8 @@ tul verify tul --fresh-clone --log-dir /sdcard/termux/import/tul/logs/verify
 ## Runtime snapshots
 
 `tul-vf-latest.md` includes a `## Runtime snapshots` section with compact `tul state` and `tul handoff` output. During `tul update`, the verify result is first written before final state/handoff files exist, then the same markdown artifacts are rewritten after the final `handoff-ready` state is recorded. This keeps one upload file sufficient for normal post-update review.
+
+
+## Compact state path alignment
+
+Compact `tul state` and the `### tul state` snapshot inside `tul-vf-latest.md` should show the import-root latest markdown path. If an older state file stored the former `logs/verify/<project>-vf-latest.md` location during a bootstrap update, compact output normalizes that stale latest pointer for display. Timestamped run artifacts are not normalized; they remain historical evidence under `logs/verify/YYMMDD/`.

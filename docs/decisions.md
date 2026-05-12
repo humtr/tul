@@ -223,3 +223,14 @@ Context: Timestamped verify artifacts already preserve historical runs by date a
 Decision: Write stable `tul-vf-latest.md/json` directly under the tul import root beside `tul-main.zip`. Keep timestamped run artifacts under `logs/verify/YYMMDD/`. Include compact `tul state` and `tul handoff` snapshots in the latest markdown. During `tul update`, rewrite the verify markdown after final handoff-ready state is recorded so snapshots reflect the just-published package.
 
 Consequences: A normal successful post-update review can use one uploaded markdown file. Historical verify runs remain available by date/hash. Legacy `tul-verify-latest.*` aliases remain forbidden.
+
+
+## ADR-017 — Compact state normalizes stale latest verify pointers
+
+Status: accepted
+
+Context: The canonical latest verify markdown/json pair now lives under the tul import root. During the bootstrap update that introduced this layout, the handoff-ready state may still record the former `logs/verify/<project>-vf-latest.md` location. That stale pointer is confusing because the latest upload artifact itself is already correct.
+
+Decision: Compact `tul state` should display the current import-root latest verify path when a stored state value is recognizably the stale `logs/verify/<project>-vf-latest.md` pointer. Timestamped run artifacts remain unchanged and are still shown by verify artifact metadata.
+
+Consequences: The user can rely on `tul-vf-latest.md` and `tul-main.zip` living side by side in the import root, while historical run artifacts remain under `logs/verify/YYMMDD/`. This is a display alignment rule, not a history rewrite.

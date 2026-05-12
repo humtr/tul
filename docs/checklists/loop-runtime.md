@@ -174,3 +174,11 @@ Invariants:
 - [x] Latest markdown includes compact `tul handoff`.
 - [x] `tul update` rewrites the markdown artifact after final handoff-ready state is recorded.
 - [x] Legacy `tul-verify-latest.*` aliases remain absent.
+
+
+## State verify path alignment
+
+- [ ] `tul state` shows `/sdcard/termux/import/tul/tul-vf-latest.md` as the verify artifact when a latest verify artifact is available.
+- [ ] `tul-vf-latest.md` runtime snapshot `### tul state` shows the same import-root latest path.
+- [ ] Timestamped run artifacts remain under `/sdcard/termux/import/tul/logs/verify/YYMMDD/`.
+- [ ] No legacy `tul-verify-latest.*` artifacts are generated.
