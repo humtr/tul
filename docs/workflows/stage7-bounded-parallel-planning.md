@@ -111,3 +111,7 @@ Stop and request a new baseline artifact or source context when:
 - runtime behavior changes are mixed with a large planning-doc rewrite;
 - a future command is presented as runnable before implementation closes;
 - acceptance criteria cannot isolate the failure source.
+
+## Export integrity hardening
+
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.

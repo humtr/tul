@@ -147,3 +147,7 @@ Use `docs/checklists/stage7-package-gates.md` to classify subsequent Green/Yello
 ## Source export note
 
 Use `tul export source` only when full source context is needed for package generation or code-level diagnosis. It is explicit/manual and separate from `tul export review`, `tul verify`, and `tul update`.
+
+## Export integrity review rule
+
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.

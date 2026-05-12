@@ -13,6 +13,7 @@ from typing import Any
 from .config import ProjectContext, platform_paths
 from .gitops import remote_url
 from .handoff import generate_handoff
+from .integrity import format_export_integrity
 from .paths import expand_path, mkdirp
 from .state import summarize_compact_state
 
@@ -398,6 +399,18 @@ def format_runtime_snapshots(ctx: ProjectContext) -> str:
     except Exception as exc:  # pragma: no cover - defensive artifact path
         handoff_text = f"Unable to capture tul handoff snapshot: {type(exc).__name__}: {exc}"
     lines.append(handoff_text.rstrip())
+    lines.extend([
+        "~~~",
+        "",
+        "### tul export status",
+        "",
+        "~~~text",
+    ])
+    try:
+        export_text = format_export_integrity(ctx)
+    except Exception as exc:  # pragma: no cover - defensive artifact path
+        export_text = f"Unable to capture tul export status snapshot: {type(exc).__name__}: {exc}"
+    lines.append(export_text.rstrip())
     lines.append("~~~")
     return "\n".join(lines) + "\n"
 

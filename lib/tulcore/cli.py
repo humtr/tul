@@ -39,6 +39,7 @@ from .gitops import (
     status_porcelain,
 )
 from .handoff import generate_handoff
+from .integrity import export_integrity_data, format_export_integrity
 from .init import init_project
 from .manifest import validate_manifest
 from .package import candidate_record, discover_candidates, discover_package_inventory, import_package, invalid_candidate_record, manifest_data_from_archive, select_package, sha256_file
@@ -272,6 +273,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_source.add_argument("--no-state-update", action="store_true", help="do not record source bundle metadata in the latest state")
     p_source.add_argument("--json", action="store_true", help="print machine-readable source export data")
 
+    p_export_status = export_sub.add_parser("status", help="inspect source/review export freshness and docs drift warnings")
+    p_export_status.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
+    p_export_status.add_argument("--json", action="store_true", help="print machine-readable export integrity data")
+
     p = sub.add_parser("archive", help="archive local tul work state")
     p.add_argument("target", nargs="?", help="optional project/path; omitted target uses guarded native context")
     p.add_argument("--all", action="store_true", help="archive all matching states, not just the latest")
@@ -456,6 +461,13 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             else:
                 print(format_source_export(result))
             return 0
+        if args.export_command == "status":
+            ctx = read_project(args, command="export status")
+            if args.json:
+                print(json.dumps(export_integrity_data(ctx), indent=2, ensure_ascii=False))
+            else:
+                print(format_export_integrity(ctx))
+            return 0
         raise TulError(f"unknown export command: {args.export_command}")
 
     if command == "update":
@@ -630,6 +642,8 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             return 0
         if not args.all:
             print(summarize_compact_state(work_root, project=ctx.project_id))
+            print()
+            print(format_export_integrity(ctx))
             latest_item = states[0]
             if latest_item is not None:
                 _, data = latest_item
@@ -1308,6 +1322,9 @@ def print_doctor(target: str | None = None) -> None:
         print(f"- repo: {ctx.repo_path}")
         print(f"- branch: {current_branch(ctx.repo_path)}")
         print(f"- dirty: {is_dirty(ctx.repo_path)}")
+        print("export integrity:")
+        for line in format_export_integrity(ctx).splitlines():
+            print(f"  {line}" if line else "")
     print("launcher diagnostics:")
     repo = ctx.repo_path if ctx else None
     for line in path_launcher_info(repo):

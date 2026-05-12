@@ -83,3 +83,7 @@ For an Orange `tul export source` implementation package, confirm:
 - [x] default output path is explicit;
 - [x] root-layout and exclusion checks are included;
 - [x] state wording uses source-export terminology only.
+
+## Export integrity hardening gate
+
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.

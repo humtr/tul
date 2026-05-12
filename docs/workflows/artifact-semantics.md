@@ -4,10 +4,10 @@ This document freezes the Stage 7 artifact vocabulary after the Stage 6 source/r
 
 ## Current baseline
 
-Verified baseline after Stage 7 terminology audit:
+Verified baseline after explicit source export implementation:
 
 ```text
-7d7b27a4eb81570482ff4d9eaba1dc7c83429272
+a5db5d01d96277e83913ec17506c22e3284424eb
 ```
 
 Known runtime facts:
@@ -17,8 +17,9 @@ Known runtime facts:
 - `tul-vf-latest.md` includes compact `tul state` and `tul handoff` snapshots.
 - `tul export review` writes `/sdcard/termux/import/tul/tul-review-latest.zip` and records review bundle evidence in state/report/handoff.
 - Automatic `tul-main.zip` export is not a closed capability.
-- `tul export source` is a proposed future command. It is not implemented in the current CLI.
-- The pre-implementation source-export contract is documented in `docs/workflows/source-export-spec.md`.
+- `tul export source` is implemented as an explicit manual source-context export command.
+- `tul export status` is the warning-only freshness and docs-drift inspection surface.
+- The source-export contract is documented in `docs/workflows/source-export-spec.md`.
 - A GitHub-generated `tul-main.zip` may be used as manual source context if the root layout and intended commit are understood, but it is not a tul runtime backup or a tul-proven explicit source export.
 
 ## Standard vocabulary
@@ -27,8 +28,8 @@ Known runtime facts:
 |---|---|
 | Runtime baseline | The latest `tul-vf-latest.md` evidence for HEAD, Remote HEAD, release gate, working tree, and fresh clone status. |
 | Review bundle | Implemented compact diff/review transport created by `tul export review`. |
-| Source context | File contents used for code-level diagnosis or package generation. This may come from a GitHub source archive, a fresh clone, or a future source export. |
-| Source export | Proposed future tul command/artifact for full source context with provenance. Not implemented yet. |
+| Source context | File contents used for code-level diagnosis or package generation. Prefer an explicit source export, then a fresh clone, then a GitHub source archive as fallback. |
+| Source export | Implemented explicit manual tul command/artifact for full source context with provenance. |
 | GitHub source archive | Manual source context, usually with a wrapper root such as `tul-main/`. Not tul-proven runtime evidence. |
 | Backup/recovery authority | Git remote, commit hashes, and tul rollback state. Zip artifacts are not backup authority. |
 
@@ -177,3 +178,7 @@ Full source export remains explicit and unimplemented until its root-layout, fre
 3. Keep the accepted source export spec in `docs/workflows/source-export-spec.md`.
 4. Keep `tul export source` explicit-only unless a later Red-class automation decision closes.
 5. Reconsider automatic review export only after explicit behavior remains stable across additional packages.
+
+## Export integrity status
+
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.

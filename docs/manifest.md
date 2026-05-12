@@ -245,3 +245,7 @@ Manifest changes should be justified in `docs/decisions.md`.
 - [x] Add root-layout and exclusion verification.
 - [x] Record source export metadata in latest state when available.
 - [ ] Keep automatic source export pending a separate Red-class decision.
+
+## Stage 7 export integrity rule
+
+Explicit source and review exports are transport artifacts, not recovery authority. `tul export status` is the warning-only inspection surface for these artifacts. It may warn that a source or review bundle is missing, stale, invalid, or unrecorded, but this package does not make those warnings release-gate failures.

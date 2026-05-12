@@ -178,3 +178,7 @@ A failed source export must not retroactively fail a successful release gate unl
 ## Automation boundary
 
 The first implementation is explicit-only. Automatic post-update source export remains Red class and requires a later decision because it changes default update behavior and may increase runtime cost, storage use, and artifact confusion.
+
+## Export integrity status
+
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.

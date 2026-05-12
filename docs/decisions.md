@@ -347,22 +347,22 @@ Status: accepted
 
 Context: After Stage 7 planning consolidation, the user pointed out that `tul export source` was not a valid current command. A repo-wide terminology audit also found that `repo zip`, `source zip`, `source bundle`, `source context`, and `source export` could still be read as interchangeable.
 
-Decision: Use `source context` for currently available file contents used in package generation or code-level diagnosis. Use `source export` only for a future tul-generated artifact with explicit provenance and root-layout evidence. `tul export source` is proposed, not implemented. A GitHub-generated `tul-main.zip` can be manual source context, but it is not review evidence, backup authority, or a tul-proven source export.
+Decision: Use `source context` for currently available file contents used in package generation or code-level diagnosis. Use `source export` only for a tul-generated artifact with explicit provenance and root-layout evidence. As of ADR-030, `tul export source` is implemented as a manual command. A GitHub-generated `tul-main.zip` can still be manual fallback source context, but it is not review evidence, backup authority, or a tul-proven source export.
 
-Consequences: Documentation and help text must not ask the user to run `tul export source` until an implementation package has closed. Future source-export work must serialize after terminology/spec baselines and must prove command wiring, output path, root layout, HEAD provenance, sha256, bytes, file count, and exclusions.
+Consequences: Documentation and help text may ask the user to run `tul export source` only after confirming the implementation package has closed. Source-export work remains separate from automatic post-update export, which still requires a later Red-class gate.
 
 
 ## ADR-029 — Source export spec and package gates precede implementation
 
 Status: accepted
 
-Context: After terminology audit closed, the remaining Green/Yellow work was to prevent the next Orange implementation from reintroducing ambiguity. `tul export source` is still not a runnable command, but its future command contract, zip layout, provenance, exclusions, and validation gate need to be fixed before implementation.
+Context: After terminology audit closed, the remaining Green/Yellow work was to prevent the next Orange implementation from reintroducing ambiguity. At this checkpoint, the command contract, zip layout, provenance, exclusions, and validation gate need to be fixed before implementation.
 
 Decision: Accept `docs/workflows/source-export-spec.md` as the pre-implementation source-export contract and `docs/checklists/stage7-package-gates.md` as the copy-ready Stage 7 package gate checklist. Source-export implementation remains Orange class and must serialize after this spec/gate baseline. Automatic post-update source export remains Red class and unapproved.
 
-Consequences: Future source-export packages have less room to blur source context, source export, review bundle, and backup authority. Fresh LLM sessions must not ask the user to run `tul export source` until an implementation package closes with release-gate evidence.
+Consequences: Future source-export packages have less room to blur source context, source export, review bundle, and backup authority. Fresh LLM sessions may treat `tul export source` as runnable only after the implementation package closes with release-gate evidence.
 
-## ADR-029 — Explicit source export is implemented as a manual command
+## ADR-030 — Explicit source export is implemented as a manual command
 
 Status: accepted
 

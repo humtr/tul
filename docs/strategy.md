@@ -55,3 +55,7 @@ After this source-spec/gate baseline, implementation work can proceed in smaller
 ## Stage 7 source-export implementation strategy
 
 The implementation path is explicit-only. It reduces manual GitHub ZIP ambiguity without changing default update cadence. This keeps source context available when package generation needs full repo contents while preserving the canonical recovery authority: Git remote, commit hash, and rollback state.
+
+## Export integrity hardening
+
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.

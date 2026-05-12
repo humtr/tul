@@ -140,3 +140,7 @@ Automatic post-update review export should only be considered after the review b
 ## Source export specification
 
 The source-export contract lives in `docs/workflows/source-export-spec.md`. The command is explicit and runnable after the implementation package closes; automatic post-update source export remains a separate Red-class decision.
+
+## Pre-automation export integrity checkpoint
+
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.

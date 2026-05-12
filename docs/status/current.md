@@ -1,105 +1,77 @@
 # Current status
 
-Latest known version: `0.8.27-stage7-source-export`.
+Latest known version: `0.8.28-stage7-export-integrity`.
 
-Current mode: Stage 7 Green/Yellow hardening after terminology audit. Stage 6 is closed as the verified stabilization baseline. Stage 7 planning consolidation is closed. Stage 7 terminology audit is closed. The current task is to accept source-export specification and package-gate templates before any Orange runtime implementation.
+Current mode: Stage 7 export integrity hardening. Stage 6 is closed. Stage 7 planning consolidation, terminology audit, source spec/gates, and explicit source export implementation are closed. The current task is to add warning-only export freshness and docs drift checks before any post-update automatic export.
 
 ## Verified baseline
 
 Latest verified baseline from the current `tul-vf-latest.md` artifact:
 
 ```text
-HEAD: 7d7b27a4eb81570482ff4d9eaba1dc7c83429272
-Remote HEAD: 7d7b27a4eb81570482ff4d9eaba1dc7c83429272
+HEAD: a5db5d01d96277e83913ec17506c22e3284424eb
+Remote HEAD: a5db5d01d96277e83913ec17506c22e3284424eb
 Release gate: PASS
 Steps: 25 pass, 0 fail
 Working tree: clean
 Fresh clone verify: PASS
-Latest package: tul-stage7-terminology-audit-bundle-v1
+Latest package: tul-stage7-source-export-implementation-bundle-v1
+Source bundle: generated and verified
 ```
 
-Canonical latest artifact:
+Canonical latest artifacts:
 
 ```text
 /sdcard/termux/import/tul/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-source-latest.zip
 ```
 
-When a newer artifact is provided by the user, treat it as the runtime source of truth over this document.
+When a newer `tul-vf-latest.md` is provided by the user, treat it as the runtime source of truth over this document.
 
 ## Closed checkpoints
 
-- Bundle B — compact gate/state: PASS.
-- Bundle C — authoring diagnostics: PASS.
-- Bundle D — archive cleanup dry-run: PASS.
-- Bundle E — handoff discoverability: PASS.
-- Bundle F — parallel-readiness gate: PASS.
-- Bundle G — import-root latest snapshot: PASS.
-- Bundle H — state verify path alignment: PASS.
-- Bundle I — source zip export attempt: verify passed, export semantics not closed.
-- Bundle J1 — artifact semantics checkpoint: PASS.
-- Bundle J2 — remove misleading source zip state: PASS.
-- Bundle J3 — explicit review bundle export: PASS.
-- Bundle J4 — review export rewrite/state integration: PASS.
-- K1 — archive execution safety: PASS.
-- K2 — package inbox ingest policy: PASS.
-- K3 — Stage 6 stabilization checkpoint: PASS.
+- Stage 6 stabilization checkpoint — PASS at `5086c982ae5d52c586049d4fb21c8e7d4ada006d`.
 - Stage 7 planning consolidation — PASS at `79d27fb07ce52666acb603b714dab33a45079e19`.
 - Stage 7 terminology audit — PASS at `7d7b27a4eb81570482ff4d9eaba1dc7c83429272`.
+- Stage 7 source spec and gates — PASS at `a3585a7441e320f1ce78f924d293c411854f76ef`.
+- Stage 7 explicit source export implementation — PASS at `a5db5d01d96277e83913ec17506c22e3284424eb`.
 
 ## Current artifact vocabulary
 
 - Runtime baseline: the latest `tul-vf-latest.md` evidence for HEAD, Remote HEAD, release gate, working tree, and fresh clone status.
-- Review bundle: currently implemented explicit transport artifact from `tul export review`, written as `tul-review-latest.zip`.
-- Source context: manually supplied repo contents used for package generation or code-level diagnosis. A GitHub-generated `tul-main.zip` can serve this role after root layout and intended commit are checked.
-- Source export: proposed future tul command and artifact. `tul export source` is not implemented in the current CLI. The accepted spec lives in `docs/workflows/source-export-spec.md` once the Green/Yellow spec package closes.
+- Source bundle: currently implemented explicit source-context artifact from `tul export source`, normally written as `tul-source-latest.zip`.
+- Review bundle: currently implemented explicit changed-files transport artifact from `tul export review`, normally written as `tul-review-latest.zip`.
+- Export status: warning-only inspection from `tul export status`; it detects stale, missing, invalid, or unrecorded export artifacts and docs drift.
 - Backup/recovery authority: Git remote, commit hashes, and tul rollback state. Zip artifacts are not backup authority.
 
-See `docs/workflows/artifact-semantics.md`, `docs/workflows/source-context-and-export.md`, `docs/workflows/source-export-spec.md`, `docs/checklists/stage7-package-gates.md`, `docs/workflows/parallel-readiness.md`, and `docs/workflows/stage7-bounded-parallel-planning.md`.
-
-## Current cleanup model
-
-- `tul archive --noop --dry-run --keep 3` is the inspection path.
-- `tul archive --noop --keep 3` is the only accepted actual archive move class at this checkpoint.
-- `tul package hygiene` reports shared external invalid archives without moving them.
-- `tul package hygiene --ingest` moves valid matching tul packages into the project inbox.
-- `tul package hygiene --quarantine` only applies to project-inbox cleanup candidates.
+See `docs/workflows/artifact-semantics.md`, `docs/workflows/source-context-and-export.md`, `docs/workflows/source-export-spec.md`, `docs/workflows/export-integrity-hardening.md`, `docs/checklists/stage7-package-gates.md`, and `docs/workflows/stage7-bounded-parallel-planning.md`.
 
 ## Stage 7 active package
 
 Recommended package:
 
 ```text
-tul-stage7-source-spec-and-gates-bundle-v1
+tul-stage7-export-integrity-hardening-bundle-v1
 ```
 
 Goal:
 
 ```text
-Accept the source-export specification and make Stage 7 Green/Yellow package gates copy-ready before any runtime implementation.
+Combine export consistency hardening, source bundle freshness warning, and docs drift checking as warning-only runtime diagnostics.
 ```
 
-Parallel class: Yellow.
+Parallel class: Orange.
 
-Reason: this package touches coordination docs, artifact semantics, source-export spec text, and gate checklists. It must not add a `tul export source` command or change runtime behavior.
+Reason: this package touches CLI/runtime inspection output, verify runtime snapshots, handoff wording, docs, and version metadata. It must not automate post-update export.
 
 ## Next ready queue
 
-1. Apply the Stage 7 source spec and package gates bundle and close it with `tul-vf-latest.md`.
-2. If source context remains a repeated bridge cost, implement `tul export source` as an Orange package using the accepted spec.
-3. Consider docs drift checking if planning/status baselines drift again.
+1. Apply `tul-stage7-export-integrity-hardening-bundle-v1` and close it with `tul-vf-latest.md`.
+2. If warning-only export status is stable, implement post-update export automation as a separate Red-class package.
+3. Consider promoting selected docs drift checks to a release gate only after repeated warning-only runs prove low false positives.
 4. Refine duplicate package name/hash guidance only if inbox clutter returns.
 5. Run Windows parity smoke only after several self-host packages remain stable.
 
 ## Deferred
 
 Stage X target onboarding, including `humtr/ai`, remains deferred until tul's self-host loop reduces rather than multiplies bridge work.
-
-## Stage 7 explicit source export implementation
-
-Current package target:
-
-- add `tul export source`;
-- write `/sdcard/termux/import/tul/tul-source-latest.zip` by default;
-- include `source-manifest.json`, `source-file-list.txt`, and `source-file-sha256s.txt`;
-- record final SHA256, payload SHA256, size, source file count, root layout, rewrite, and post-replace verification in command output and latest state when available;
-- keep automatic post-update source export out of scope.

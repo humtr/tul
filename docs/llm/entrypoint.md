@@ -113,7 +113,7 @@ For compact change review, prefer the explicit review bundle:
 tul export review
 ```
 
-For package generation or code-level diagnosis, ask for source context when needed and verify its root layout before use. A GitHub-generated `tul-main.zip` is acceptable manual source context when it plausibly corresponds to the verified HEAD, but it is not a tul runtime backup or a tul-proven explicit source export. A future explicit `tul export source` command may replace this ambiguity, but it is not implemented yet and must not be suggested as a runnable command.
+For package generation or code-level diagnosis, prefer the explicit source bundle from `tul export source` when the implementation package is closed in the latest verify baseline. A GitHub-generated `tul-main.zip` remains acceptable fallback source context when it plausibly corresponds to the verified HEAD, but it is not a tul runtime backup or a tul-proven explicit source export.
 
 ## Stage 7 planning checkpoint
 
@@ -122,4 +122,8 @@ Before proposing implementation work, read `docs/workflows/stage7-bounded-parall
 
 ## Stage 7 gate reference
 
-Before generating a Stage 7 package, read `docs/checklists/stage7-package-gates.md`. Do not implement `tul export source` until `docs/workflows/source-export-spec.md` is accepted by the latest verified baseline and the package is explicitly classified Orange.
+Before generating a Stage 7 package, read `docs/checklists/stage7-package-gates.md`. Treat `tul export source` as implemented only when the latest verify baseline confirms the explicit source export implementation package. Use `tul export status` to check whether the current source bundle is fresh.
+
+## Export integrity handoff rule
+
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.

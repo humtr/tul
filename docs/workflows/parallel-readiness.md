@@ -150,3 +150,7 @@ For the first Stage 7 package, a large planning consolidation commit is acceptab
 ## Stage 7 gate pointer
 
 For copy-ready Green/Yellow/Orange/Red gate requirements, use `docs/checklists/stage7-package-gates.md`. That checklist is the operational gate template; this workflow remains the planning/readiness overview.
+
+## Export integrity hardening class
+
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
