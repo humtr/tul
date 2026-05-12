@@ -177,3 +177,13 @@ Context: The self-host loop now has a release gate and compact state output. The
 Decision: Treat `tul package check` as the pre-update authoring gate. It should validate archive root layout, payload hygiene, manifest target compatibility, apply source coverage, unique destinations, and exact alignment between `apply.files[*].to` and `commit.files`. Failure output should include a concise failure summary and actionable next steps.
 
 Consequences: Package authors get faster feedback before mutating a repo. Update remains the runtime execution loop, while package check becomes the safer place to catch authoring mistakes. Broader cleanup automation and Windows parity remain separate bundles.
+
+## ADR-017 — Archive cleanup is dry-run first
+
+Status: accepted
+
+Context: Work state directories accumulate during self-host testing. They are clutter, but they also contain reports, handoffs, state files, and rollback evidence. A compact state view can suggest cleanup, but it should not encourage an unreviewed move as the first action.
+
+Decision: State cleanup guidance starts with `tul archive --noop --dry-run --keep N`. Archive output should show inventory, selected cleanup class, keep count, source and destination directories, and latest/latest-rollbackable reference states. Omitted project targets may use guarded native context, matching other mutating commands. Actual moves require an explicit rerun without `--dry-run`.
+
+Consequences: Users can reduce work-state clutter without losing inspection authority. Cleanup remains reversible in the sense that state directories are moved to the configured archive root rather than deleted. Automatic deletion and archive pruning are deferred.

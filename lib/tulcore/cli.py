@@ -44,7 +44,20 @@ from .manifest import validate_manifest
 from .package import candidate_record, discover_candidates, discover_package_inventory, import_package, invalid_candidate_record, manifest_data_from_archive, select_package, sha256_file
 from .pipeline import run_update
 from .report import build_report
-from .state import archive_latest_state, archive_states, iter_states, latest_state, latest_state_with_commit, state_commit, summarize_compact_state, summarize_state, set_phase
+from .state import (
+    archive_inventory,
+    archive_protected_paths,
+    archive_selector_label,
+    archive_latest_state,
+    archive_states,
+    iter_states,
+    latest_state,
+    latest_state_with_commit,
+    state_commit,
+    summarize_compact_state,
+    summarize_state,
+    set_phase,
+)
 from .sweep import sweep_repo
 from .verify import run_verify, write_verify_artifacts
 
@@ -232,7 +245,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("target")
 
     p = sub.add_parser("archive", help="archive local tul work state")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?", help="optional project/path; omitted target uses guarded native context")
     p.add_argument("--all", action="store_true", help="archive all matching states, not just the latest")
     p.add_argument("--noop", action="store_true", help="archive no-op states")
     p.add_argument("--imported", action="store_true", help="archive import/validated states without commits")
@@ -602,7 +615,11 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         return 0
 
     if command == "archive":
-        ctx = resolve_project(args.target)
+        inferred = infer_mutating_project(getattr(args, "target", None), command="archive")
+        ctx = inferred.ctx
+        if not getattr(args, "target", None):
+            print(format_inference_summary(inferred, command="archive"))
+            print()
         paths = platform_paths(ctx.global_config)
         work_root = paths.get("work_root")
         archive_root = paths.get("archive_root") or paths.get("backup_root")
@@ -612,6 +629,15 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if not archive_root:
             print("No platform.archive_root or platform.backup_root configured.")
             return 0
+        keep = max(args.keep or 0, 0)
+        selector = archive_selector_label(
+            all_states=args.all,
+            noop=args.noop,
+            imported=args.imported,
+            failed=args.failed,
+        )
+        inventory = archive_inventory(work_root, project=ctx.project_id)
+        protected = archive_protected_paths(work_root, project=ctx.project_id)
         archived = archive_states(
             work_root,
             archive_root,
@@ -620,28 +646,63 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             noop=args.noop,
             imported=args.imported,
             failed=args.failed,
-            keep=max(args.keep or 0, 0),
+            keep=keep,
             dry_run=args.dry_run,
         )
+        print("# tul archive")
+        print(f"Project: {ctx.project_id}")
+        print(f"Work root: {work_root}")
+        print(f"Archive root: {archive_root}")
+        print(f"Mode: {'dry-run' if args.dry_run else 'move'}")
+        print(f"Selector: {selector}")
+        print(f"Keep newest selected: {keep}")
+        print("Inventory:")
+        print(f"- total states: {inventory['total']}")
+        print(f"- noop: {inventory['noop']}")
+        print(f"- imported: {inventory['imported']}")
+        print(f"- failed: {inventory['failed']}")
+        print(f"- rollbackable: {inventory['rollbackable']}")
+        if protected:
+            print("Protected reference states:")
+            if protected.get("latest"):
+                print(f"- latest: {protected['latest']}")
+            if protected.get("latest_rollbackable"):
+                print(f"- latest rollbackable: {protected['latest_rollbackable']}")
         if not archived:
+            print()
             print(f"No matching tul state found for project {ctx.project_id} under {work_root}")
             print("Examples:")
-            print(f"  tul archive {ctx.project_id} --noop --dry-run")
+            print(f"  tul archive {ctx.project_id} --noop --dry-run --keep 3")
             print(f"  tul archive {ctx.project_id} --noop --keep 3")
-            print(f"  tul archive {ctx.project_id} --imported")
+            print(f"  tul archive {ctx.project_id} --imported --dry-run")
             return 0
         action = "Would archive" if args.dry_run else "Archived"
+        print()
         print(f"{action} {len(archived)} state(s) for {ctx.project_id}:")
+        protected_values = set(protected.values())
         for state_path, dest, data in archived:
+            source_dir = state_path.parent
+            markers = []
+            if state_path in protected_values:
+                markers.append("protected-reference")
             print(f"- state: {state_path}")
-            print(f"  dir: {dest}")
+            print(f"  source dir: {source_dir}")
+            print(f"  archive dir: {dest}")
             print(f"  phase: {data.get('phase')}")
             if data.get("outcome"):
                 print(f"  outcome: {data.get('outcome')}")
+            if data.get("package_name") or data.get("package"):
+                print(f"  package: {data.get('package_name') or data.get('package')}")
             if data.get("commit"):
                 print(f"  commit: {data.get('commit')}")
+            if markers:
+                print(f"  warning: {', '.join(markers)}")
         if args.dry_run:
-            print("No files were moved. Re-run without --dry-run to archive.")
+            print()
+            print("No files were moved. Review the list, then re-run without --dry-run only if it is correct.")
+        else:
+            print()
+            print("Archived state directories were moved out of work_root. Verify with: tul state --all --limit 5")
         return 0
 
     if command == "config":

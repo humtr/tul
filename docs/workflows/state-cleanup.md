@@ -1,22 +1,57 @@
 # State cleanup workflow
 
-`tul` keeps work state under the configured `platform.work_root`. Repeated package testing can create many no-op or imported states. These records are useful while debugging, but they should be easy to inspect and archive without deleting evidence.
+`tul` keeps work state under the configured `platform.work_root`. Repeated package testing can create many no-op, imported, or failed states. These records are useful while debugging, so cleanup should begin with a dry-run plan rather than an immediate move.
 
-## Recommended commands
+## Recommended inspection
 
 ```bash
-tul state tul
-tul state tul --all --limit 5
-tul archive tul --noop --dry-run
-tul archive tul --noop --keep 3
-tul archive tul --imported --dry-run
+tul state
+tul state --all --limit 5
+tul state --json
 ```
 
-Rules:
+Default `tul state` is a decision view. It shows the latest state, latest rollbackable commit, key artifacts, and the recommended cleanup dry-run. Full history is explicit behind `--all` or `--json`.
 
-- `tul state <project>` shows the latest state only.
-- `tul state <project> --all --limit N` shows the newest N matching states.
-- `tul archive <project> --noop --keep N` archives older no-op states while keeping the newest N.
-- `tul archive <project> --imported` archives imported/validated states that do not contain commits.
+## Dry-run first
+
+Start with no-op state cleanup because no-op work states are usually clutter and do not contain commits. Keep the newest few records until repeated runs prove they are no longer useful.
+
+```bash
+tul archive --noop --dry-run --keep 3
+```
+
+The dry-run output should show:
+
+- project and inferred target context when the target is omitted;
+- work root and archive root;
+- mode, selector, and keep count;
+- total/noop/imported/failed/rollbackable inventory counts;
+- latest state and latest rollbackable state as protected references;
+- each selected source state directory and destination archive directory;
+- an explicit note that no files were moved.
+
+## Move only after review
+
+After reviewing the dry-run list, rerun without `--dry-run` only if the selected source directories are correct.
+
+```bash
+tul archive --noop --keep 3
+```
+
+Imported or failed state cleanup should also start with dry-run:
+
+```bash
+tul archive --imported --dry-run --keep 3
+tul archive --failed --dry-run --keep 3
+```
+
+## Rules
+
 - `--dry-run` prints what would move without moving files.
-- Published rollbackable states are not removed by `--noop` or `--imported`.
+- `--noop` selects no-op states.
+- `--imported` selects imported/validated states without commits.
+- `--failed` selects failed states.
+- `--keep N` keeps the newest N selected states and archives the older selected states.
+- Published rollbackable states are not selected by `--noop` or `--imported`.
+- Broad `--all` cleanup is a diagnostic tool, not the normal cleanup path.
+- Archive cleanup moves state directories to the configured archive root; it does not delete them.

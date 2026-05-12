@@ -225,3 +225,13 @@ Impact: Users and LLM sessions should spend less time guessing whether an archiv
 Reflected in: `lib/tulcore/authoring.py`, `lib/tulcore/package.py`, `docs/workflows/package-authoring.md`, and `docs/checklists/loop-runtime.md`.
 
 Follow-up: Use synthetic broken packages when package-check behavior changes. Keep cleanup and Windows parity as separate bundles.
+
+### Stage 6.5 — State cleanup should be dry-run first
+
+Observation: Compact `tul state` made work-state accumulation visible, but the previous cleanup suggestion pointed directly at an archive move command. Because state directories are rollback and diagnosis evidence, cleanup needs an inspectable plan before any move.
+
+Impact: Archive cleanup should start with `tul archive --noop --dry-run --keep N`, showing inventory counts, selected source directories, archive destinations, and protected reference states. Actual moves remain explicit and separate.
+
+Reflected in: `lib/tulcore/state.py`, `lib/tulcore/cli.py`, `docs/workflows/state-cleanup.md`, and `docs/checklists/loop-runtime.md`.
+
+Follow-up: After observing dry-run output over repeated bundles, decide whether imported/failed cleanup guidance needs a separate bundle. Keep actual deletion and archive pruning out of this dry-run bundle.

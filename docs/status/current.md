@@ -1,8 +1,8 @@
 # Current status
 
-Latest known version: `0.8.7-authoring-diagnostics-bundle`.
+Latest known version: `0.8.8-archive-cleanup-dryrun-bundle`.
 
-Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, and compact state output are available. The compact gate bundle has passed release gate and is now the normal loop baseline.
+Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, and archive dry-run guidance are available. The compact gate and authoring diagnostics bundles have passed release gate and are now normal loop baseline behavior.
 
 ## Current verified loop
 
@@ -18,16 +18,17 @@ tul update
 
 ## Current bundle
 
-Package: `tul_stage6_authoring_diagnostics_bundle_v1`
+Package: `tul_stage6_archive_cleanup_dryrun_bundle_v1`
 
-Commit message: `Improve package authoring diagnostics`
+Commit message: `Improve archive cleanup dry-run output`
 
 Scope:
 
-1. Strengthen `tul package check` diagnostics for root layout, manifest, payload, and commit file consistency.
-2. Improve invalid archive and no-match remediation guidance.
-3. Keep package authoring guidance aligned with the bounded self-host loop.
-4. Preserve verify, pipeline, rollback, and Windows behavior for later bundles.
+1. Make `tul state` recommend archive dry-run before cleanup.
+2. Allow `tul archive` to use guarded native context when the project target is omitted.
+3. Print work-state inventory, selected cleanup class, keep count, archive root, and protected reference states.
+4. Improve `tul archive --noop --dry-run --keep N` output without adding automatic destructive cleanup.
+5. Preserve verify, update, rollback, package authoring, and Windows behavior for later bundles.
 
 ## Verify artifact convention
 
@@ -78,10 +79,20 @@ The check should identify:
 - destination/`commit.files` mismatches;
 - target project/repo/branch mismatches when `--target` is supplied.
 
+## State cleanup convention
+
+State cleanup is intentionally dry-run first. Routine inspection should use:
+
+```bash
+tul archive --noop --dry-run --keep 3
+```
+
+The dry-run output should show inventory counts, selected state directories, destination archive directories, latest state, and latest rollbackable state before any files are moved. Actual archive moves remain explicit by re-running without `--dry-run` after review.
+
 ## Next likely bundles
 
-- archive cleanup dry-run bundle;
 - handoff discoverability bundle;
+- parallel-readiness gate bundle;
 - Windows parity bundle;
 - parallel-readiness gate bundle.
 

@@ -4,7 +4,7 @@
 
 Stage 6 — bounded parallel self-host hardening.
 
-The roadmap is a ready queue and bundle planner. The update-integrated verify gate has passed smoke and is now the normal loop baseline. The first bounded parallel package, `tul_stage6_compact_gate_bundle_v1`, has passed. The active bounded package is `tul_stage6_authoring_diagnostics_bundle_v1`.
+The roadmap is a ready queue and bundle planner. The update-integrated verify gate has passed smoke and is now the normal loop baseline. The compact gate and authoring diagnostics bounded packages have passed. The active bounded package is `tul_stage6_archive_cleanup_dryrun_bundle_v1`.
 
 ## Completed foundations
 
@@ -33,8 +33,9 @@ The roadmap is a ready queue and bundle planner. The update-integrated verify ga
 - Stage 6.1e — update-integrated verify gate and handoff hotfix
 - Stage 6.1f — normal update smoke for post-update fresh verification
 - Stage 6.2 — compact verify gate and state output
+- Stage 6.4 — package authoring diagnostics
 
-## Recently completed bundle
+## Recently completed bundles
 
 ### Bundle B — Compact gate bundle v1
 
@@ -42,32 +43,37 @@ Package: `tul_stage6_compact_gate_bundle_v1`
 
 Result: release gate passed. Canonical verify layout, release-gate summary, compact state output, and docs consistency updates are now baseline behavior.
 
-## Active bundle
-
 ### Bundle C — Authoring and diagnostics bundle
 
 Package: `tul_stage6_authoring_diagnostics_bundle_v1`
 
+Result: release gate passed. Package check now catches nested roots, missing payload sources, unreferenced payload files, and apply/commit file drift before update.
+
+## Active bundle
+
+### Bundle D — Archive cleanup dry-run bundle
+
+Package: `tul_stage6_archive_cleanup_dryrun_bundle_v1`
+
 Scope:
 
-1. Strengthen `tul package check` diagnostics for archive root layout, manifest parsing, payload consistency, and apply/commit file set alignment.
-2. Improve package discovery invalid-archive reasons, especially nested `tul-package.yml` archives.
-3. Add actionable next steps to package check failure output.
-4. Refresh package authoring workflow and runtime checklist docs.
+1. Make `tul state` recommend `tul archive --noop --dry-run --keep 3` before cleanup.
+2. Let `tul archive` use the same guarded native context pattern as other mutating commands when target is omitted.
+3. Improve archive dry-run output with inventory counts, selector, keep count, source/destination directories, and protected reference states.
+4. Refresh state cleanup workflow and runtime checklist docs.
 
 Success criteria:
 
-- `tul package check` fails with a clear failure summary and remediation when a zip has a nested `tul-package.yml`.
-- `tul package check` identifies missing apply sources under `files/`.
-- `tul package check` identifies `apply.files[*].to` and `commit.files` mismatches.
-- `tul package check --target tul` still builds an apply plan for valid packages.
+- `tul archive --noop --dry-run --keep 3` works from the active/current tul repo without a repeated project argument.
+- Dry-run output states that no files were moved.
+- Output identifies latest state and latest rollbackable state as protected reference states.
+- `tul state` cleanup guidance points to dry-run first.
 - Normal `tul update` still produces a release-gate PASS artifact after applying this bundle.
 
 ## Ready queue
 
 Ready queue items can be bundled when they share a capability area and have compatible risk.
 
-- Archive cleanup dry-run: reduce no-op/imported state clutter without destructive cleanup.
 - Handoff discoverability: make repo-resident state easier for a fresh LLM to find.
 - Package check diagnostics: clearer failure messages and package authoring guidance.
 - Docs consistency checks: status, roadmap, manifest, strategy, and checklist alignment.
@@ -75,14 +81,6 @@ Ready queue items can be bundled when they share a capability area and have comp
 - State cleanup polish: better archive defaults and clearer stale failure detection.
 
 ## Bundle candidates
-
-### Bundle D — Archive cleanup dry-run bundle
-
-Scope:
-
-- work-state inventory summary;
-- safer `tul archive --noop --keep N` guidance;
-- explicit dry-run before any state cleanup.
 
 ### Bundle E — Handoff discoverability bundle
 

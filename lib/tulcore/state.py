@@ -139,6 +139,25 @@ def is_failed_state(data: dict[str, Any]) -> bool:
     return data.get("phase") == "failed" or bool(data.get("error"))
 
 
+def archive_selector_label(
+    *,
+    all_states: bool = False,
+    noop: bool = False,
+    imported: bool = False,
+    failed: bool = False,
+) -> str:
+    selectors: list[str] = []
+    if all_states:
+        selectors.append("all")
+    if noop:
+        selectors.append("noop")
+    if imported:
+        selectors.append("imported")
+    if failed:
+        selectors.append("failed")
+    return ", ".join(selectors) if selectors else "latest"
+
+
 def select_archive_states(
     work_root: Path,
     *,
@@ -171,6 +190,36 @@ def select_archive_states(
     if keep > 0:
         selected = selected[keep:]
     return selected
+
+
+def archive_inventory(
+    work_root: Path,
+    *,
+    project: str | None = None,
+) -> dict[str, int]:
+    states = iter_states(work_root, project=project)
+    return {
+        "total": len(states),
+        "noop": sum(1 for _, data in states if is_noop_state(data)),
+        "imported": sum(1 for _, data in states if is_imported_state(data)),
+        "failed": sum(1 for _, data in states if is_failed_state(data)),
+        "rollbackable": sum(1 for _, data in states if has_commit_state(data)),
+    }
+
+
+def archive_protected_paths(
+    work_root: Path,
+    *,
+    project: str | None = None,
+) -> dict[str, Path]:
+    protected: dict[str, Path] = {}
+    latest = latest_state(work_root, project=project)
+    if latest:
+        protected["latest"] = latest[0]
+    rollbackable = latest_state_with_commit(work_root, project=project)
+    if rollbackable:
+        protected["latest_rollbackable"] = rollbackable[0]
+    return protected
 
 
 def archive_states(
@@ -302,7 +351,7 @@ def summarize_compact_state(
         "",
         "Cleanup:",
         f"- work states: {total_states}",
-        "- suggestion: tul archive --noop --keep 3",
+        "- suggestion: tul archive --noop --dry-run --keep 3",
         "",
         "For full history:",
         "- tul state --all --limit 5",

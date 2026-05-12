@@ -133,3 +133,11 @@ Invariants:
 - [x] `tul package check` validates that apply destinations and `commit.files` align.
 - [x] `tul package check --target tul` keeps apply-plan validation for compatible packages.
 - [x] No-match package guidance suggests both inspect and check commands.
+## Archive cleanup dry-run checkpoint
+
+- [x] `tul state` cleanup guidance points to dry-run before moving files.
+- [x] `tul archive` accepts omitted target through guarded native context.
+- [x] `tul archive --noop --dry-run --keep 3` prints inventory counts.
+- [x] Archive dry-run output shows source and archive destination directories.
+- [x] Archive dry-run output identifies latest and latest rollbackable reference states.
+- [x] Actual state moves require re-running without `--dry-run`.
