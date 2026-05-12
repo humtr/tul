@@ -217,6 +217,8 @@ def generate_handoff(
     state_file: Path | None = None,
     report_file: Path | None = None,
     outcome: str | None = None,
+    verify_fresh_ok: bool | None = None,
+    verify_artifacts: dict[str, str] | None = None,
     full: bool = False,
 ) -> str:
     kwargs = dict(
@@ -228,6 +230,8 @@ def generate_handoff(
         state_file=state_file,
         report_file=report_file,
         outcome=outcome,
+        verify_fresh_ok=verify_fresh_ok,
+        verify_artifacts=verify_artifacts,
     )
     if full:
         return full_handoff(
