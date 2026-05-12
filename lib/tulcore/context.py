@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,13 @@ from .config import config_path, expand_path, load_global_config, resolve_projec
 from .errors import ConfigError
 from .gitops import current_branch
 from .paths import mkdirp
+
+
+@dataclass
+class InferredProject:
+    ctx: Any
+    reason: str
+    warnings: list[str]
 
 
 def context_path() -> Path:
@@ -91,6 +99,67 @@ def project_for_cwd(cwd: Path | None = None) -> tuple[str, Path] | None:
         return None
     _, project_id, repo = sorted(matches, reverse=True)[0]
     return project_id, repo
+
+
+def _configured_project_ids() -> list[str]:
+    config, _ = load_global_config()
+    projects = config.get("projects") or {}
+    return [str(key) for key, value in projects.items() if isinstance(value, dict) and value.get("path")]
+
+
+def infer_project(target: str | None = None, *, command: str = "command", read_only: bool = True) -> InferredProject:
+    """Infer a project for native/no-arg commands.
+
+    Resolution order for omitted targets is:
+    explicit target, current configured repo, active_project, default_project,
+    single configured project. Mutating commands should use this helper only
+    after adding their own conflict guard. v1b uses it for read-only commands.
+    """
+    warnings: list[str] = []
+    if target:
+        return InferredProject(resolve_project(target), "explicit target", warnings)
+
+    cwd_match = project_for_cwd()
+    active = active_project()
+    default = default_project()
+
+    if cwd_match:
+        project_id, _ = cwd_match
+        if active and active != project_id:
+            warnings.append(
+                "Context conflict: current directory project "
+                f"{project_id!r} differs from active project {active!r}; "
+                "using current directory project for this read-only command."
+            )
+        return InferredProject(resolve_project(project_id), "current directory project", warnings)
+
+    if active:
+        return InferredProject(resolve_project(active), "active_project", warnings)
+
+    if default:
+        return InferredProject(resolve_project(default), "default_project", warnings)
+
+    project_ids = _configured_project_ids()
+    if len(project_ids) == 1:
+        return InferredProject(resolve_project(project_ids[0]), "only configured project", warnings)
+
+    options = [
+        f"tul use <project>",
+        f"tul {command} <project>",
+        "tul projects",
+    ]
+    if project_ids:
+        options.append("configured projects: " + ", ".join(project_ids))
+    raise ConfigError(
+        "project target is ambiguous.\n"
+        "Choose one of:\n- " + "\n- ".join(options)
+    )
+
+
+def format_inference_warnings(inferred: InferredProject) -> str:
+    if not inferred.warnings:
+        return ""
+    return "\n".join(f"WARNING: {item}" for item in inferred.warnings)
 
 
 def format_current_context() -> str:

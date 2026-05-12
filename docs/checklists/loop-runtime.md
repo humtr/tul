@@ -66,3 +66,13 @@ Invariants:
 - [ ] `tul doctor tul` reports runtime context.
 - [ ] `tul use tul --default` safely updates global `default_project`.
 - [ ] No-arg `tul update` is still unavailable until guarded mutating-command inference is implemented.
+
+## Native context checks
+
+- [x] `tul use <project>` stores an active project.
+- [x] `tul current` shows active/default/current-directory context.
+- [x] read-only commands can infer the project target when safe.
+- [x] `tul verify fresh` is accepted as shorthand for `--fresh-clone`.
+- [ ] mutating commands stop on active/cwd context conflict.
+- [ ] `tul update` can safely infer project and latest package.
+- [ ] package manifest mismatch guidance explains incompatible zip targets.

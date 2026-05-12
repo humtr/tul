@@ -123,3 +123,13 @@ Impact: native context must be introduced in steps: store active project first, 
 Reflected in: `docs/roadmap.md`, `docs/status/current.md`, `docs/checklists/loop-runtime.md`.
 
 Follow-up: implement `tul_native_context_v1b` only after `tul use` and `tul current` are verified.
+
+## Stage 6 — read-only native defaults should precede mutating defaults
+
+Observation: No-arg commands reduce bridge work, but mutating commands such as `tul update` need stronger context-conflict and package-target guards than read-only commands.
+
+Impact: Native context is staged: active project storage, read-only inference, mutating inference, then package mismatch guidance.
+
+Reflected in: `docs/roadmap.md`, `docs/commands.md`, and native context v1b.
+
+Follow-up: Implement no-arg `tul update` only with explicit conflict and package selection banners.

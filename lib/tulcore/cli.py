@@ -24,7 +24,7 @@ from .authoring import (
 )
 from .checks import run_checks
 from .config import config_path, load_global_config, platform_paths, resolve_project
-from .context import active_project, context_path, format_current_context, set_active_project, set_default_project
+from .context import active_project, context_path, format_current_context, format_inference_warnings, infer_project, set_active_project, set_default_project
 from .errors import TulError
 from .gitops import (
     changed_files,
@@ -61,6 +61,27 @@ def read_repo_text(rel: str, *, repo: Path | None = None) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def read_project(args, *, command: str):
+    inferred = infer_project(getattr(args, "target", None), command=command, read_only=True)
+    warnings = format_inference_warnings(inferred)
+    if warnings:
+        print(warnings)
+    return inferred.ctx
+
+
+def parse_verify_target_and_mode(args) -> tuple[str | None, bool]:
+    target = getattr(args, "target", None)
+    mode = getattr(args, "mode", None)
+    fresh = bool(getattr(args, "fresh_clone", False))
+    if target == "fresh" and mode is None:
+        return None, True
+    if mode == "fresh":
+        return target, True
+    if mode:
+        raise TulError(f"unknown verify mode: {mode}. Use: tul verify fresh")
+    return target, fresh
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tul", description="Terminal Update Loop")
     parser.add_argument("--version", action="version", version=f"tul {__version__}")
@@ -74,16 +95,17 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--copy-handoff", action="store_true", help="copy handoff to clipboard command when configured")
 
     p = sub.add_parser("status", help="show repo status")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?")
 
     p = sub.add_parser("sync", help="fetch and pull --ff-only when safe")
     p.add_argument("target")
 
     p = sub.add_parser("check", help="run repo checks")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?")
 
     p = sub.add_parser("verify", help="verify repo status, checks, docs, and optional fresh clone")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?", help="optional project/path, or 'fresh' for fresh-clone verification")
+    p.add_argument("mode", nargs="?", help="optional shorthand mode; use 'fresh' for fresh-clone verification")
     p.add_argument("--fresh-clone", action="store_true", help="clone the remote repo into ~/tmp and verify the clone too")
     p.add_argument("--clone-root", help="directory for fresh clone verification; defaults to ~/tmp/tul-verify-fresh")
     p.add_argument("--log-dir", help="directory for verify artifacts; defaults to platform log root")
@@ -99,10 +121,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--force", action="store_true", help="replace an existing launcher after backing it up")
 
     p = sub.add_parser("report", help="print a lightweight report")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?")
 
     p = sub.add_parser("handoff", help="print an LLM handoff")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?")
     p.add_argument("--mode", default="initial-review")
     p.add_argument("--full", action="store_true", help="include full loop contract and invariants")
     p.add_argument("--instructions", action="store_true", help="print project instruction template instead of runtime handoff")
@@ -137,12 +159,12 @@ def build_parser() -> argparse.ArgumentParser:
     package_sub = p.add_subparsers(dest="package_command", required=True)
 
     p_list = package_sub.add_parser("list", help="list matching packages from configured inbox roots")
-    p_list.add_argument("target")
+    p_list.add_argument("target", nargs="?")
     p_list.add_argument("--limit", type=int, default=20, help="maximum candidates to show")
     p_list.add_argument("--json", action="store_true", help="print machine-readable candidate data")
 
     p_latest = package_sub.add_parser("latest", help="show the newest matching package and selection reason")
-    p_latest.add_argument("target")
+    p_latest.add_argument("target", nargs="?")
     p_latest.add_argument("--json", action="store_true", help="print machine-readable selected candidate data")
 
     p_inspect = package_sub.add_parser("inspect", help="inspect a package archive manifest without applying it")
@@ -184,7 +206,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("commit", nargs="?", help="commit to revert; defaults to latest state commit when available")
 
     p = sub.add_parser("state", help="show local tul work state")
-    p.add_argument("target")
+    p.add_argument("target", nargs="?")
     p.add_argument("--all", action="store_true", help="show all matching state files, newest first")
     p.add_argument("--limit", type=int, help="limit displayed states when using --all")
     p.add_argument("--json", action="store_true", help="print state data as JSON")
@@ -262,7 +284,7 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         return 0
 
     if command == "status":
-        ctx = resolve_project(args.target)
+        ctx = read_project(args, command="status")
         print_status(ctx)
         return 0
 
@@ -279,7 +301,7 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         return 0
 
     if command == "check":
-        ctx = resolve_project(args.target)
+        ctx = read_project(args, command="check")
         outputs = run_checks(ctx.repo_path, ctx.repo_config)
         for item in outputs:
             print(item)
@@ -288,10 +310,12 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         return 0
 
     if command == "verify":
-        ctx = resolve_project(args.target)
+        target, fresh_clone = parse_verify_target_and_mode(args)
+        args.target = target
+        ctx = read_project(args, command="verify")
         result = run_verify(
             ctx,
-            fresh_clone=args.fresh_clone,
+            fresh_clone=fresh_clone,
             clone_root=Path(args.clone_root).expanduser() if args.clone_root else None,
         )
         artifacts = None
@@ -299,7 +323,7 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             artifacts = write_verify_artifacts(
                 ctx,
                 result,
-                fresh_clone=args.fresh_clone,
+                fresh_clone=fresh_clone,
                 log_dir=Path(args.log_dir).expanduser() if args.log_dir else None,
             )
         if args.json:
@@ -319,12 +343,12 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         return 0
 
     if command == "report":
-        ctx = resolve_project(args.target)
+        ctx = read_project(args, command="report")
         print(build_report(repo=ctx.repo_path, project=ctx.project_id))
         return 0
 
     if command == "handoff":
-        ctx = resolve_project(args.target)
+        ctx = read_project(args, command="handoff")
         if args.instructions:
             print(read_repo_text("templates/project-instructions.md", repo=ctx.repo_path))
             return 0
@@ -468,7 +492,7 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             else:
                 print(format_package_summary(summary))
             return 0
-        ctx = resolve_project(args.target)
+        ctx = read_project(args, command=f"package {args.package_command}")
         if args.package_command == "list":
             print_package_candidates(ctx, limit=args.limit, as_json=args.json, latest_only=False)
             return 0
@@ -499,7 +523,7 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         return 0
 
     if command == "state":
-        ctx = resolve_project(args.target)
+        ctx = read_project(args, command="state")
         paths = platform_paths(ctx.global_config)
         work_root = paths.get("work_root")
         if not work_root:

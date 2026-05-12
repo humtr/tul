@@ -86,7 +86,7 @@ Decision: `tul verify` writes markdown and JSON artifacts by default. The termin
 
 Consequences: The human bridge shifts from log copying to file handoff. This supports the long-term goal of minimizing repetitive bridge labor while preserving inspectability.
 
-## ADR-008 — Verify artifacts use short upload-friendly names
+## ADR-009 — Verify artifacts use short upload-friendly names
 
 Status: accepted
 
@@ -95,3 +95,13 @@ Context: Verify artifacts replaced long terminal copy/paste, but long common fil
 Decision: Generate short timestamped names using `<project>-vf-<mode>-<yymmdd>-<hhmmss>-<head>`, where `mode` is `f` for fresh-clone verification and `l` for local verification. Also generate stable `tul-vf-latest.*` files. Continue writing legacy `tul-verify-latest.*` aliases temporarily for compatibility.
 
 Consequences: The user can upload one short, unique markdown artifact without long terminal paste. Existing notes/scripts using the old latest filename continue working during the transition.
+
+## ADR-010 — Native context is staged from read-only to mutating commands
+
+Status: accepted
+
+Context: Repeating project names and long flags preserves bridge work. However, changing commands such as `tul update` can damage the wrong repo if active project, current directory, and package manifest disagree.
+
+Decision: Implement native context in stages. First store active context. Then allow no-arg read-only commands and `tul verify fresh`. Only later allow no-arg mutating commands with conflict guards and package-target mismatch guidance.
+
+Consequences: Users get shorter safe commands early, while update/import/rollback defaults remain guarded until the model is proven.

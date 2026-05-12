@@ -1,3 +1,3 @@
 """tul core package."""
 
-__version__ = "0.8.0-native-context-a"
+__version__ = "0.8.1-native-context-readonly"
