@@ -88,27 +88,33 @@ In the normal `tul update` path, the fresh verify gate runs before the final rep
 
 ## Export boundary
 
-`tul update` no longer treats full source zip export as a hidden default side effect. The failed repo zip experiment showed that a source path in state is not enough to prove freshness, root layout, or provenance.
+`tul update` no longer treats full source zip export as a hidden pre-verify side effect. The failed repo zip experiment showed that a source path in state is not enough to prove freshness, root layout, or provenance. Source/review exports now belong to an explicit post-update phase after commit, push, and fresh verification.
 
 The current update order is:
 
 ```text
-precheck -> import -> validate -> apply -> checks -> sweep -> publish -> verify -> report/state/handoff -> latest snapshot rewrite
+precheck -> import -> validate -> apply -> checks -> sweep -> publish -> verify -> report/state/handoff -> latest snapshot rewrite -> post-update exports -> latest snapshot refresh
 ```
+
+The post-update export phase runs only after the core update has already produced commit/push/fresh-verify evidence. Export failures are warning-only and must not alter commit, push, rollback, or release-gate facts.
 
 Export work is split by role:
 
 ```bash
-tul export review   # implemented compact diff-oriented upload bundle; records state/report/latest evidence
+tul export review   # compact diff-oriented upload bundle
+tul export source   # full source-context bundle
+tul export status   # warning-only freshness/docs-drift inspection
 ```
 
-Planned future command, not currently implemented:
+Normal `tul update` runs source/review export automatically after a successful default update. Recovery/debug paths may disable the phase:
 
-```text
-tul export source   # explicit full source context; manual, not part of update
+```bash
+tul update --no-export
+tul update --no-source-export
+tul update --no-review-export
 ```
 
-Neither command is a backup authority. Recovery remains Git remote + commit hashes + tul rollback state.
+Neither export is backup authority. Recovery remains Git remote + commit hashes + tul rollback state.
 
 ## Artifact semantics correction
 
@@ -119,7 +125,7 @@ Current corrected rule:
 - `verify.py` owns release-gate artifacts only.
 - `state.py` owns decision-state summaries only.
 - `handoff.py` owns fresh-session orientation only.
-- Review export and future source export should be separate responsibilities, not hidden inside verify.
+- Review export and source export are separate responsibilities and must not be hidden inside verify.
 - A path in state is insufficient evidence of a valid source export.
 
 Current implementation provides explicit review export:
@@ -128,13 +134,13 @@ Current implementation provides explicit review export:
 tul export review
 ```
 
-Explicit source export exists, but it remains outside the default update pipeline:
+Explicit source export exists as both a manual command and a default post-update artifact refresh. The post-update phase is intentionally after the release gate and warning-only. Manual commands remain useful for recovery/debug or when an artifact was intentionally skipped:
 
-```text
-tul export source  # manual only; not automatic
+```bash
+tul export source
+tul export review
+tul export status
 ```
-
-Automatic post-update review export should only be considered after the review bundle format is stable.
 
 
 ## Source export specification
@@ -143,4 +149,4 @@ The source-export contract lives in `docs/workflows/source-export-spec.md`. The 
 
 ## Pre-automation export integrity checkpoint
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.

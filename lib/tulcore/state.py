@@ -386,6 +386,37 @@ def _source_bundle_lines(data: dict[str, Any]) -> list[str]:
     return lines
 
 
+
+def _post_update_exports(data: dict[str, Any]) -> dict[str, Any] | None:
+    exports = data.get("post_update_exports")
+    if isinstance(exports, dict):
+        return exports
+    return None
+
+
+def _post_update_export_lines(data: dict[str, Any]) -> list[str]:
+    exports = _post_update_exports(data)
+    if not exports:
+        return []
+    lines = ["- post-update exports: warning-only"]
+    for key in ("source", "review"):
+        item = exports.get(key) if isinstance(exports.get(key), dict) else {}
+        status = item.get("status") or "unknown"
+        label = f"post-update {key}"
+        path = item.get("path")
+        if path:
+            lines.append(f"- {label}: {status} ({path})")
+        else:
+            lines.append(f"- {label}: {status}")
+        if item.get("error"):
+            lines.append(f"- {label} error: {item.get('error_type') or 'Error'}: {item.get('error')}")
+    if exports.get("snapshot_refreshed") is not None:
+        lines.append(f"- post-update export snapshots refreshed: {str(bool(exports.get('snapshot_refreshed'))).lower()}")
+    warnings = exports.get("warnings") if isinstance(exports.get("warnings"), list) else []
+    if warnings:
+        lines.append(f"- post-update export warnings: {len(warnings)}")
+    return lines
+
 def _review_bundle_export(data: dict[str, Any]) -> dict[str, Any] | None:
     export = data.get("review_bundle_export")
     if isinstance(export, dict):
@@ -464,6 +495,10 @@ def summarize_compact_state(
             else:
                 lines.extend(_source_bundle_lines(data))
             lines.extend(_review_bundle_lines(data))
+        post_export_lines = _post_update_export_lines(data)
+        if post_export_lines:
+            lines.extend(["", "Post-update export phase:"])
+            lines.extend(post_export_lines)
 
     lines.extend([
         "",
@@ -517,6 +552,10 @@ def summarize_state(path: Path, data: dict[str, Any]) -> str:
             lines.append(f"Review Bundle: failed ({review_export.get('error') or 'unknown error'})")
         elif review_export.get("path"):
             lines.append(f"Review Bundle: {review_export.get('path')}")
+    post_export_lines = _post_update_export_lines(data)
+    if post_export_lines:
+        lines.extend(["", "Post-update export phase:"])
+        lines.extend(post_export_lines)
     if data.get("outcome") == "noop" or data.get("no_op") is True:
         lines.append("Push verified: not applicable for no-op")
     elif data.get("push_verified") is not None:

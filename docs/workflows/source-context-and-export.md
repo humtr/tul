@@ -4,7 +4,7 @@ This document prevents one specific ambiguity: source context can come from seve
 
 ## Current rule
 
-`tul export source` is implemented as an explicit command after the Stage 7 source-export implementation package closes. It is not automatic and does not run inside `tul update`, `tul verify`, or `tul export review`.
+`tul export source` is implemented as an explicit command. After the post-update export automation package closes, normal `tul update` also refreshes the source bundle after successful commit, push, and fresh verification. It remains separate from `tul verify` and `tul export review`, and export failures are warning-only.
 
 Current package-generation sessions may use source context from:
 
@@ -31,7 +31,7 @@ tul export source --out /path/to/tul-source-latest.zip
 | `tul-main.zip` | Usually a GitHub-generated archive. Valid as manual source context when root layout and intended commit are understood. |
 | `tul-review-latest.zip` | Implemented review/diff transport from `tul export review`. Not full source context. |
 | `tul-source-latest.zip` | Implemented explicit full source-context bundle from `tul export source`. |
-| `tul export source` | Explicit source export command. Not automatic. |
+| `tul export source` | Explicit source export command; also used by the post-update export phase after successful updates. |
 
 ## Required checks before using source context
 
@@ -52,8 +52,8 @@ For a tul-generated source export, also check:
 
 ## Boundary
 
-Source export is explicit-only. Automatic post-update source export remains Red class and requires a later decision because it changes default update behavior, storage use, and artifact cadence.
+Source export is explicit as a manual command and automatic as a post-update refresh after successful default updates. The automatic phase is intentionally after commit, push, and fresh verification, and failures are warning-only.
 
 ## Export status
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.

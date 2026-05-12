@@ -72,7 +72,7 @@ many candidate plans may be drafted or compared in parallel
 → one release gate closes the new baseline
 ```
 
-The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b714dab33a45079e19`, the terminology audit package is closed at `7d7b27a4eb81570482ff4d9eaba1dc7c83429272`, and the source spec/gates checkpoint is closed at `a3585a7441e320f1ce78f924d293c411854f76ef`, when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes. The current Orange implementation baseline adds explicit `tul export source` as a manual command while keeping automatic source export out of the update pipeline. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md), [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md), [`docs/workflows/source-export-spec.md`](docs/workflows/source-export-spec.md), and [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md).
+The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b714dab33a45079e19`, the terminology audit package is closed at `7d7b27a4eb81570482ff4d9eaba1dc7c83429272`, and the source spec/gates checkpoint is closed at `a3585a7441e320f1ce78f924d293c411854f76ef`, the explicit source export implementation is closed at `a5db5d01d96277e83913ec17506c22e3284424eb`, and export integrity hardening is closed at `2bd72e4eedbc6753083d12ea7c4eac73e7691ba3`, when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes. The current Red-light implementation adds warning-only post-update source/review export automation after the core commit/push/verify path succeeds. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md), [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md), [`docs/workflows/source-export-spec.md`](docs/workflows/source-export-spec.md), and [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md).
 
 
 ## Non-negotiable invariants
@@ -284,7 +284,7 @@ It contains release-gate evidence plus compact runtime snapshots. Zip artifacts 
 - source export: implemented explicit full source context for package generation and code-level diagnosis; run manually with `tul export source`;
 - backup: Git remote, commit hashes, and rollback state.
 
-See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md). Ask for source context only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it. A GitHub-generated source archive can be source context, but backup and recovery authority remains Git remote plus commit hashes and rollback state. `tul export source` is now an explicit source-context command; it remains separate from `tul update`, `tul verify`, and `tul export review`.
+See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md). Ask for source context only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it. A GitHub-generated source archive can be source context, but backup and recovery authority remains Git remote plus commit hashes and rollback state. `tul export source` is now an explicit source-context command. In the default update path, source/review exports run as a separate post-update phase after commit, push, and fresh verification; export failures are warning-only and do not change commit/push/rollback facts.
 
 
 ## K1 archive execution safety
@@ -313,7 +313,15 @@ tul export status --json
 
 The command is warning-only. It checks whether `tul-source-latest.zip` and `tul-review-latest.zip` are present, readable, and aligned with the current HEAD. It also reports small docs drift warnings. These warnings do not fail the release gate.
 
-If the source bundle is stale after a successful update, refresh it explicitly:
+After the post-update export automation package closes, normal `tul update` refreshes source/review exports automatically after commit, push, and fresh verification. Use these flags only for recovery/debug or constrained environments:
+
+```bash
+tul update --no-export
+tul update --no-source-export
+tul update --no-review-export
+```
+
+If an export is intentionally skipped or fails warning-only, refresh source context manually with:
 
 ```bash
 tul export source

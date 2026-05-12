@@ -193,7 +193,7 @@ Invariants:
 - [x] Legacy source zip paths are not displayed as successful artifacts in compact state.
 - [x] `tul export review` creates a compact diff-oriented review bundle.
 - [x] `tul export source` creates an explicit full source export with root-layout checks.
-- [ ] Any automatic post-update export is limited to review evidence until source export is proven.
+- [x] Source export is proven before automatic post-update export.
 
 ## Artifact semantics checkpoint
 
@@ -205,7 +205,7 @@ Invariants:
 - [x] Misleading source zip state output is removed or clearly marked as unresolved.
 - [x] `tul export review` creates a compact diff-oriented review bundle.
 - [x] `tul export source` creates an explicit full source export with root-layout checks.
-- [ ] Any automatic post-update export is limited to review evidence until source export is proven.
+- [x] Source export is proven before automatic post-update export.
 
 
 ## Review bundle export checkpoint
@@ -258,7 +258,7 @@ Invariants:
 - [x] Runtime behavior changes are excluded from the planning consolidation package.
 - [x] Review bundle and source bundle semantics remain separated.
 - [x] GitHub-generated `tul-main.zip` can be source context but not backup or tul-proven source export.
-- [x] `tul export source` has an accepted implementation spec and is described as explicit/manual only.
+- [x] `tul export source` has an accepted implementation spec and implementation; post-update automation is warning-only.
 - [ ] Any automatic review/source export is approved in a separate package.
 
 
@@ -274,4 +274,4 @@ Invariants:
 
 ## Export integrity checkpoint
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.

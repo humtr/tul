@@ -108,17 +108,17 @@ Source context is not automatically runtime evidence. A source archive can be us
 
 ### Source export
 
-Purpose: future tul-generated full repo source context with provenance.
+Purpose: tul-generated full repo source context with provenance.
 
-Planned command, not currently implemented:
+Implemented manual command:
 
-```text
+```bash
 tul export source
 ```
 
-Do not ask the user to run `tul export source` until a source-export implementation package has been applied and verified.
+Default update behavior after the post-update export automation package closes: a successful normal `tul update` refreshes the source bundle after commit, push, and fresh verification. Export failures are warning-only and do not change release-gate, commit, push, or rollback facts.
 
-Future latest path:
+Latest path:
 
 ```text
 /sdcard/termux/import/tul/tul-source-latest.zip
@@ -181,4 +181,4 @@ Full source export remains explicit and unimplemented until its root-layout, fre
 
 ## Export integrity status
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.

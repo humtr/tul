@@ -168,6 +168,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--allow-dirty", action="store_true")
     p.add_argument("--dry-run", action="store_true", help="select/import/validate/plan the package without applying repo changes")
     p.add_argument("--no-verify", action="store_true", help="skip automatic post-update fresh verification")
+    p.add_argument("--no-export", action="store_true", help="skip automatic post-update source/review export phase")
+    p.add_argument("--no-source-export", action="store_true", help="skip automatic post-update source bundle export")
+    p.add_argument("--no-review-export", action="store_true", help="skip automatic post-update review bundle export")
 
     p = sub.add_parser("publish", help="commit and push already-staged changes")
     p.add_argument("target")
@@ -493,11 +496,17 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             no_push=args.no_push,
             allow_dirty=args.allow_dirty,
             verify_after=not args.no_verify,
+            post_export=not args.no_export,
+            post_export_source=not args.no_source_export,
+            post_export_review=not args.no_review_export,
         )
         print(result.report)
         if result.verify_text:
             print("\n--- VERIFY FRESH ---\n")
             print(result.verify_text)
+        if result.export_text:
+            print("\n--- POST-UPDATE EXPORTS ---\n")
+            print(result.export_text)
         print("\n--- LLM HANDOFF ---\n")
         print(result.handoff)
         return 0 if result.verify_ok is not False else 1

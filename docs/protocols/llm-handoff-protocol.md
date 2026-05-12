@@ -84,12 +84,12 @@ tul update <project> --package /path/to/package.zip
 
 ## Evidence economy
 
-For a successful update review, `tul-vf-latest.md` is usually enough. Ask for `tul state` only when state/rollback/cleanup behavior is part of the review. Ask for source context only when producing the next package or diagnosing a code-level failure. Source context may be a GitHub-generated archive, fresh clone, or future source export; it is not backup evidence.
+For a successful update review, `tul-vf-latest.md` is usually enough. Ask for `tul state` only when state/rollback/cleanup behavior is part of the review. Ask for source context only when producing the next package or diagnosing a code-level failure. Source context may be a GitHub-generated archive, fresh clone, or explicit source export; it is not backup evidence.
 
 
 ## Stage 7 package gates
 
-For Stage 7 package generation, read `docs/checklists/stage7-package-gates.md` and declare the package class before writing files. A future source-export implementation must also conform to `docs/workflows/source-export-spec.md`; until that implementation closes, `tul export source` is not a runnable command.
+For Stage 7 package generation, read `docs/checklists/stage7-package-gates.md` and declare the package class before writing files. A future source-export implementation must also conform to `docs/workflows/source-export-spec.md`; the source-export implementation is closed; post-update automation remains warning-only and serialized.
 
 ## Source export note
 
@@ -97,4 +97,4 @@ Use `tul export source` only when full source context is needed for package gene
 
 ## Export status rule
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.

@@ -8,7 +8,7 @@ Use current-turn evidence in this order:
 
 1. `tul-vf-latest.md` for release-gate facts and embedded state/handoff snapshots.
 2. `tul state` output for latest package, rollbackable commit, cleanup, and handoff state.
-3. Source context such as a GitHub-generated `tul-main.zip`, manually created source zip, fresh clone contents, or future explicit source export for code-level package generation.
+3. Source context such as a GitHub-generated `tul-main.zip`, manually created source zip, fresh clone contents, or explicit source export for code-level package generation.
 4. Repo documents for durable guidance.
 
 Do not use prior chat memory as the source of truth when these inputs disagree.
@@ -153,4 +153,4 @@ For copy-ready Green/Yellow/Orange/Red gate requirements, use `docs/checklists/s
 
 ## Export integrity hardening class
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.

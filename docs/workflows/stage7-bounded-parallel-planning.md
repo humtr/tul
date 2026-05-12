@@ -52,9 +52,9 @@ Serialize packages when they touch any of the same ownership domains:
 | Stage 7 planning consolidation | Yellow | Closed | Verified at `79d27fb...` |
 | Terminology audit | Yellow | Closed | Verified at `7d7b27...` |
 | Source export spec and gates | Yellow | Closed | Accepted before source-export implementation |
-| Explicit `tul export source` implementation | Orange | Current | Adds manual source export; automatic export remains out of scope |
+| Explicit `tul export source` implementation | Orange | Closed | Adds manual source export |
 | Docs drift checker | Orange | Future | After planning docs stabilize |
-| Review export automation | Red | Future | Separate decision only |
+| Post-update export automation | Red-light | Current | Runs source/review exports after successful updates with warning-only failures |
 | Archive policy expansion | Red | Future | Separate dry-run evidence first |
 | Stage X target onboarding | Red | Deferred | After self-host loop friction drops |
 
@@ -99,7 +99,7 @@ The resulting latest artifact must show:
 
 ## Source-export boundary
 
-`docs/workflows/source-export-spec.md` is the implemented command contract after the Orange source-export package closes. `tul export source` is runnable as a manual command; automatic source export remains Red class and must serialize into a later decision package.
+`docs/workflows/source-export-spec.md` is the implemented command contract. `tul export source` is runnable manually and participates in the post-update export phase after successful updates. Automatic export remains warning-only and must not affect the release gate.
 
 ## Stop conditions
 
@@ -114,4 +114,4 @@ Stop and request a new baseline artifact or source context when:
 
 ## Export integrity hardening
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.

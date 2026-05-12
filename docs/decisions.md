@@ -366,8 +366,19 @@ Consequences: Future source-export packages have less room to blur source contex
 
 Status: accepted
 
-Context: Stage 7 terminology and source-export gate packages separated source context, review bundles, runtime baseline, future source export, and backup authority. The next bounded implementation should reduce GitHub ZIP ambiguity without changing the default update pipeline.
+Context: Stage 7 terminology and source-export gate packages separated source context, review bundles, runtime baseline, source export, and backup authority. The next bounded implementation should reduce GitHub ZIP ambiguity without changing the default update pipeline.
 
 Decision: Implement `tul export source` as an explicit manual command. It writes a wrapper-free source archive, includes `source-manifest.json`, `source-file-list.txt`, and `source-file-sha256s.txt`, verifies the archive after replacement, and records source-export metadata in the latest state when available.
 
-Consequences: `tul export source` is now a runnable explicit command after this package closes. It is not automatic, not review evidence, not release-gate evidence, and not backup or rollback authority. Automatic post-update source export remains Red class and requires a later decision.
+Consequences: `tul export source` is now a runnable explicit command after this package closes. It is not review evidence, not release-gate evidence, and not backup or rollback authority. ADR-031 later authorizes post-update source/review export automation as a warning-only phase after successful commit, push, and fresh verification.
+
+
+## ADR-031 — Post-update exports are automatic but warning-only
+
+Status: accepted
+
+Context: After explicit source export and export integrity checks closed, `tul export status` could correctly detect stale source/review bundles after an update. That proved the artifact model but still required the user to manually refresh source/review transport artifacts after each successful update.
+
+Decision: Run source and review export as a post-update phase after successful commit, push, and fresh verification. The phase records `source_bundle_export`, `review_bundle_export`, and `post_update_exports` metadata, appends export outcome sections to report/handoff artifacts, and refreshes latest verify runtime snapshots. Export failures remain warning-only and must not alter release-gate, commit, push, or rollback facts.
+
+Consequences: The normal self-host loop should leave `tul-source-latest.zip` and `tul-review-latest.zip` current after successful updates. Recovery/debug runs can use `--no-export`, `--no-source-export`, or `--no-review-export`. Zip artifacts remain transport artifacts, not backup or recovery authority.

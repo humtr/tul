@@ -371,7 +371,7 @@ Action: Keep `tul-main.zip` usable as source context while documenting that back
 
 Observation: After the Stage 7 planning package, `tul export source` was still only a proposed future command, but several planning and workflow documents could be read as if it were already runnable. The user explicitly reported that the argument did not exist.
 
-Lesson: Planning documents may name future commands, but they must label implementation status at the point of use. Source context, future source export, review bundle, runtime baseline, and backup authority must remain separate terms.
+Lesson: Planning documents may name future commands, but they must label implementation status at the point of use. Source context, source export, review bundle, runtime baseline, and backup authority must remain separate terms.
 
 Action: Add a terminology audit package before source-export implementation. Update docs and help/docstrings so `tul export review` is the only current export command and `tul export source` is a future command that must not be suggested until implemented and verified.
 
@@ -390,4 +390,13 @@ The safe implementation boundary is explicit source export only. The package can
 
 ## Stage 7 export integrity lesson
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
+
+
+## 2026-05-13 — Post-update exports reduce bridge work only if warning-only
+
+Observation: After `tul export status` landed, a normal update could legitimately leave source/review artifacts stale. That made the warning surface useful but still required another manual bridge step.
+
+Lesson: Automatic artifact refresh is safe only after the core update has already committed, pushed, and passed fresh verification. Export failures must be recorded but not allowed to rewrite release-gate or rollback semantics.
+
+Action: Add a post-update export phase that refreshes source and review bundles, records outcomes in state/report/handoff, refreshes latest verify runtime snapshots, and keeps failures warning-only.

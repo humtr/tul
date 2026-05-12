@@ -111,10 +111,10 @@ Current Stage 7 artifact semantics are separated by role. Treat artifacts as fol
 
 - `tul-vf-latest.md`: release-gate and runtime snapshot evidence.
 - `tul-review-latest.zip`: explicit compact review/diff bundle created by `tul export review`.
-- `tul-source-latest.zip` or equivalent source export: planned future explicit source context, not currently implemented, not backup.
+- `tul-source-latest.zip`: implemented explicit source context from `tul export source`, normally refreshed by the post-update export phase after successful updates; not backup.
 - `tul-main.zip`: may be a GitHub-generated manual source archive. It can support code/package generation when its root layout and intended commit are understood, but it is not backup evidence and not a tul-proven explicit source export.
 
-A future tul-proven source export should have repo files at zip root, such as `README.md`, `.tul.yml`, `bin/tul`, and `lib/tulcore/__init__.py`. A wrapper such as `tul-main/README.md` is common for GitHub-generated archives, but it is not the canonical tul source-export shape.
+A tul-proven source export should have repo files at zip root, such as `README.md`, `.tul.yml`, `bin/tul`, and `lib/tulcore/__init__.py`. A wrapper such as `tul-main/README.md` is common for GitHub-generated archives, but it is not the canonical tul source-export shape.
 
 
 ## Optional review bundle
@@ -140,7 +140,7 @@ When reviewing a Stage 7 planning package, confirm that Stage 6 is closed by the
 
 ## Source-export spec review
 
-A source-export specification package is successful only if it keeps `tul export source` non-runnable while defining the future command contract, output path, root layout, manifest/provenance requirements, exclusion rules, and validation gate. Runtime implementation remains a later Orange package.
+The source-export specification and implementation are closed. For post-update automation review, confirm that source/review export happens only after successful commit, push, and fresh verification, and that failures remain warning-only.
 
 Use `docs/checklists/stage7-package-gates.md` to classify subsequent Green/Yellow/Orange/Red bundles.
 
@@ -150,4 +150,4 @@ Use `tul export source` only when full source context is needed for package gene
 
 ## Export integrity review rule
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It must not be treated as post-update automation and must not fail the release gate in this stage. Stale source bundles should be refreshed with `tul export source` when a fresh source baseline is needed.
+`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.

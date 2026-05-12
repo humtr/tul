@@ -1,22 +1,22 @@
 # Current status
 
-Latest known version: `0.8.28-stage7-export-integrity`.
+Latest known version: `0.8.29-stage7-post-export`.
 
-Current mode: Stage 7 export integrity hardening. Stage 6 is closed. Stage 7 planning consolidation, terminology audit, source spec/gates, and explicit source export implementation are closed. The current task is to add warning-only export freshness and docs drift checks before any post-update automatic export.
+Current mode: Stage 7 post-update export automation. Stage 6 is closed. Stage 7 planning consolidation, terminology audit, source spec/gates, explicit source export implementation, and export integrity hardening are closed. The current task is to automate source/review export after successful updates while keeping export failures warning-only and separate from commit/push/rollback facts.
 
 ## Verified baseline
 
 Latest verified baseline from the current `tul-vf-latest.md` artifact:
 
 ```text
-HEAD: a5db5d01d96277e83913ec17506c22e3284424eb
-Remote HEAD: a5db5d01d96277e83913ec17506c22e3284424eb
+HEAD: 2bd72e4eedbc6753083d12ea7c4eac73e7691ba3
+Remote HEAD: 2bd72e4eedbc6753083d12ea7c4eac73e7691ba3
 Release gate: PASS
 Steps: 25 pass, 0 fail
 Working tree: clean
 Fresh clone verify: PASS
-Latest package: tul-stage7-source-export-implementation-bundle-v1
-Source bundle: generated and verified
+Latest package: tul-stage7-export-integrity-hardening-bundle-v1
+Export status: warning-only diagnostics available
 ```
 
 Canonical latest artifacts:
@@ -24,6 +24,7 @@ Canonical latest artifacts:
 ```text
 /sdcard/termux/import/tul/tul-vf-latest.md
 /sdcard/termux/import/tul/tul-source-latest.zip
+/sdcard/termux/import/tul/tul-review-latest.zip
 ```
 
 When a newer `tul-vf-latest.md` is provided by the user, treat it as the runtime source of truth over this document.
@@ -35,41 +36,43 @@ When a newer `tul-vf-latest.md` is provided by the user, treat it as the runtime
 - Stage 7 terminology audit — PASS at `7d7b27a4eb81570482ff4d9eaba1dc7c83429272`.
 - Stage 7 source spec and gates — PASS at `a3585a7441e320f1ce78f924d293c411854f76ef`.
 - Stage 7 explicit source export implementation — PASS at `a5db5d01d96277e83913ec17506c22e3284424eb`.
+- Stage 7 export integrity hardening — PASS at `2bd72e4eedbc6753083d12ea7c4eac73e7691ba3`.
 
 ## Current artifact vocabulary
 
 - Runtime baseline: the latest `tul-vf-latest.md` evidence for HEAD, Remote HEAD, release gate, working tree, and fresh clone status.
-- Source bundle: currently implemented explicit source-context artifact from `tul export source`, normally written as `tul-source-latest.zip`.
-- Review bundle: currently implemented explicit changed-files transport artifact from `tul export review`, normally written as `tul-review-latest.zip`.
+- Source bundle: implemented source-context artifact from `tul export source`, normally written as `tul-source-latest.zip`.
+- Review bundle: implemented changed-files transport artifact from `tul export review`, normally written as `tul-review-latest.zip`.
 - Export status: warning-only inspection from `tul export status`; it detects stale, missing, invalid, or unrecorded export artifacts and docs drift.
+- Post-update exports: an automatic phase after successful commit/push/fresh-verify that refreshes source/review artifacts but records failures as warnings only.
 - Backup/recovery authority: Git remote, commit hashes, and tul rollback state. Zip artifacts are not backup authority.
 
-See `docs/workflows/artifact-semantics.md`, `docs/workflows/source-context-and-export.md`, `docs/workflows/source-export-spec.md`, `docs/workflows/export-integrity-hardening.md`, `docs/checklists/stage7-package-gates.md`, and `docs/workflows/stage7-bounded-parallel-planning.md`.
+See `docs/workflows/artifact-semantics.md`, `docs/workflows/source-context-and-export.md`, `docs/workflows/source-export-spec.md`, `docs/workflows/export-integrity-hardening.md`, `docs/workflows/post-update-export-automation.md`, `docs/checklists/stage7-package-gates.md`, and `docs/workflows/stage7-bounded-parallel-planning.md`.
 
 ## Stage 7 active package
 
 Recommended package:
 
 ```text
-tul-stage7-export-integrity-hardening-bundle-v1
+tul-stage7-post-update-export-automation-bundle-v1
 ```
 
 Goal:
 
 ```text
-Combine export consistency hardening, source bundle freshness warning, and docs drift checking as warning-only runtime diagnostics.
+Run source/review export automatically after successful commit, push, and fresh verification. Keep export failures warning-only and record them in state/report/handoff/latest verify snapshots.
 ```
 
-Parallel class: Orange.
+Parallel class: Red-light.
 
-Reason: this package touches CLI/runtime inspection output, verify runtime snapshots, handoff wording, docs, and version metadata. It must not automate post-update export.
+Reason: this package changes default post-update behavior, but the change is bounded to post-success artifact generation and must not alter commit, push, rollback, or release-gate semantics.
 
 ## Next ready queue
 
-1. Apply `tul-stage7-export-integrity-hardening-bundle-v1` and close it with `tul-vf-latest.md`.
-2. If warning-only export status is stable, implement post-update export automation as a separate Red-class package.
-3. Consider promoting selected docs drift checks to a release gate only after repeated warning-only runs prove low false positives.
-4. Refine duplicate package name/hash guidance only if inbox clutter returns.
+1. Apply `tul-stage7-post-update-export-automation-bundle-v1` and close it with `tul-vf-latest.md`.
+2. Verify that `tul export status` reports current source/review bundles after a normal update.
+3. Consider a small follow-up audit package only if automatic exports produce noisy warnings.
+4. Consider promoting selected docs drift checks to a release gate only after repeated warning-only runs prove low false positives.
 5. Run Windows parity smoke only after several self-host packages remain stable.
 
 ## Deferred

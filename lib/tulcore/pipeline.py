@@ -11,6 +11,7 @@ from .handoff import generate_handoff
 from .manifest import validate_manifest
 from .package import import_package, select_package
 from .precheck import run_precheck
+from .postexport import format_post_update_exports, run_post_update_exports
 from .publish import publish_manifest_changes
 from .report import build_report, write_report
 from .state import record_error, set_phase
@@ -29,6 +30,8 @@ class UpdateResult:
     verify_ok: bool | None = None
     verify_text: str | None = None
     verify_artifacts: dict[str, str] | None = None
+    export_text: str | None = None
+    export_ok: bool | None = None
 
 
 def run_update(
@@ -39,6 +42,9 @@ def run_update(
     no_push: bool = False,
     allow_dirty: bool = False,
     verify_after: bool = True,
+    post_export: bool = True,
+    post_export_source: bool = True,
+    post_export_review: bool = True,
 ) -> UpdateResult:
     repo = ctx.repo_path
     state_file: Path | None = None
@@ -143,8 +149,9 @@ def run_update(
             )
             verify_text = format_verify_gate(verify_result, verify_artifacts)
 
-        # Source/review export is intentionally not hidden inside update.
-        # See docs/workflows/artifact-semantics.md.
+        # Source/review export now runs as a post-update convenience phase
+        # after commit/push/verify. Its failures are warning-only and must not
+        # alter commit/push/rollback facts.
 
         report = build_report(
             repo=repo,
@@ -205,6 +212,33 @@ def run_update(
         )
         if verify_result is not None and verify_artifacts is not None:
             rewrite_verify_artifacts_with_runtime_snapshots(ctx, verify_result, verify_artifacts)
+
+        export_result = None
+        export_text = None
+        if (
+            post_export
+            and publish.commit_hash
+            and not publish.no_op
+            and not no_commit
+            and not no_push
+            and verify_after
+        ):
+            failed_at = "post-update-exports"
+            export_result = run_post_update_exports(
+                ctx,
+                state_file=state_file,
+                report_path=report_path,
+                handoff_path=handoff_path,
+                changed_files=visible_changed_files,
+                source_enabled=post_export_source,
+                review_enabled=post_export_review,
+            )
+            export_text = format_post_update_exports(export_result)
+            if report_path.exists():
+                report = report_path.read_text(encoding="utf-8")
+            if handoff_path.exists():
+                handoff = handoff_path.read_text(encoding="utf-8")
+
         return UpdateResult(
             report=report,
             handoff=handoff,
@@ -215,6 +249,8 @@ def run_update(
             verify_ok=verify_result.ok if verify_result is not None else None,
             verify_text=verify_text,
             verify_artifacts=verify_artifacts,
+            export_text=export_text,
+            export_ok=export_result.ok if export_result is not None else None,
         )
     except Exception as exc:
         record_error(state_file, exc, failed_at=failed_at)

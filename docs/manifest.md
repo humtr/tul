@@ -235,7 +235,7 @@ Manifest changes should be justified in `docs/decisions.md`.
 - [x] State output is compact and decision-oriented.
 - [x] Latest verify markdown includes state/handoff snapshots.
 - [x] Explicit review export creates a compact transport bundle when needed.
-- [ ] Explicit source export remains future implementation work, is not currently runnable, and must not be treated as backup. Its pre-implementation spec is documented before implementation.
+- [ ] Explicit source export is implemented as a manual command and must not be treated as backup, review evidence, or release-gate evidence.
 
 ## Stage 7 source-export implementation manifest
 
@@ -244,8 +244,20 @@ Manifest changes should be justified in `docs/decisions.md`.
 - [x] Add source manifest, file list, and file-hash entries.
 - [x] Add root-layout and exclusion verification.
 - [x] Record source export metadata in latest state when available.
-- [ ] Keep automatic source export pending a separate Red-class decision.
+- [ ] Post-update source/review export automation remains pending this Red-light package; failures must be warning-only.
 
 ## Stage 7 export integrity rule
 
-Explicit source and review exports are transport artifacts, not recovery authority. `tul export status` is the warning-only inspection surface for these artifacts. It may warn that a source or review bundle is missing, stale, invalid, or unrecorded, but this package does not make those warnings release-gate failures.
+Explicit source and review exports are transport artifacts, not recovery authority. `tul export status` is the warning-only inspection surface for these artifacts. It may warn that a source or review bundle is missing, stale, invalid, or unrecorded, but these warnings do not make the release gate fail. Post-update automation may refresh artifacts after successful updates, but export failures remain warning-only.
+
+
+## Stage 7 post-update export automation manifest
+
+- [x] Export integrity warning surface exists before automation.
+- [ ] Run source export after successful commit, push, and fresh verification.
+- [ ] Run review export after successful commit, push, and fresh verification when changed files exist.
+- [ ] Record source/review export outcomes in latest state.
+- [ ] Append export outcome sections to report and handoff artifacts.
+- [ ] Refresh latest verify runtime snapshots after post-update exports.
+- [ ] Keep export failures warning-only and separate from release-gate success.
+- [ ] Provide `--no-export`, `--no-source-export`, and `--no-review-export` escape hatches.
