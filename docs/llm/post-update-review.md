@@ -131,4 +131,4 @@ Then upload:
 /sdcard/termux/import/tul/tul-review-latest.zip
 ```
 
-The review bundle is a transport artifact, not a backup and not a full source archive.
+The review bundle is a transport artifact, not a backup and not a full source archive. After export, `tul-vf-latest.md` should be refreshed so the runtime snapshot shows the review bundle path and evidence.

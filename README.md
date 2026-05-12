@@ -171,7 +171,7 @@ The command writes:
 /sdcard/termux/import/tul/tul-review-latest.zip
 ```
 
-The review bundle is not a backup and not a full source archive. It contains the latest verify/state/report/handoff artifacts, recent git facts, the latest changed-file list, `diff.patch`, and copies of changed files only.
+The review bundle is not a backup and not a full source archive. It contains the latest verify/state/report/handoff artifacts, recent git facts, the latest changed-file list, `diff.patch`, and copies of changed files only. A successful explicit export records review bundle metadata in state/report/handoff and refreshes the latest verify runtime snapshot.
 
 ## Runtime facts
 

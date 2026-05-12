@@ -1,6 +1,6 @@
 # Current status
 
-Latest known version: `0.8.16-source-export-state-cleanup`.
+Latest known version: `0.8.18-review-export-state-integration`.
 
 Current mode: Stage 6 bounded parallel stabilization. The release gate, compact state, handoff discoverability, parallel-readiness gate, import-root latest verify artifact, and runtime snapshots are baseline behavior. Repo/source zip export is explicitly not closed and is being re-scoped.
 
@@ -9,8 +9,8 @@ Current mode: Stage 6 bounded parallel stabilization. The release gate, compact 
 Latest verified baseline:
 
 ```text
-HEAD: da00aae271a82473f0958e4e66416a4d6f9d5801
-Remote HEAD: da00aae271a82473f0958e4e66416a4d6f9d5801
+HEAD: 88e9a8ccd67e0de4dad4f39d45b4eef7be00b072
+Remote HEAD: 88e9a8ccd67e0de4dad4f39d45b4eef7be00b072
 Release gate: PASS
 Working tree: clean
 ```
@@ -47,26 +47,27 @@ Corrected status:
 Bundle I initial: verify PASS, export incomplete
 Bundle I fix v2: verify PASS, path surfaced, export semantics unresolved
 Bundle J1: artifact vocabulary checkpoint PASS
-Bundle J2: remove misleading source zip state output
+Bundle J2: remove misleading source zip state output PASS
+Bundle J3: explicit review bundle export PASS
 ```
 
 Do not mark repo/source zip export as closed until a future explicit command records freshness, root layout, and provenance evidence.
 
 ## Current next bundle
 
-Package: `tul_stage6_review_bundle_export_bundle_v1`
+Package: `tul_stage6_review_export_state_integration_bundle_v2`
 
 Scope:
 
-1. Add explicit `tul export review`.
-2. Write `/sdcard/termux/import/tul/tul-review-latest.zip`.
-3. Include latest verify, state, report, handoff, git facts, changed-files, diff, and changed-file copies.
-4. Keep review export separate from `verify` and from the default `update` loop for now.
-5. Keep full source export as a separate future command.
+1. Keep `tul export review` as an explicit command.
+2. Record review bundle metadata in the latest state.
+3. Append review export evidence to the latest report and handoff artifacts.
+4. Refresh `tul-vf-latest.md` runtime snapshots after explicit review export.
+5. Do not attach review export automatically to `tul update` yet.
 
 ## Next implementation queue
 
-1. Verify `tul export review` as an explicit command.
+1. Verify that `tul export review` leaves `review bundle: ...` evidence in `tul state`.
 2. Decide later whether successful `tul update` should run review export automatically.
 3. Implement `tul export source` for explicit source bundles with wrapper/root-layout checks.
 

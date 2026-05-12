@@ -368,6 +368,12 @@ def _review_bundle_lines(data: dict[str, Any]) -> list[str]:
         lines.append(f"- review bundle bytes: {export['size_bytes']}")
     if export.get("changed_file_count") is not None:
         lines.append(f"- review bundle changed files: {export['changed_file_count']}")
+    if export.get("rewritten") is not None:
+        lines.append(f"- review bundle rewritten: {str(bool(export['rewritten'])).lower()}")
+    if export.get("verified_after_replace") is not None:
+        lines.append(f"- review bundle verified after replace: {str(bool(export['verified_after_replace'])).lower()}")
+    if export.get("target_mtime"):
+        lines.append(f"- review bundle mtime: {export['target_mtime']}")
     return lines
 
 

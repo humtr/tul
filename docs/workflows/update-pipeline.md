@@ -99,7 +99,7 @@ precheck -> import -> validate -> apply -> checks -> sweep -> publish -> verify 
 Future export work is split by role:
 
 ```bash
-tul export review   # explicit compact diff-oriented upload bundle
+tul export review   # explicit compact diff-oriented upload bundle; records state/report/latest evidence
 tul export source   # planned explicit full source bundle with root-layout checks
 ```
 

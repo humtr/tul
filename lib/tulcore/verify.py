@@ -269,6 +269,65 @@ def rewrite_verify_artifacts_with_runtime_snapshots(
     Path(artifacts["latest_markdown"]).write_text(text, encoding="utf-8", newline="\n")
 
 
+
+def refresh_latest_verify_runtime_snapshots(ctx: ProjectContext) -> bool:
+    """Refresh the latest verify markdown runtime snapshots without re-running checks.
+
+    `tul export review` updates the latest state after the release gate has
+    already been written. This helper re-renders the existing latest markdown
+    from the latest JSON payload so `tul-vf-latest.md` continues to be the
+    single post-update review artifact. The machine-readable JSON is not
+    changed.
+    """
+    log_root = verify_log_root(ctx)
+    latest_root = verify_latest_root(ctx, log_root)
+    latest_json = latest_root / f"{ctx.project_id}-vf-latest.json"
+    latest_md = latest_root / f"{ctx.project_id}-vf-latest.md"
+    if not latest_json.exists():
+        return False
+    payload = json.loads(latest_json.read_text(encoding="utf-8"))
+    result = _verify_result_from_payload(payload)
+    artifact = payload.get("artifact") if isinstance(payload.get("artifact"), dict) else {}
+    artifacts = {
+        "markdown": str(artifact.get("markdown") or latest_md),
+        "json": str(artifact.get("json") or latest_json),
+        "latest_markdown": str(artifact.get("latest_markdown") or latest_md),
+        "latest_json": str(artifact.get("latest_json") or latest_json),
+    }
+    text = render_verify_artifact_markdown(
+        ctx,
+        result,
+        artifacts,
+        payload,
+        include_runtime_snapshots=True,
+    )
+    latest_md.write_text(text, encoding="utf-8", newline="\n")
+    run_md = Path(artifacts["markdown"])
+    if run_md.exists():
+        run_md.write_text(text, encoding="utf-8", newline="\n")
+    return True
+
+
+def _verify_result_from_payload(payload: dict[str, Any]) -> VerifyResult:
+    result = VerifyResult(
+        project=str(payload.get("project") or "unknown"),
+        repo=str(payload.get("repo") or "unknown"),
+        branch=payload.get("branch"),
+        head=payload.get("head"),
+        remote_head=payload.get("remote_head"),
+        clone_path=payload.get("clone_path"),
+    )
+    for item in payload.get("steps") or []:
+        if not isinstance(item, dict):
+            continue
+        result.steps.append(VerifyStep(
+            name=str(item.get("name") or "step"),
+            ok=bool(item.get("ok")),
+            detail=str(item.get("detail") or ""),
+            command=item.get("command"),
+        ))
+    return result
+
 def render_verify_artifact_markdown(
     ctx: ProjectContext,
     result: VerifyResult,

@@ -275,3 +275,11 @@ Context: After ADR-022, compact state could still show `repo zip: /path` from le
 Decision: Remove hidden repo/source zip export from the default update pipeline. Suppress legacy repo zip paths in compact and detailed state. Report and handoff output should not present `tul-main.zip` as a successful update artifact. Future export work must be role-specific: `tul export review` for compact diff evidence and `tul export source` for explicit full source context.
 
 Consequences: A normal post-update review returns to a single primary artifact: `tul-vf-latest.md`. Code-level package generation may still require manually provided source context until explicit export commands are implemented.
+
+## ADR-024: Explicit review export records evidence but remains outside update
+
+Decision: `tul export review` should remain an explicit command for now, but a successful export must leave visible evidence in state/report/handoff and refresh the latest verify markdown runtime snapshots.
+
+Rationale: J3 proved the transport artifact shape. J4 closes observability without re-coupling export to verify or the default update loop.
+
+Consequences: Automatic post-update review export remains a later decision. Full source export remains a separate explicit command.

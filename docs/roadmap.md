@@ -72,7 +72,7 @@ Status: PASS.
 
 ### Bundle J3 — Review bundle export
 
-Package: `tul_stage6_review_bundle_export_bundle_v1`
+Status: PASS.
 
 Goal: implement `tul export review` for compact diff-oriented review bundles.
 
@@ -93,7 +93,13 @@ Acceptance:
 
 ## Next ready queue
 
-### J4 — Explicit source bundle export
+### J4 — Review export state/report integration
+
+Goal: make explicit `tul export review` leave evidence in state/report/handoff/latest verify snapshots.
+
+Requirements: state shows `review bundle: <path>` with sha/size/changed-file count, report and handoff include review export evidence, and `tul-vf-latest.md` runtime snapshots refresh after export.
+
+### J5 — Explicit source bundle export
 
 Goal: implement `tul export source` for full source context only when needed.
 

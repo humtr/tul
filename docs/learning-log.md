@@ -317,3 +317,9 @@ Observation: Hidden source zip export blurred review transport, source context, 
 Impact: Review bundle export is separated from verify and from the default update loop. The command writes `tul-review-latest.zip` as a transport artifact, not a backup.
 
 Follow-up: Verify the explicit command, then decide whether successful `tul update` should call review export automatically.
+
+## 2026-05-12 — Review export evidence must refresh runtime facts
+
+Observation: J3 proved the review bundle file can be created, but the uploaded latest verify artifact can remain stale unless the export command refreshes runtime snapshots after recording state.
+
+Action: J4 keeps review export explicit while recording its metadata in state/report/handoff and refreshing `tul-vf-latest.md` runtime snapshots. Automatic update-side export remains deferred.
