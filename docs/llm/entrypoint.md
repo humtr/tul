@@ -18,13 +18,19 @@ LLM creates a cross-platform package
 ## Read order
 
 1. `README.md`
-2. `docs/status/current.md`
-3. `docs/roadmap.md`
-4. `docs/checklists/loop-runtime.md`
-5. `docs/llm/commands.md`
-6. `docs/protocols/llm-handoff-protocol.md`
-7. `docs/protocols/command-grammar.md`
-8. `docs/workflows/update-pipeline.md`
+2. `docs/manifest.md`
+3. `docs/status/current.md`
+4. `docs/strategy.md`
+5. `docs/roadmap.md`
+6. `docs/learning-log.md`
+7. `docs/decisions.md`
+8. `docs/checklists/loop-runtime.md`
+9. `docs/checklists/planning-harness.md`
+10. `docs/protocols/planning-loop.md`
+11. `docs/llm/commands.md`
+12. `docs/protocols/llm-handoff-protocol.md`
+13. `docs/protocols/command-grammar.md`
+14. `docs/workflows/update-pipeline.md`
 
 ## Non-negotiable invariants
 
@@ -52,6 +58,8 @@ Use `--package PATH` only when the user wants to apply a specific file.
 
 Do not ask the user to paste long absolute package paths when the package is already in a configured inbox root and `--latest` is sufficient.
 
-## Current next stage
+## Current planning mode
 
-After Option 2 adoption, the next stage is Stage 2.5: apply safety audit. Focus on directory copy safety, apply plan logging, and manifest destination allowlists.
+Stage 6 uses a planning harness. Read `docs/manifest.md`, `docs/strategy.md`, `docs/roadmap.md`, `docs/status/current.md`, `docs/learning-log.md`, and `docs/decisions.md` before proposing the next package.
+
+The next package after the planning harness should be a bounded native-context step, not a large all-at-once rewrite.

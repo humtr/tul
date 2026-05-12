@@ -1,6 +1,12 @@
-# Roadmap
+# tul Roadmap
 
-## Completed
+## Current mode
+
+Stage 6 — accelerated self-host hardening.
+
+The project is moving from single-issue sequential patches to bounded bundles of parallel work. The roadmap is now a ready queue and bundle planner, not a static linear checklist.
+
+## Completed foundations
 
 - Stage 0 — syntax/runtime recovery
 - Stage 1 — runtime boundary restructure
@@ -18,17 +24,83 @@
 - Stage 5.4 — package authoring helper
 - Stage 5.5 — package authoring polish
 
-## Next
+## Ready queue
 
-Stage 6 — self-host loop hardening and accelerated multi-change packages.
+Ready queue items can be bundled when they share a capability area and have compatible risk.
 
-Focus:
+- Planning harness insertion: manifest, strategy, learning log, decisions, planning loop.
+- Active project context: `tul use <project>`, `tul current`, context state file.
+- No-arg read-only commands: `tul status`, `tul verify`, `tul state`, `tul handoff`, `tul package latest`.
+- Short fresh verification syntax: `tul verify fresh` while keeping `--fresh-clone` compatibility.
+- No-arg mutating commands: `tul update`, `tul import`, `tul rollback` with conflict guards.
+- Context conflict UX: active project vs current-directory project safety messages.
+- Package mismatch guidance: explain incompatible package manifests and present next commands.
+- Verify release gate summary: top-line PASS/FAIL and remediation commands.
+- State compact output: latest state, latest published, latest rollbackable, cleanup suggestion.
+- Package check diagnostics: clearer failure messages and package authoring guidance.
+- Windows parity pass: launcher shim, config paths, inbox roots, `update -l`, verify fresh clone.
 
-- bundle related UX/documentation/runtime improvements safely
-- keep `tul verify tul --fresh-clone` as acceptance gate
-- keep `tul update tul -l` as the default application command
-- avoid broad staging, force push, and repo-specific engine hardcoding
+## Bundle candidates
 
-## Stage X
+### Bundle 1 — Planning harness
 
-`humtr/ai` onboarding is intentionally deferred until tul development acceleration is stable.
+Package: `tul_planning_harness_v1`
+
+Scope:
+
+- README planning-harness pointers.
+- `docs/manifest.md`.
+- `docs/strategy.md`.
+- `docs/learning-log.md`.
+- `docs/decisions.md`.
+- `docs/protocols/planning-loop.md`.
+- `docs/checklists/planning-harness.md`.
+- project harness templates.
+
+### Bundle 2 — Native context v1a
+
+Scope:
+
+- `tul use <project>`.
+- `tul current`.
+- active project context file.
+- `default_project` support.
+- projects output shows active/default.
+
+### Bundle 3 — Native context v1b
+
+Scope:
+
+- no-arg read-only commands.
+- `tul verify fresh` shorthand.
+- current-directory project inference.
+- read-only conflict banner.
+
+### Bundle 4 — Native context v1c/d
+
+Scope:
+
+- no-arg `tul update` as inferred project + latest matching package.
+- mutating-command context conflict guard.
+- package mismatch classification and guidance.
+
+### Bundle 5 — Release gate and state compactness
+
+Scope:
+
+- verify release gate summary.
+- compact state output.
+- archive recommendation output.
+- docs consistency checks.
+
+## Extraction rules
+
+- Pull short-term items from `docs/strategy.md` capability pressure.
+- Keep each bundle coherent and bounded.
+- After each published package, update `docs/status/current.md` and add lessons to `docs/learning-log.md` when appropriate.
+- Escalate repeated capability friction to `docs/strategy.md`.
+- Escalate authority/safety/vision changes to `docs/manifest.md` and `docs/decisions.md`.
+
+## Deferred: Stage X
+
+`humtr/ai` onboarding is intentionally deferred. It should resume only after tul's self-host harness, verification, package discovery, state recovery, and native context are stable enough to reduce rather than multiply bridge work.

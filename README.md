@@ -15,12 +15,14 @@ The first operational target is **`humtr/ai`**. This repo, **`humtr/tul`**, is t
 If you are an LLM, coding agent, or a new session reviewing this repo, start here:
 
 1. Read [`docs/llm/entrypoint.md`](docs/llm/entrypoint.md).
-2. Read [`docs/status/current.md`](docs/status/current.md).
-3. Read [`docs/roadmap.md`](docs/roadmap.md).
-4. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md).
-5. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md) if handling a terminal handoff.
-6. Read [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md) if interpreting `/tul ...` commands.
-7. Read [`docs/workflows/recovery-debug.md`](docs/workflows/recovery-debug.md) when inspecting failed/no-op/interrupted state.
+2. Read [`docs/manifest.md`](docs/manifest.md) for vision, invariants, and change rules.
+3. Read [`docs/status/current.md`](docs/status/current.md) for the current checkpoint.
+4. Read [`docs/strategy.md`](docs/strategy.md) for the medium-term capability map.
+5. Read [`docs/roadmap.md`](docs/roadmap.md) for the short-term ready queue and bundle candidates.
+6. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
+7. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
+8. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
+9. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
@@ -29,6 +31,24 @@ Do not rely on prior chat context when the repo documents answer the question. D
 `tul` applies standardized LLM-generated packages, validates them, commits them, pushes them, verifies remote HEAD, prints rollback guidance, and generates an LLM-ready handoff.
 
 The durable project contract lives in repo documents. Runtime facts live in terminal handoff output.
+
+## Planning harness
+
+README is the entrypoint, not the full planning ledger. For Stage 6 and later, tul uses a repo-resident planning harness:
+
+```text
+manifest → strategy → roadmap → status → learning log → decisions
+```
+
+- [`docs/manifest.md`](docs/manifest.md) states the vision, invariants, human role, and manifest change rules.
+- [`docs/strategy.md`](docs/strategy.md) tracks medium-term capability areas and maturity.
+- [`docs/roadmap.md`](docs/roadmap.md) holds the short-term ready queue and bundle candidates.
+- [`docs/status/current.md`](docs/status/current.md) records the current checkpoint and next package.
+- [`docs/learning-log.md`](docs/learning-log.md) records bottom-up lessons from updates.
+- [`docs/decisions.md`](docs/decisions.md) records accepted planning decisions.
+
+The same harness should be portable to future target repositories such as `humtr/ai`, but `humtr/ai` onboarding remains **Stage X** until tul's self-host loop is sufficiently stable.
+
 
 ## Non-negotiable invariants
 

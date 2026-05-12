@@ -28,3 +28,14 @@ Invariants:
 - No force push.
 - Repo policy belongs in `.tul.yml`.
 - Environment paths and aliases belong in global config.
+
+## Planning harness checkpoint
+
+- [ ] README links to the planning harness.
+- [ ] `docs/manifest.md` exists and states vision/invariants.
+- [ ] `docs/strategy.md` exists and defines capability map.
+- [ ] `docs/roadmap.md` contains ready queue and bundle candidates.
+- [ ] `docs/status/current.md` names current mode and next package.
+- [ ] `docs/learning-log.md` records known execution lessons.
+- [ ] `docs/decisions.md` records accepted planning decisions.
+- [ ] `docs/protocols/planning-loop.md` defines top-down and bottom-up planning.
