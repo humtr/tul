@@ -215,3 +215,13 @@ Impact: Default `tul state` should show latest state, latest rollbackable commit
 Reflected in: `lib/tulcore/state.py`, `lib/tulcore/cli.py`, `docs/checklists/loop-runtime.md`.
 
 Follow-up: Continue improving archive recommendations after observing actual no-op/imported-state clutter.
+
+### Stage 6.4 — Package diagnostics should fail before update
+
+Observation: Once the update/verify/state loop is compact, the next bridge bottleneck is package authoring failure interpretation. A bad package should fail at `tul package check` with a clear distinction between root layout errors, manifest target mismatches, missing payload files, and `commit.files` drift.
+
+Impact: Users and LLM sessions should spend less time guessing whether an archive was nested incorrectly, targeted the wrong repo, or listed the wrong file set.
+
+Reflected in: `lib/tulcore/authoring.py`, `lib/tulcore/package.py`, `docs/workflows/package-authoring.md`, and `docs/checklists/loop-runtime.md`.
+
+Follow-up: Use synthetic broken packages when package-check behavior changes. Keep cleanup and Windows parity as separate bundles.

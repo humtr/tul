@@ -167,3 +167,13 @@ Context: Update state files are essential for rollback, diagnosis, and handoff r
 Decision: `tul state` defaults to a compact decision view showing the latest state, latest rollbackable commit, key artifacts, cleanup suggestion, and explicit commands for full history. `tul state --all` preserves the long state summaries, and `tul state --json` preserves machine-readable state output.
 
 Consequences: Routine inspection becomes shorter without losing diagnostic depth. Rollbackability remains visible even when the newest state is a no-op, imported, failed, or otherwise non-rollbackable state.
+
+## ADR-016 — Package check is the pre-update authoring gate
+
+Status: accepted
+
+Context: The self-host loop now has a release gate and compact state output. The next high-friction point is package authoring: nested zip roots, missing payload files, and mismatched `apply.files`/`commit.files` can otherwise surface too late during update.
+
+Decision: Treat `tul package check` as the pre-update authoring gate. It should validate archive root layout, payload hygiene, manifest target compatibility, apply source coverage, unique destinations, and exact alignment between `apply.files[*].to` and `commit.files`. Failure output should include a concise failure summary and actionable next steps.
+
+Consequences: Package authors get faster feedback before mutating a repo. Update remains the runtime execution loop, while package check becomes the safer place to catch authoring mistakes. Broader cleanup automation and Windows parity remain separate bundles.

@@ -29,6 +29,16 @@ tul package zip NAME --out /sdcard/Download/NAME.zip --force
 tul package check /sdcard/Download/NAME.zip --target tul
 ```
 
+Before update, package check should catch:
+
+- nested `tul-package.yml` or `README.md`;
+- missing `files/` payload;
+- generated/cache files in the archive;
+- missing apply sources;
+- duplicate destinations;
+- `apply.files[*].to` and `commit.files` mismatches;
+- target project/repo/branch mismatch when `--target` is supplied.
+
 Invariants:
 
 - `tul update` pushes by default.
@@ -114,3 +124,12 @@ Invariants:
 - [x] `tul state --all --limit 5` preserves full state summaries.
 - [x] `tul state --json` preserves machine-readable output.
 - [x] Compact state output includes cleanup guidance for no-op/imported state clutter.
+
+## Package authoring diagnostics checkpoint
+
+- [x] `tul package check` reports nested-root package layout clearly.
+- [x] `tul package check` validates that apply sources are under `files/`.
+- [x] `tul package check` validates that payload files are referenced by `apply.files`.
+- [x] `tul package check` validates that apply destinations and `commit.files` align.
+- [x] `tul package check --target tul` keeps apply-plan validation for compatible packages.
+- [x] No-match package guidance suggests both inspect and check commands.

@@ -58,6 +58,31 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def _archive_names(path: Path) -> list[str] | None:
+    try:
+        if zipfile.is_zipfile(path):
+            with zipfile.ZipFile(path) as zf:
+                return zf.namelist()
+        if tarfile.is_tarfile(path):
+            with tarfile.open(path) as tf:
+                return [member.name for member in tf.getmembers()]
+    except Exception:
+        return None
+    return None
+
+
+def _root_manifest_diagnostic(path: Path) -> str:
+    names = _archive_names(path)
+    if names is None:
+        return "unsupported or unreadable archive; expected .zip or .tar.gz"
+    normalized = [name.replace("\\", "/").lstrip("./") for name in names]
+    nested = [name for name in normalized if name.endswith("/tul-package.yml")]
+    if nested:
+        examples = ", ".join(nested[:3])
+        return f"missing root tul-package.yml; found nested manifest(s): {examples}"
+    return "missing or unreadable root tul-package.yml"
+
+
 def _manifest_from_archive(path: Path) -> dict | None:
     try:
         if zipfile.is_zipfile(path):
@@ -68,7 +93,10 @@ def _manifest_from_archive(path: Path) -> dict | None:
                     return None
         elif tarfile.is_tarfile(path):
             with tarfile.open(path) as tf:
-                member = tf.getmember("tul-package.yml")
+                try:
+                    member = tf.getmember("tul-package.yml")
+                except KeyError:
+                    return None
                 extracted = tf.extractfile(member)
                 if extracted is None:
                     return None
@@ -83,7 +111,6 @@ def _manifest_from_archive(path: Path) -> dict | None:
         return load_yaml_text(raw)
     except Exception:
         return None
-
 
 
 def manifest_data_from_archive(path: Path) -> dict:
@@ -174,7 +201,7 @@ def discover_package_inventory(global_config: dict, *, project: str, repo: str |
             continue
         data = _manifest_from_archive(path)
         if not data:
-            invalid.append(InvalidPackageCandidate(source=path, mtime=mtime, reason="missing or unreadable root tul-package.yml"))
+            invalid.append(InvalidPackageCandidate(source=path, mtime=mtime, reason=_root_manifest_diagnostic(path)))
             continue
         mismatches = _target_mismatches(data, project=project, repo=repo, branch=branch)
         if mismatches:
@@ -221,6 +248,7 @@ def _format_no_match_error(global_config: dict, *, project: str, repo: str | Non
     lines.append("- download a package whose tul-package.yml target matches this project/repo/branch")
     lines.append("- run: tul package list <project>")
     lines.append("- run: tul package inspect <package.zip>")
+    lines.append("- run: tul package check <package.zip> --target <project>")
     lines.append("- use an explicit compatible package: tul update <project> --package <package.zip>")
     return "\n".join(lines)
 

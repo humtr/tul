@@ -56,13 +56,128 @@ def _archive_names(path: Path) -> list[str]:
     raise TulError(f"unsupported package archive: {path}")
 
 
+def _normalize_archive_name(name: str) -> str:
+    return name.replace("\\", "/").lstrip("./")
+
+
 def _has_forbidden_member(names: list[str]) -> list[str]:
     bad: list[str] = []
     for name in names:
-        parts = [part for part in name.replace("\\", "/").split("/") if part]
-        if any(part in FORBIDDEN_ARCHIVE_PARTS for part in parts) or any(name.endswith(suffix) for suffix in FORBIDDEN_SUFFIXES):
-            bad.append(name)
+        normalized = _normalize_archive_name(name)
+        parts = [part for part in normalized.split("/") if part]
+        if any(part in FORBIDDEN_ARCHIVE_PARTS for part in parts) or any(normalized.endswith(suffix) for suffix in FORBIDDEN_SUFFIXES):
+            bad.append(normalized)
     return bad
+
+
+def _nested_archive_members(names: list[str], leaf: str) -> list[str]:
+    nested: list[str] = []
+    for name in names:
+        normalized = _normalize_archive_name(name)
+        if normalized != leaf and normalized.endswith(f"/{leaf}"):
+            nested.append(normalized)
+    return sorted(nested)
+
+
+def _payload_member_names(names: list[str]) -> list[str]:
+    payload: list[str] = []
+    for name in names:
+        normalized = _normalize_archive_name(name)
+        if not normalized.startswith("files/") or normalized.endswith("/"):
+            continue
+        pseudo = Path(normalized)
+        if should_skip_zip_member(pseudo):
+            continue
+        payload.append(normalized)
+    return sorted(set(payload))
+
+
+def _as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _format_list(items: list[str], *, limit: int = 8) -> str:
+    if not items:
+        return "ok"
+    shown = ", ".join(items[:limit])
+    if len(items) > limit:
+        shown += f", ... (+{len(items) - limit} more)"
+    return shown
+
+
+def _manifest_consistency_checks(manifest_data: dict[str, Any], payload_files: list[str]) -> list[tuple[bool, str, str]]:
+    checks: list[tuple[bool, str, str]] = []
+    apply_section = manifest_data.get("apply") or {}
+    commit_section = manifest_data.get("commit") or {}
+    apply_items = _as_list(apply_section.get("files"))
+    raw_commit_files = _as_list(commit_section.get("files"))
+
+    destinations: list[str] = []
+    sources: list[str] = []
+    malformed: list[str] = []
+    source_outside_files: list[str] = []
+    for index, item in enumerate(apply_items):
+        if not isinstance(item, dict):
+            malformed.append(f"apply.files[{index}] is not a mapping")
+            continue
+        src = str(item.get("from") or "").strip()
+        dst = str(item.get("to") or "").strip()
+        if not src or not dst:
+            malformed.append(f"apply.files[{index}] missing from/to")
+            continue
+        sources.append(src)
+        destinations.append(dst)
+        if not src.startswith("files/"):
+            source_outside_files.append(src)
+
+    duplicate_destinations = sorted({item for item in destinations if destinations.count(item) > 1})
+    commit_files = [str(item).strip() for item in raw_commit_files if str(item).strip()]
+    destination_set = set(destinations)
+    commit_set = set(commit_files)
+    missing_from_commit = sorted(destination_set - commit_set)
+    extra_commit_files = sorted(commit_set - destination_set)
+
+    payload_set = set(payload_files)
+    source_set = set(sources)
+    missing_sources = sorted(source_set - payload_set)
+    extra_payload = sorted(payload_set - source_set)
+
+    checks.append((not malformed, "manifest apply item shape", _format_list(malformed)))
+    checks.append((not source_outside_files, "apply sources under files/", _format_list(source_outside_files)))
+    checks.append((not duplicate_destinations, "unique apply destinations", _format_list(duplicate_destinations)))
+    checks.append((not missing_sources, "payload covers apply sources", _format_list(missing_sources)))
+    checks.append((not extra_payload, "no unreferenced payload files", _format_list(extra_payload)))
+    checks.append((not missing_from_commit and not extra_commit_files, "apply destinations match commit.files", _format_mismatch(missing_from_commit, extra_commit_files)))
+    return checks
+
+
+def _format_mismatch(missing: list[str], extra: list[str]) -> str:
+    if not missing and not extra:
+        return "ok"
+    parts: list[str] = []
+    if missing:
+        parts.append("missing from commit.files: " + _format_list(missing))
+    if extra:
+        parts.append("commit.files not produced by apply.files: " + _format_list(extra))
+    return "; ".join(parts)
+
+
+def _next_actions_for_failed_checks(checks: list[dict[str, Any]]) -> list[str]:
+    failed = {str(item.get("name") or "") for item in checks if not item.get("ok")}
+    actions: list[str] = []
+    if "root tul-package.yml" in failed:
+        actions.append("Rebuild the zip so tul-package.yml is at archive root, not inside a wrapper directory.")
+    if "files/ payload" in failed or "payload covers apply sources" in failed or "no unreferenced payload files" in failed:
+        actions.append("Keep package payload files under files/ and make apply.files[*].from list exactly those payload files.")
+    if "apply destinations match commit.files" in failed:
+        actions.append("Make commit.files exactly match the repo-relative destinations in apply.files[*].to.")
+    if "manifest validation" in failed:
+        actions.append("Check target.project/repo/branch, apply.mode, non-empty apply.files, and commit.message.")
+    if "apply plan" in failed:
+        actions.append("Inspect apply.files paths against the target repo; directory copies require allow_directory: true and explicit commit.files coverage.")
+    if not actions and failed:
+        actions.append("Run tul package inspect <package.zip> and compare tul-package.yml with files/ payload contents.")
+    return actions
 
 
 def check_package_archive(path: Path, *, ctx: Any | None = None) -> PackageCheckResult:
@@ -83,12 +198,28 @@ def check_package_archive(path: Path, *, ctx: Any | None = None) -> PackageCheck
         _add(checks, False, "archive readable", str(exc))
         return PackageCheckResult(path=path, ok=False, checks=checks, manifest={})
 
-    _add(checks, "tul-package.yml" in names, "root tul-package.yml", "must be at archive root")
-    _add(checks, "README.md" in names, "root README.md", "recommended package instructions")
-    _add(checks, any(name.startswith("files/") for name in names), "files/ payload", "repo files must live under files/")
+    normalized_names = [_normalize_archive_name(name) for name in names]
+    name_set = set(normalized_names)
+    nested_manifests = _nested_archive_members(names, "tul-package.yml")
+    nested_readmes = _nested_archive_members(names, "README.md")
+    payload_files = _payload_member_names(names)
+
+    _add(
+        checks,
+        "tul-package.yml" in name_set,
+        "root tul-package.yml",
+        "ok" if "tul-package.yml" in name_set else ("nested: " + _format_list(nested_manifests) if nested_manifests else "must be at archive root"),
+    )
+    _add(
+        checks,
+        "README.md" in name_set,
+        "root README.md",
+        "ok" if "README.md" in name_set else ("nested: " + _format_list(nested_readmes) if nested_readmes else "recommended package instructions"),
+    )
+    _add(checks, bool(payload_files), "files/ payload", f"{len(payload_files)} file(s)" if payload_files else "repo files must live under files/")
 
     bad = _has_forbidden_member(names)
-    _add(checks, not bad, "no generated/cache files", ", ".join(bad[:5]) if bad else "ok")
+    _add(checks, not bad, "no generated/cache files", _format_list(bad) if bad else "ok")
 
     try:
         manifest_data = manifest_data_from_archive(path)
@@ -113,6 +244,9 @@ def check_package_archive(path: Path, *, ctx: Any | None = None) -> PackageCheck
             _add(checks, True, "manifest validation", "ok")
         except Exception as exc:
             _add(checks, False, "manifest validation", str(exc))
+
+        for ok, name, detail in _manifest_consistency_checks(manifest_data, payload_files):
+            _add(checks, ok, name, detail)
 
         if ctx is not None:
             try:
@@ -146,6 +280,18 @@ def format_package_check(result: PackageCheckResult) -> str:
         lines.append(f"Target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
     if result.apply_plan_count is not None:
         lines.append(f"Apply plan operations: {result.apply_plan_count}")
+    failed = [item for item in result.checks if not item.get("ok")]
+    if failed:
+        lines.append("")
+        lines.append("## Failure summary")
+        for item in failed:
+            lines.append(f"- {item.get('name')}: {str(item.get('detail') or '').strip() or 'failed'}")
+        actions = _next_actions_for_failed_checks(result.checks)
+        if actions:
+            lines.append("")
+            lines.append("## Next actions")
+            for action in actions:
+                lines.append(f"- {action}")
     lines.append("")
     lines.append("## Checks")
     for item in result.checks:

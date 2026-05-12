@@ -800,6 +800,7 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
         print("Options:")
         print(f"- download a package targeting project={ctx.project_id} repo={ctx.expected_repo} branch={payload['branch']}")
         print(f"- inspect a package: tul package inspect <package.zip>")
+        print(f"- validate a package: tul package check <package.zip> --target {ctx.project_id}")
         print(f"- use an explicit compatible package: tul update {ctx.project_id} --package <package.zip>")
         return
     print(f"Selected: {selected['path']}")
