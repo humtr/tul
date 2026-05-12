@@ -1,21 +1,21 @@
 # Current status
 
-Latest known version: `0.8.25-stage7-terminology`.
+Latest known version: `0.8.26-stage7-source-spec-gates`.
 
-Current mode: Stage 7 terminology hardening after planning consolidation. Stage 6 is closed as the verified stabilization baseline. The first Stage 7 planning consolidation package is applied and verified. The current task is to remove artifact-vocabulary ambiguity before any source-export implementation.
+Current mode: Stage 7 Green/Yellow hardening after terminology audit. Stage 6 is closed as the verified stabilization baseline. Stage 7 planning consolidation is closed. Stage 7 terminology audit is closed. The current task is to accept source-export specification and package-gate templates before any Orange runtime implementation.
 
 ## Verified baseline
 
 Latest verified baseline from the current `tul-vf-latest.md` artifact:
 
 ```text
-HEAD: 79d27fb07ce52666acb603b714dab33a45079e19
-Remote HEAD: 79d27fb07ce52666acb603b714dab33a45079e19
+HEAD: 7d7b27a4eb81570482ff4d9eaba1dc7c83429272
+Remote HEAD: 7d7b27a4eb81570482ff4d9eaba1dc7c83429272
 Release gate: PASS
 Steps: 25 pass, 0 fail
 Working tree: clean
 Fresh clone verify: PASS
-Latest package: tul-stage7-planning-consolidation-bundle-v1
+Latest package: tul-stage7-terminology-audit-bundle-v1
 ```
 
 Canonical latest artifact:
@@ -44,16 +44,17 @@ When a newer artifact is provided by the user, treat it as the runtime source of
 - K2 — package inbox ingest policy: PASS.
 - K3 — Stage 6 stabilization checkpoint: PASS.
 - Stage 7 planning consolidation — PASS at `79d27fb07ce52666acb603b714dab33a45079e19`.
+- Stage 7 terminology audit — PASS at `7d7b27a4eb81570482ff4d9eaba1dc7c83429272`.
 
 ## Current artifact vocabulary
 
 - Runtime baseline: the latest `tul-vf-latest.md` evidence for HEAD, Remote HEAD, release gate, working tree, and fresh clone status.
 - Review bundle: currently implemented explicit transport artifact from `tul export review`, written as `tul-review-latest.zip`.
 - Source context: manually supplied repo contents used for package generation or code-level diagnosis. A GitHub-generated `tul-main.zip` can serve this role after root layout and intended commit are checked.
-- Source export: proposed future tul command and artifact. `tul export source` is not implemented in the current CLI.
+- Source export: proposed future tul command and artifact. `tul export source` is not implemented in the current CLI. The accepted spec lives in `docs/workflows/source-export-spec.md` once the Green/Yellow spec package closes.
 - Backup/recovery authority: Git remote, commit hashes, and tul rollback state. Zip artifacts are not backup authority.
 
-See `docs/workflows/artifact-semantics.md`, `docs/workflows/source-context-and-export.md`, `docs/workflows/parallel-readiness.md`, and `docs/workflows/stage7-bounded-parallel-planning.md`.
+See `docs/workflows/artifact-semantics.md`, `docs/workflows/source-context-and-export.md`, `docs/workflows/source-export-spec.md`, `docs/checklists/stage7-package-gates.md`, `docs/workflows/parallel-readiness.md`, and `docs/workflows/stage7-bounded-parallel-planning.md`.
 
 ## Current cleanup model
 
@@ -68,25 +69,25 @@ See `docs/workflows/artifact-semantics.md`, `docs/workflows/source-context-and-e
 Recommended package:
 
 ```text
-tul-stage7-terminology-audit-bundle-v1
+tul-stage7-source-spec-and-gates-bundle-v1
 ```
 
 Goal:
 
 ```text
-Clarify artifact and source vocabulary across docs and code comments before implementing any source-export command.
+Accept the source-export specification and make Stage 7 Green/Yellow package gates copy-ready before any runtime implementation.
 ```
 
 Parallel class: Yellow.
 
-Reason: this package touches coordination docs and artifact vocabulary. It may update documentation and help/docstrings in one commit, but it must not change runtime behavior or add a `tul export source` command.
+Reason: this package touches coordination docs, artifact semantics, source-export spec text, and gate checklists. It must not add a `tul export source` command or change runtime behavior.
 
 ## Next ready queue
 
-1. Apply the Stage 7 terminology audit package and close it with `tul-vf-latest.md`.
-2. If needed, add a source-export spec package that defines root layout, freshness, HEAD provenance, sha256, bytes, file count, and exclusions.
-3. Implement `tul export source` only after the spec is accepted and source context remains a repeated bridge cost.
-4. Consider docs drift checking if planning/status baselines drift again.
+1. Apply the Stage 7 source spec and package gates bundle and close it with `tul-vf-latest.md`.
+2. If source context remains a repeated bridge cost, implement `tul export source` as an Orange package using the accepted spec.
+3. Consider docs drift checking if planning/status baselines drift again.
+4. Refine duplicate package name/hash guidance only if inbox clutter returns.
 5. Run Windows parity smoke only after several self-host packages remain stable.
 
 ## Deferred

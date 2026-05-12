@@ -23,11 +23,13 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 7. Read [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md) before proposing the next bounded bundle.
 8. Read [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md) before planning multiple candidate workstreams.
 9. Read [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) before treating any zip as review evidence, source evidence, or backup.
-10. Read [`docs/workflows/package-hygiene.md`](docs/workflows/package-hygiene.md) before moving downloaded package archives out of inbox roots.
-11. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
-12. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
-13. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
-14. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
+10. Read [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md) and [`docs/workflows/source-export-spec.md`](docs/workflows/source-export-spec.md) before proposing source-export work.
+11. Read [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md) before declaring a Green/Yellow/Orange/Red bundle.
+12. Read [`docs/workflows/package-hygiene.md`](docs/workflows/package-hygiene.md) before moving downloaded package archives out of inbox roots.
+13. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
+14. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
+15. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
+16. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
@@ -70,7 +72,7 @@ many candidate plans may be drafted or compared in parallel
 → one release gate closes the new baseline
 ```
 
-The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b714dab33a45079e19` when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes. The next Stage 7 checkpoint is terminology hardening: remove ambiguity between runtime baseline, review bundle, source context, future source export, and backup/recovery authority. Subsequent implementation packages must be classified as Green, Yellow, Orange, or Red before generation. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md) and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md).
+The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b714dab33a45079e19`, and the terminology audit package is closed at `7d7b27a4eb81570482ff4d9eaba1dc7c83429272`, when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes. The next Green/Yellow checkpoint is source-export specification and package-gate hardening: accept the source-export contract before any runtime implementation and make bundle gates copy-ready. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md), [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md), [`docs/workflows/source-export-spec.md`](docs/workflows/source-export-spec.md), and [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md).
 
 
 ## Non-negotiable invariants
@@ -277,7 +279,7 @@ It contains release-gate evidence plus compact runtime snapshots. Zip artifacts 
 
 - verify artifact: release-gate evidence;
 - review bundle: explicit compact diff-oriented upload artifact from `tul export review`;
-- source export: proposed future explicit full source context for package generation; not implemented yet;
+- source export: proposed future explicit full source context for package generation; not implemented yet; spec accepted before implementation;
 - backup: Git remote, commit hashes, and rollback state.
 
 See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md). Ask for source context only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it. A GitHub-generated source archive can be source context, but backup and recovery authority remains Git remote plus commit hashes and rollback state. Do not ask the user to run `tul export source` until a source-export implementation package has been applied and verified.

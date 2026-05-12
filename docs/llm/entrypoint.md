@@ -118,3 +118,8 @@ For package generation or code-level diagnosis, ask for source context when need
 ## Stage 7 planning checkpoint
 
 Before proposing implementation work, read `docs/workflows/stage7-bounded-parallel-planning.md` and confirm the latest `tul-vf-latest.md` release gate is PASS. Treat Stage 6 as closed only when the runtime artifact confirms the Stage 6 stabilization checkpoint commit.
+
+
+## Stage 7 gate reference
+
+Before generating a Stage 7 package, read `docs/checklists/stage7-package-gates.md`. Do not implement `tul export source` until `docs/workflows/source-export-spec.md` is accepted by the latest verified baseline and the package is explicitly classified Orange.

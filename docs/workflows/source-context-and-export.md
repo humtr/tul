@@ -33,18 +33,17 @@ Before treating a manual archive as package-generation input, check:
 | `tul-source-latest.zip` | Reserved future latest source-export path. Not currently produced by tul. |
 | `tul export source` | Planned future command. Not currently implemented. |
 
-## Future source-export acceptance gate
+## Accepted source-export spec boundary
 
-A future implementation package for `tul export source` must prove:
+The pre-implementation source-export contract lives in `docs/workflows/source-export-spec.md`. That document is a specification and acceptance gate, not evidence that the command exists.
 
-- the CLI subcommand exists;
-- the output path is explicit and predictable;
-- repo files are at zip root, not under a wrapper directory;
-- `.git`, caches, bytecode, dependency directories, previous zip files, backups, and transient roots are excluded;
-- the export records HEAD, remote HEAD when available, branch, created_at, sha256, bytes, and file count;
-- package generation docs distinguish source export from review bundle and backup;
-- `tul package check`, py_compile, `git diff --check`, release gate, and fresh clone verification pass.
+Until an implementation package closes, these statements remain true:
+
+- `tul export review` is implemented.
+- `tul export source` is not implemented.
+- `tul-source-latest.zip` is a reserved future output path.
+- GitHub-generated source archives may be source context but not tul-proven source exports.
 
 ## Boundary
 
-Do not implement source export inside a terminology-only or planning-only package. Source export changes runtime/export behavior and is therefore Orange class. It must serialize after the terminology/spec baseline closes.
+Do not implement source export inside a terminology-only, spec-only, gate-only, or planning-only package. Source export changes runtime/export behavior and is therefore Orange class. It must serialize after the terminology/spec baseline closes.

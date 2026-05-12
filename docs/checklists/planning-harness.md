@@ -45,3 +45,11 @@ Use this checklist when changing the planning system, roadmap, manifest, or cros
 - [x] Bundle candidate matrix is present.
 - [x] Conflict/serialization rules are present.
 - [x] Runtime implementation is excluded from the planning consolidation package.
+
+
+## Stage 7 source-spec/gates gate
+
+- [x] Source context and source export are separate terms.
+- [x] Future `tul export source` has a pre-implementation specification.
+- [x] Green/Yellow/Orange/Red gate templates are copy-ready.
+- [x] Source export implementation remains serialized after the spec/gates baseline.

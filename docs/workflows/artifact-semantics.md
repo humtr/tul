@@ -4,10 +4,10 @@ This document freezes the Stage 7 artifact vocabulary after the Stage 6 source/r
 
 ## Current baseline
 
-Verified baseline after Stage 7 planning consolidation:
+Verified baseline after Stage 7 terminology audit:
 
 ```text
-79d27fb07ce52666acb603b714dab33a45079e19
+7d7b27a4eb81570482ff4d9eaba1dc7c83429272
 ```
 
 Known runtime facts:
@@ -18,6 +18,7 @@ Known runtime facts:
 - `tul export review` writes `/sdcard/termux/import/tul/tul-review-latest.zip` and records review bundle evidence in state/report/handoff.
 - Automatic `tul-main.zip` export is not a closed capability.
 - `tul export source` is a proposed future command. It is not implemented in the current CLI.
+- The pre-implementation source-export contract is documented in `docs/workflows/source-export-spec.md`.
 - A GitHub-generated `tul-main.zip` may be used as manual source context if the root layout and intended commit are understood, but it is not a tul runtime backup or a tul-proven explicit source export.
 
 ## Standard vocabulary
@@ -163,16 +164,16 @@ The safer model is:
 update -> verify -> state/handoff -> optional explicit review export -> future optional explicit source export
 ```
 
-Full source export remains explicit and unimplemented until its root-layout, freshness, and provenance checks are specified, implemented, and verified.
+Full source export remains explicit and unimplemented until its root-layout, freshness, and provenance checks are implemented and verified. The pre-implementation specification is accepted in `docs/workflows/source-export-spec.md`, but the command remains non-runnable.
 
 ## Current implementation status
 
-`repozip.py` exists as a retired helper from the source-zip experiment, but it is not wired into the default update loop and does not expose a current `tul export source` CLI command. J2 removed misleading source zip state output. J3 added explicit `tul export review` for diff-oriented review bundles. J4 records the explicit review export in state/report/handoff and refreshes latest runtime snapshots. Stage 7 should add explicit source export only after the spec and acceptance gate are accepted.
+`repozip.py` exists as a retired helper from the source-zip experiment, but it is not wired into the default update loop and does not expose a current `tul export source` CLI command. J2 removed misleading source zip state output. J3 added explicit `tul export review` for diff-oriented review bundles. J4 records the explicit review export in state/report/handoff and refreshes latest runtime snapshots. Stage 7 should add explicit source export only after the spec and acceptance gate package closes and a later Orange implementation package is generated.
 
 ## Next bundles
 
 1. Keep review export explicit and evidence-backed.
 2. Keep terminology clear: runtime baseline, review bundle, source context, proposed source export, and backup are separate roles.
-3. Write a source export spec before implementation.
-4. Implement `tul export source` for explicit source exports with root-layout checks only after the spec package closes.
+3. Keep the accepted source export spec in `docs/workflows/source-export-spec.md`.
+4. Implement `tul export source` for explicit source exports with root-layout checks only after the spec/gates package closes.
 5. Reconsider automatic review export only after explicit behavior remains stable across additional packages.

@@ -105,7 +105,7 @@ tul export review   # implemented compact diff-oriented upload bundle; records s
 Planned future command, not currently implemented:
 
 ```text
-tul export source   # proposed explicit full source bundle with root-layout checks
+tul export source   # future explicit full source export; not implemented yet
 ```
 
 Neither command is a backup authority. Recovery remains Git remote + commit hashes + tul rollback state.
@@ -135,3 +135,8 @@ tul export source  # planned only; do not run yet
 ```
 
 Automatic post-update review export should only be considered after the review bundle format is stable.
+
+
+## Source export specification
+
+The pre-implementation contract for a future `tul export source` command lives in `docs/workflows/source-export-spec.md`. The spec does not make the command runnable. Runtime implementation remains a separate Orange-class package.

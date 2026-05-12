@@ -374,3 +374,12 @@ Observation: After the Stage 7 planning package, `tul export source` was still o
 Lesson: Planning documents may name future commands, but they must label implementation status at the point of use. Source context, future source export, review bundle, runtime baseline, and backup authority must remain separate terms.
 
 Action: Add a terminology audit package before source-export implementation. Update docs and help/docstrings so `tul export review` is the only current export command and `tul export source` is a future command that must not be suggested until implemented and verified.
+
+
+## 2026-05-13 — Green/Yellow before Orange
+
+User direction: resolve Green/Yellow work before implementing runtime behavior.
+
+Lesson: When a future command name is already being discussed, a spec-only package should make the command contract and non-runnable boundary explicit before code is written. This reduces later bridge work and prevents an assistant from suggesting unimplemented commands.
+
+Applied rule: accept source-export spec and package gates before any `tul export source` implementation package.

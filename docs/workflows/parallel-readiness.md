@@ -145,3 +145,8 @@ Stage 7 remains bounded parallel, not unrestricted parallel. The safe rhythm is:
 7. request `tul state` or `tul handoff` only when the bundle touched those surfaces.
 
 For the first Stage 7 package, a large planning consolidation commit is acceptable because it intentionally owns the coordination docs and excludes runtime behavior changes.
+
+
+## Stage 7 gate pointer
+
+For copy-ready Green/Yellow/Orange/Red gate requirements, use `docs/checklists/stage7-package-gates.md`. That checklist is the operational gate template; this workflow remains the planning/readiness overview.

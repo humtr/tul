@@ -235,4 +235,4 @@ Manifest changes should be justified in `docs/decisions.md`.
 - [x] State output is compact and decision-oriented.
 - [x] Latest verify markdown includes state/handoff snapshots.
 - [x] Explicit review export creates a compact transport bundle when needed.
-- [ ] Explicit source export remains future work, is not currently runnable, and must not be treated as backup.
+- [ ] Explicit source export remains future implementation work, is not currently runnable, and must not be treated as backup. Its pre-implementation spec is documented before implementation.

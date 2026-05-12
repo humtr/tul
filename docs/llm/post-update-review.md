@@ -136,3 +136,10 @@ The review bundle is a transport artifact, not a backup and not a full source ar
 ## Stage 7 planning review
 
 When reviewing a Stage 7 planning package, confirm that Stage 6 is closed by the latest runtime facts, Stage 7 is active in the planning docs, artifact roles remain separated, and no runtime behavior change is mixed into a large coordination-doc rewrite.
+
+
+## Source-export spec review
+
+A source-export specification package is successful only if it keeps `tul export source` non-runnable while defining the future command contract, output path, root layout, manifest/provenance requirements, exclusion rules, and validation gate. Runtime implementation remains a later Orange package.
+
+Use `docs/checklists/stage7-package-gates.md` to classify subsequent Green/Yellow/Orange/Red bundles.
