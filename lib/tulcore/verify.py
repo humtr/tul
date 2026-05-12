@@ -12,7 +12,9 @@ from typing import Any
 
 from .config import ProjectContext, platform_paths
 from .gitops import remote_url
+from .handoff import generate_handoff
 from .paths import expand_path, mkdirp
+from .state import summarize_compact_state
 
 
 REQUIRED_DOCS = [
@@ -121,12 +123,16 @@ def run_verify(ctx: ProjectContext, *, fresh_clone: bool = False, clone_root: Pa
 
 
 def verify_log_root(ctx: ProjectContext, explicit: Path | None = None) -> Path:
-    """Return the directory for persisted verify artifacts.
+    """Return the directory for timestamped verify run artifacts.
 
     Termux defaults to `/sdcard/termux/import/tul/logs/verify` by deriving the
     log root from the configured work root `/sdcard/termux/import/tul/work`.
     Windows derives `D:/work/files/downloads/.tul/logs/verify` from the work
     root unless `platform.verify_log_root` or `platform.log_root` is configured.
+
+    The stable latest markdown/json pair is intentionally written outside this
+    run-log root by `verify_latest_root()`, so the import root can hold
+    `tul-main.zip` and `tul-vf-latest.md` side by side.
     """
     if explicit is not None:
         return explicit.expanduser().resolve()
@@ -142,21 +148,50 @@ def verify_log_root(ctx: ProjectContext, explicit: Path | None = None) -> Path:
     return Path.home() / ".cache" / "tul" / "logs" / "verify"
 
 
+def verify_latest_root(ctx: ProjectContext, log_root: Path) -> Path:
+    """Return the directory for stable latest verify artifacts.
+
+    By default this is the tul import root, derived from the configured work
+    root. For the common Termux layout, that means:
+
+    `/sdcard/termux/import/tul/tul-vf-latest.md`
+
+    Timestamped run artifacts remain in `logs/verify/YYMMDD/`.
+    """
+    platform = ctx.global_config.get("platform") or {}
+    if platform.get("verify_latest_root"):
+        return expand_path(str(platform["verify_latest_root"]))
+    paths = platform_paths(ctx.global_config)
+    work_root = paths.get("work_root")
+    if work_root:
+        return Path(work_root).parent
+    # Best-effort fallback for explicit/default log roots that end in logs/verify.
+    if log_root.name == "verify" and log_root.parent.name == "logs":
+        return log_root.parent.parent
+    return log_root
+
+
 def write_verify_artifacts(
     ctx: ProjectContext,
     result: VerifyResult,
     *,
     fresh_clone: bool = False,
     log_dir: Path | None = None,
+    include_runtime_snapshots: bool = True,
 ) -> dict[str, str]:
     """Persist verify output as canonical markdown and JSON artifacts.
 
-    The verify log root keeps only the stable latest markdown/json pair.
-    Timestamped run artifacts are stored directly under a YYMMDD date folder.
+    Timestamped run artifacts are stored under the verify run-log root in a
+    YYMMDD date folder. Stable latest markdown/json files are written to the
+    import root so `tul-main.zip` and `tul-vf-latest.md` can be uploaded from
+    the same directory.
+
     Legacy `*-verify-latest.*` aliases are intentionally not generated.
     """
-    root = verify_log_root(ctx, log_dir)
-    mkdirp(root)
+    log_root = verify_log_root(ctx, log_dir)
+    latest_root = verify_latest_root(ctx, log_root)
+    mkdirp(log_root)
+    mkdirp(latest_root)
     now = datetime.now()
     date_key = now.strftime("%y%m%d")
     time_key = now.strftime("%H%M%S")
@@ -164,19 +199,20 @@ def write_verify_artifacts(
     mode_key = "f" if fresh_clone else "l"
     head_short = (result.head or "unknown")[:7]
 
-    run_root = mkdirp(root / date_key)
+    run_root = mkdirp(log_root / date_key)
     stem = f"{ctx.project_id}-vf-{mode_key}-{date_key}-{time_key}-{head_short}"
     md_path = run_root / f"{stem}.md"
     json_path = run_root / f"{stem}.json"
-    latest_md = root / f"{ctx.project_id}-vf-latest.md"
-    latest_json = root / f"{ctx.project_id}-vf-latest.json"
+    latest_md = latest_root / f"{ctx.project_id}-vf-latest.md"
+    latest_json = latest_root / f"{ctx.project_id}-vf-latest.json"
 
     payload = result.to_dict()
     payload["artifact"] = {
         "mode": mode,
         "created_at": now.isoformat(timespec="seconds"),
-        "log_root": str(root),
+        "log_root": str(log_root),
         "run_root": str(run_root),
+        "latest_root": str(latest_root),
         "markdown": str(md_path),
         "json": str(json_path),
         "latest_markdown": str(latest_md),
@@ -189,17 +225,13 @@ def write_verify_artifacts(
         "latest_markdown": str(latest_md),
         "latest_json": str(latest_json),
     }
-    text = result.to_text(artifacts)
-    text += "\n\n## Artifact metadata\n"
-    text += f"- Mode: {mode}\n"
-    text += f"- Run root: {run_root}\n"
-    text += f"- Markdown: {md_path}\n"
-    text += f"- JSON: {json_path}\n"
-    text += f"- Latest markdown: {latest_md}\n"
-    text += f"- Latest JSON: {latest_json}\n"
-    text += "\n## Machine-readable summary\n\n```json\n"
-    text += json.dumps(payload, indent=2, ensure_ascii=False)
-    text += "\n```\n"
+    text = render_verify_artifact_markdown(
+        ctx,
+        result,
+        artifacts,
+        payload,
+        include_runtime_snapshots=include_runtime_snapshots,
+    )
 
     md_path.write_text(text, encoding="utf-8", newline="\n")
     json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
@@ -207,6 +239,107 @@ def write_verify_artifacts(
     latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
     return artifacts
+
+
+def rewrite_verify_artifacts_with_runtime_snapshots(
+    ctx: ProjectContext,
+    result: VerifyResult,
+    artifacts: dict[str, str],
+) -> None:
+    """Rewrite existing verify markdown/latest files with state/handoff snapshots.
+
+    `tul update` runs the fresh verification gate before it writes the final
+    handoff-ready state and handoff files. This helper is called after those
+    files exist, so the same `tul-vf-latest.md` can serve as the single upload
+    artifact for release gate, compact state, and compact handoff evidence.
+    """
+    json_path = Path(artifacts["json"])
+    if json_path.exists():
+        payload = json.loads(json_path.read_text(encoding="utf-8"))
+    else:
+        payload = result.to_dict()
+    text = render_verify_artifact_markdown(
+        ctx,
+        result,
+        artifacts,
+        payload,
+        include_runtime_snapshots=True,
+    )
+    Path(artifacts["markdown"]).write_text(text, encoding="utf-8", newline="\n")
+    Path(artifacts["latest_markdown"]).write_text(text, encoding="utf-8", newline="\n")
+
+
+def render_verify_artifact_markdown(
+    ctx: ProjectContext,
+    result: VerifyResult,
+    artifacts: dict[str, str],
+    payload: dict[str, Any],
+    *,
+    include_runtime_snapshots: bool = True,
+) -> str:
+    artifact = payload.get("artifact") if isinstance(payload.get("artifact"), dict) else {}
+    text = result.to_text(artifacts)
+    text += "\n\n## Artifact metadata\n"
+    mode_value = artifact.get("mode") or ("fresh" if result.clone_path else "local")
+    text += f"- Mode: {mode_value}\n"
+    if artifact.get("log_root"):
+        text += f"- Log root: {artifact['log_root']}\n"
+    if artifact.get("run_root"):
+        text += f"- Run root: {artifact['run_root']}\n"
+    if artifact.get("latest_root"):
+        text += f"- Latest root: {artifact['latest_root']}\n"
+    text += f"- Markdown: {artifacts['markdown']}\n"
+    text += f"- JSON: {artifacts['json']}\n"
+    text += f"- Latest markdown: {artifacts['latest_markdown']}\n"
+    text += f"- Latest JSON: {artifacts['latest_json']}\n"
+    if include_runtime_snapshots:
+        text += "\n" + format_runtime_snapshots(ctx)
+    text += "\n## Machine-readable summary\n\n```json\n"
+    text += json.dumps(payload, indent=2, ensure_ascii=False)
+    text += "\n```\n"
+    return text
+
+
+def format_runtime_snapshots(ctx: ProjectContext) -> str:
+    """Return compact state and handoff snapshots for verify markdown."""
+    lines = [
+        "## Runtime snapshots",
+        "",
+        "These snapshots are included so `tul-vf-latest.md` can be uploaded as the single post-update review artifact.",
+        "",
+        "### tul state",
+        "",
+        "~~~text",
+    ]
+    try:
+        paths = platform_paths(ctx.global_config)
+        work_root = paths.get("work_root")
+        if not work_root:
+            state_text = "No platform.work_root configured."
+        else:
+            state_text = summarize_compact_state(work_root, project=ctx.project_id)
+    except Exception as exc:  # pragma: no cover - defensive artifact path
+        state_text = f"Unable to capture tul state snapshot: {type(exc).__name__}: {exc}"
+    lines.append(state_text.rstrip())
+    lines.extend([
+        "~~~",
+        "",
+        "### tul handoff",
+        "",
+        "~~~text",
+    ])
+    try:
+        handoff_text = generate_handoff(
+            repo=ctx.repo_path,
+            project=ctx.project_id,
+            mode="verify-snapshot",
+            expected_repo=ctx.expected_repo,
+        )
+    except Exception as exc:  # pragma: no cover - defensive artifact path
+        handoff_text = f"Unable to capture tul handoff snapshot: {type(exc).__name__}: {exc}"
+    lines.append(handoff_text.rstrip())
+    lines.append("~~~")
+    return "\n".join(lines) + "\n"
 
 def format_verify_artifacts(paths: dict[str, str]) -> str:
     return "\n".join(

@@ -64,7 +64,7 @@ By default, `tul verify` writes markdown and JSON artifacts in the platform veri
 /sdcard/termux/import/tul/logs/verify/
 ```
 
-Canonical latest files are kept directly under the verify log root:
+Canonical latest files are kept directly under the tul import root so they sit beside `tul-main.zip`:
 
 ```text
 <project>-vf-latest.md
@@ -83,13 +83,13 @@ Timestamped run artifacts are stored under YYMMDD date folders directly under th
 Example:
 
 ```text
-/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
-/sdcard/termux/import/tul/logs/verify/tul-vf-latest.json
+/sdcard/termux/import/tul/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-vf-latest.json
 /sdcard/termux/import/tul/logs/verify/260512/tul-vf-f-260512-153345-a1dcc39.md
 /sdcard/termux/import/tul/logs/verify/260512/tul-vf-f-260512-153345-a1dcc39.json
 ```
 
-For review, upload `<project>-vf-latest.md` when only the newest run matters. Upload the timestamped markdown artifact when comparing multiple runs.
+For review, upload `<project>-vf-latest.md` from the tul import root. It includes the release gate, artifact metadata, a compact `tul state` snapshot, and a compact `tul handoff` snapshot. Upload the timestamped markdown artifact only when comparing multiple runs.
 
 Do not use or generate legacy `tul-verify-latest.*` aliases. Artifact metadata should not contain legacy latest paths.
 
@@ -100,3 +100,7 @@ tul verify tul --fresh-clone
 tul verify tul --fresh-clone --no-log
 tul verify tul --fresh-clone --log-dir /sdcard/termux/import/tul/logs/verify
 ```
+
+## Runtime snapshots
+
+`tul-vf-latest.md` includes a `## Runtime snapshots` section with compact `tul state` and `tul handoff` output. During `tul update`, the verify result is first written before final state/handoff files exist, then the same markdown artifacts are rewritten after the final `handoff-ready` state is recorded. This keeps one upload file sufficient for normal post-update review.

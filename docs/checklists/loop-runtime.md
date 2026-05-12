@@ -9,7 +9,7 @@ tul update
 # If the package modifies verify.py and the immediate post-update artifact still uses the old bootstrap layout:
 tul verify fresh
 # Upload instead of pasting long output:
-# /sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+# /sdcard/termux/import/tul/tul-vf-latest.md
 ```
 
 Use explicit targets when context is ambiguous:
@@ -47,7 +47,7 @@ Invariants:
 - No force push.
 - Repo policy belongs in `.tul.yml`.
 - Environment paths and aliases belong in global config.
-- Root verify latest artifacts are `tul-vf-latest.md/json` only.
+- Import-root verify latest artifacts are `tul-vf-latest.md/json` only.
 - Timestamped verify run artifacts live under `logs/verify/<YYMMDD>/` without a `runs/` layer.
 
 ## Planning harness checkpoint
@@ -72,7 +72,7 @@ Invariants:
 
 ## Verify artifact filenames
 
-- [x] `tul-vf-latest.md` is the canonical latest markdown upload file.
+- [x] `/sdcard/termux/import/tul/tul-vf-latest.md` is the canonical latest markdown upload file.
 - [x] `tul-vf-latest.json` is the canonical latest machine-readable file.
 - [x] Fresh run artifacts use `tul-vf-f-YYMMDD-HHMMSS-<head7>.md/json`.
 - [x] Local run artifacts use `tul-vf-l-YYMMDD-HHMMSS-<head7>.md/json`.
@@ -163,3 +163,14 @@ Invariants:
 - [x] Post-update review guidance requires next-bundle readiness classification.
 - [x] Compact handoff points fresh sessions to the parallel-readiness guide.
 - [x] Packages are still applied one at a time through `tul update` and closed with `tul-vf-latest.md`.
+
+
+## Import-root latest snapshot checkpoint
+
+- [x] Stable latest verify markdown/json live beside `tul-main.zip` in the tul import root.
+- [x] Timestamped run artifacts remain under `logs/verify/YYMMDD/`.
+- [x] Latest markdown includes `## Runtime snapshots`.
+- [x] Latest markdown includes compact `tul state`.
+- [x] Latest markdown includes compact `tul handoff`.
+- [x] `tul update` rewrites the markdown artifact after final handoff-ready state is recorded.
+- [x] Legacy `tul-verify-latest.*` aliases remain absent.

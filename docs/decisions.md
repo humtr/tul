@@ -212,3 +212,14 @@ Accepted rule:
 - Apply packages one at a time through `tul update` and close each with `tul-vf-latest.md`.
 
 Reflected in: `docs/workflows/parallel-readiness.md`, `docs/llm/post-update-review.md`, `docs/checklists/loop-runtime.md`, and compact handoff read-next pointers.
+
+
+## ADR-019 — Latest verify artifact is the single upload artifact
+
+Status: accepted
+
+Context: Timestamped verify artifacts already preserve historical runs by date and commit hash. The stable latest artifact is operationally a current pointer for review and upload, not the archival record. Keeping it under `logs/verify/` made the user select files from different directories than `tul-main.zip`, and separate `tul state` / `tul handoff` pastes kept bridge work high.
+
+Decision: Write stable `tul-vf-latest.md/json` directly under the tul import root beside `tul-main.zip`. Keep timestamped run artifacts under `logs/verify/YYMMDD/`. Include compact `tul state` and `tul handoff` snapshots in the latest markdown. During `tul update`, rewrite the verify markdown after final handoff-ready state is recorded so snapshots reflect the just-published package.
+
+Consequences: A normal successful post-update review can use one uploaded markdown file. Historical verify runs remain available by date/hash. Legacy `tul-verify-latest.*` aliases remain forbidden.

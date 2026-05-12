@@ -1,8 +1,8 @@
 # Current status
 
-Latest known version: `0.8.10-parallel-readiness-gate-bundle`.
+Latest known version: `0.8.11-import-root-latest-snapshot-bundle`.
 
-Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, and handoff discoverability are baseline behavior. Bundle B, Bundle C, Bundle D, and Bundle E have passed release gate. The active bounded package is the parallel-readiness gate bundle.
+Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, handoff discoverability, and parallel-readiness gating are baseline behavior. Bundle B, Bundle C, Bundle D, Bundle E, and Bundle F have passed release gate. The active bounded package is the import-root latest snapshot bundle.
 
 ## Current verified loop
 
@@ -11,35 +11,35 @@ The intended normal self-host loop is:
 ```bash
 tul package latest
 tul update
-# upload /sdcard/termux/import/tul/logs/verify/tul-vf-latest.md when review evidence is needed
+# upload /sdcard/termux/import/tul/tul-vf-latest.md when review evidence is needed
 ```
 
 `tul update` should print the update report first, including commit, push verification, rollback, changed files, and checks. It should then run a compact post-update `verify fresh` gate, write markdown/json verify artifacts, and print the LLM handoff. New verify runs use the canonical layout without requiring an extra bootstrap command.
 
 ## Current bundle
 
-Package: `tul_stage6_parallel_readiness_gate_bundle_v1`
+Package: `tul_stage6_import_root_latest_snapshot_bundle_v1`
 
-Commit message: `Add parallel readiness gate`
+Commit message: `Move verify latest to import root`
 
 Scope:
 
-1. Add `docs/workflows/parallel-readiness.md` as the bounded-bundle readiness and conflict guide.
-2. Define Green/Yellow/Orange/Red parallel classes for bundle proposals.
-3. Add file-overlap and serialize rules for runtime files and coordination docs.
-4. Add next-bundle readiness checks to the post-update review guide and handoff pointers.
-5. Refresh README, entrypoint, roadmap, checklist, learning log, and decisions.
+1. Move the stable latest verify markdown/json pair to the tul import root beside `tul-main.zip`.
+2. Keep timestamped run artifacts in `logs/verify/YYMMDD/`.
+3. Include compact `tul state` and `tul handoff` snapshots in `tul-vf-latest.md`.
+4. Rewrite the post-update verify markdown after final handoff-ready state is written.
+5. Refresh review, verify, roadmap, checklist, learning log, and decisions docs.
 
 ## Verify artifact convention
 
-Canonical latest files remain directly under the verify log root:
+Canonical latest files live directly under the tul import root so they sit beside `tul-main.zip` for upload:
 
 ```text
-/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
-/sdcard/termux/import/tul/logs/verify/tul-vf-latest.json
+/sdcard/termux/import/tul/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-vf-latest.json
 ```
 
-Timestamped run artifacts live in YYMMDD date folders directly under the verify log root. There is no `runs/` layer:
+The latest markdown includes the release gate plus compact `tul state` and `tul handoff` snapshots. Timestamped run artifacts live in YYMMDD date folders directly under the verify log root. There is no `runs/` layer:
 
 ```text
 /sdcard/termux/import/tul/logs/verify/260512/tul-vf-f-260512-153345-a1dcc39.md
@@ -48,7 +48,7 @@ Timestamped run artifacts live in YYMMDD date folders directly under the verify 
 /sdcard/termux/import/tul/logs/verify/260512/tul-vf-l-260512-153345-a1dcc39.json
 ```
 
-Do not write both `vf` and `verify` naming families. `tul-vf-latest.md/json` are the only canonical latest artifacts. Legacy `tul-verify-latest.*` aliases are no longer generated.
+Do not write both `vf` and `verify` naming families. `tul-vf-latest.md/json` are the only canonical latest artifacts and live at the import root. Legacy `tul-verify-latest.*` aliases are no longer generated.
 
 ## State output convention
 

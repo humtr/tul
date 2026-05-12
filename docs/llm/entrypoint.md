@@ -28,7 +28,7 @@ Use this order unless the user gives a narrower task:
 7. Read `docs/checklists/loop-runtime.md` for acceptance criteria.
 8. Read implementation files only when generating or reviewing a package.
 
-Do not ask for a repo zip just to confirm a successful update when `tul-vf-latest.md` already proves release-gate status. Ask for a current repo zip when producing the next package or when the failure is code-level.
+Do not ask for a repo zip just to confirm a successful update when `tul-vf-latest.md` already proves release-gate status and includes runtime snapshots. Ask for standalone `tul state` or `tul handoff` only if the latest artifact is stale or missing those snapshots. Ask for a current repo zip when producing the next package or when the failure is code-level.
 
 ## Durable read order
 
@@ -64,7 +64,7 @@ tul update
 Then the user should upload:
 
 ```text
-/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-vf-latest.md
 ```
 
 A package is normally closed when the artifact shows `Release gate: PASS`, matching local/remote HEAD, clean working tree, py_compile pass, git diff check pass, and canonical verify artifact paths.

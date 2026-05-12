@@ -1,3 +1,3 @@
 """tul core package."""
 
-__version__ = "0.8.10-parallel-readiness-gate-bundle"
+__version__ = "0.8.11-import-root-latest-snapshot-bundle"

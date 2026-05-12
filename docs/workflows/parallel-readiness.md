@@ -6,7 +6,7 @@ This guide decides whether tul can start the next bounded bundle, whether multip
 
 Use current-turn evidence in this order:
 
-1. `tul-vf-latest.md` for release-gate facts.
+1. `tul-vf-latest.md` for release-gate facts and embedded state/handoff snapshots.
 2. `tul state` output for latest package, rollbackable commit, cleanup, and handoff state.
 3. Current repo zip or fresh clone contents for code-level package generation.
 4. Repo documents for durable guidance.
@@ -79,7 +79,7 @@ Every bounded package should keep the normal acceptance gate:
 ```bash
 tul package latest
 tul update
-# upload /sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+# upload /sdcard/termux/import/tul/tul-vf-latest.md
 ```
 
 Add state or handoff checks only when the bundle changes state, archive, rollback, handoff, or cleanup behavior. Add package-check synthetic tests when the bundle changes package validation. Add a one-time `tul verify fresh` bootstrap note only when the package modifies verify behavior itself.

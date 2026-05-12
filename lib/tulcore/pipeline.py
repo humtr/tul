@@ -15,7 +15,7 @@ from .publish import publish_manifest_changes
 from .report import build_report, write_report
 from .state import record_error, set_phase
 from .sweep import sweep_repo
-from .verify import format_verify_gate, run_verify, write_verify_artifacts
+from .verify import format_verify_gate, rewrite_verify_artifacts_with_runtime_snapshots, run_verify, write_verify_artifacts
 
 
 @dataclass
@@ -135,7 +135,12 @@ def run_update(
         if verify_after and not no_commit and not no_push:
             failed_at = "verify-fresh"
             verify_result = run_verify(ctx, fresh_clone=True)
-            verify_artifacts = write_verify_artifacts(ctx, verify_result, fresh_clone=True)
+            verify_artifacts = write_verify_artifacts(
+                ctx,
+                verify_result,
+                fresh_clone=True,
+                include_runtime_snapshots=False,
+            )
             verify_text = format_verify_gate(verify_result, verify_artifacts)
 
         report = build_report(
@@ -195,6 +200,8 @@ def run_update(
             verify_fresh_ok=verify_result.ok if verify_result is not None else None,
             verify_artifacts=verify_artifacts,
         )
+        if verify_result is not None and verify_artifacts is not None:
+            rewrite_verify_artifacts_with_runtime_snapshots(ctx, verify_result, verify_artifacts)
         return UpdateResult(
             report=report,
             handoff=handoff,

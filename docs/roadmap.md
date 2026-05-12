@@ -63,26 +63,32 @@ Package: `tul_stage6_handoff_discoverability_bundle_v1`
 
 Result: release gate passed. Fresh sessions now have an explicit post-update review guide, compact handoff read-next pointers, and evidence-economy guidance for deciding when `tul-vf-latest.md`, `tul state`, or repo zip is required.
 
-## Active bundle
-
 ### Bundle F — Parallel-readiness gate bundle
 
 Package: `tul_stage6_parallel_readiness_gate_bundle_v1`
 
+Result: release gate passed. Fresh sessions now have a bounded-bundle readiness guide, file-overlap rules, and Green/Yellow/Orange/Red classification before package generation.
+
+## Active bundle
+
+### Bundle G — Import-root latest snapshot bundle
+
+Package: `tul_stage6_import_root_latest_snapshot_bundle_v1`
+
 Scope:
 
-1. Add a parallel-readiness workflow guide.
-2. Define single-bundle readiness conditions.
-3. Define Green/Yellow/Orange/Red bundle classes.
-4. Define touched-file overlap and serialization rules.
-5. Add next-bundle readiness checks to post-update review and handoff pointers.
+1. Move `tul-vf-latest.md/json` to `/sdcard/termux/import/tul/` beside `tul-main.zip`.
+2. Keep timestamped run artifacts in `logs/verify/YYMMDD/`.
+3. Include compact `tul state` and `tul handoff` snapshots in `tul-vf-latest.md`.
+4. Ensure `tul update` rewrites the verify markdown after final state/handoff are available.
+5. Update review and verify docs so the user can upload one latest markdown file for normal review.
 
 Success criteria:
 
-- `docs/workflows/parallel-readiness.md` exists.
-- Compact handoff includes the parallel-readiness guide in read-next pointers.
-- Post-update review guidance requires next-bundle readiness classification.
-- Loop checklist includes a parallel-readiness checkpoint.
+- `tul-vf-latest.md/json` are written under the tul import root.
+- Timestamped run artifacts remain under `logs/verify/YYMMDD/`.
+- Latest markdown contains `## Runtime snapshots`, `### tul state`, and `### tul handoff`.
+- `tul state` reports the root latest markdown path after update.
 - Normal `tul update` still produces a release-gate PASS artifact after applying this bundle.
 
 ## Ready queue
@@ -95,7 +101,7 @@ Ready queue items can be bundled when they share a capability area and have comp
 
 ## Bundle candidates
 
-### Bundle G — Windows parity bundle
+### Bundle H — Windows parity bundle
 
 Scope:
 
@@ -104,7 +110,7 @@ Scope:
 - `tul update` and post-update verify on Windows;
 - PowerShell fallback scripts.
 
-### Bundle H — State cleanup policy expansion
+### Bundle I — State cleanup policy expansion
 
 Scope:
 

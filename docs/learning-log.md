@@ -255,3 +255,14 @@ Impact: Parallel planning is useful, but package generation must classify file o
 Reflected in: `docs/workflows/parallel-readiness.md`, `docs/llm/post-update-review.md`, `docs/checklists/loop-runtime.md`, and `lib/tulcore/handoff.py`.
 
 Follow-up: Use the Green/Yellow/Orange/Red classification before producing the next package. Keep Windows parity and state cleanup policy expansion separate unless the readiness gate says their touched files and gates are independent.
+
+
+### Stage 6.8 — Latest artifact should be the upload bundle
+
+Observation: Keeping `tul-main.zip` at the tul import root while `tul-vf-latest.md` lived under `logs/verify/` forced repeated directory switching during uploads. Requiring separate pasted `tul state` and `tul handoff` output added more bridge work.
+
+Impact: Stable latest artifacts should live beside `tul-main.zip`, while timestamped run artifacts remain under `logs/verify/YYMMDD/`. The latest markdown should include compact state and handoff snapshots so normal post-update review uses one uploaded markdown file.
+
+Reflected in: `lib/tulcore/verify.py`, `lib/tulcore/pipeline.py`, `docs/workflows/verify.md`, `docs/llm/post-update-review.md`, and `docs/checklists/loop-runtime.md`.
+
+Follow-up: After applying this bundle, verify that `/sdcard/termux/import/tul/tul-vf-latest.md` exists, contains `## Runtime snapshots`, and that `tul state` points to the import-root latest file.

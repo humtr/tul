@@ -76,7 +76,11 @@ Normal `tul update` now runs a compact post-update fresh verification gate after
 The full verification details are written as markdown and JSON artifacts under the platform verify log root. On Termux, the usual upload file is:
 
 ```text
-/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-vf-latest.md
 ```
 
 `--no-verify` skips the post-update fresh gate. `--no-commit` and `--no-push` are recovery/debug exceptions and do not run the automatic fresh gate because the remote may intentionally not reflect local changes.
+
+## Latest artifact snapshot rewrite
+
+In the normal `tul update` path, the fresh verify gate runs before the final report, handoff, and handoff-ready state are written. After those files exist, tul rewrites the same verify markdown artifacts so `/sdcard/termux/import/tul/tul-vf-latest.md` includes compact `tul state` and `tul handoff` snapshots.

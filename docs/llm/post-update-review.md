@@ -1,16 +1,17 @@
 # LLM post-update review guide
 
-This guide is for a fresh LLM session receiving a `tul` handoff, a `tul-vf-latest.md` artifact, a `tul state` output, or a repo zip after a package has been applied.
+This guide is for a fresh LLM session receiving `tul-vf-latest.md`, a repo zip, or additional terminal output after a package has been applied. Current latest markdown includes the release gate plus compact `tul state` and `tul handoff` snapshots.
 
 ## Source hierarchy
 
 Use this order when facts differ:
 
-1. User-provided terminal artifacts from the current turn, especially `/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md`.
-2. User-provided `tul state` output.
-3. The current repo zip or fresh clone contents.
-4. Durable repo documents such as `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
-5. Prior chat summaries, only as context.
+1. User-provided terminal artifacts from the current turn, especially `/sdcard/termux/import/tul/tul-vf-latest.md`.
+2. Runtime snapshots inside `tul-vf-latest.md`, especially `### tul state` and `### tul handoff`.
+3. User-provided standalone `tul state` or `tul handoff` output when newer than the latest artifact.
+4. The current repo zip or fresh clone contents.
+5. Durable repo documents such as `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
+6. Prior chat summaries, only as context.
 
 Do not treat prior chat claims as repository truth when the artifact or repo contradicts them.
 
@@ -19,7 +20,7 @@ Do not treat prior chat claims as repository truth when the artifact or repo con
 For a normal successful package application, the user should only need to upload:
 
 ```text
-/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-vf-latest.md
 ```
 
 A review can usually be closed if the artifact shows:
@@ -32,7 +33,7 @@ A review can usually be closed if the artifact shows:
 - `git diff --check` passed;
 - verify artifacts use the canonical layout.
 
-Ask for `tul state` output only when the package changed state, handoff, cleanup, rollback, or archive behavior.
+Ask for standalone `tul state` or `tul handoff` output only when the latest artifact is missing the runtime snapshots, appears stale, or the user has run newer commands after the artifact was created.
 
 Ask for a fresh repo zip only when producing the next package, doing code-level review, or investigating a failure that cannot be resolved from the verify artifact and terminal output.
 
@@ -48,7 +49,7 @@ tul update
 For evidence upload after update:
 
 ```text
-/sdcard/termux/import/tul/logs/verify/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-vf-latest.md
 ```
 
 For state-sensitive bundles:
