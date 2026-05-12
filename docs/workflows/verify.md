@@ -34,3 +34,32 @@ Fresh clones are created under:
 ```
 
 This command does not replace `tul update`. It verifies the repo after update or before generating the next package.
+
+## Verify artifacts
+
+By default, `tul verify` now writes timestamped markdown and JSON artifacts in the platform log root. On Termux the default location is:
+
+```text
+/sdcard/termux/import/tul/logs/verify/
+```
+
+Each run writes both timestamped files and stable latest files:
+
+```text
+<project>-verify-local-<timestamp>-<head>.md
+<project>-verify-local-<timestamp>-<head>.json
+<project>-verify-fresh-<timestamp>-<head>.md
+<project>-verify-fresh-<timestamp>-<head>.json
+<project>-verify-latest.md
+<project>-verify-latest.json
+```
+
+This reduces long terminal copy/paste. For review, upload the latest markdown artifact instead of pasting the full verify output.
+
+Options:
+
+```bash
+tul verify tul --fresh-clone
+tul verify tul --fresh-clone --no-log
+tul verify tul --fresh-clone --log-dir /sdcard/termux/import/tul/logs/verify
+```

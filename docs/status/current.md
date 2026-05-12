@@ -1,10 +1,10 @@
 # Current status
 
-Latest known version in the uploaded source baseline: `0.7.4-package-authoring-polish`.
+Latest known version after this package: `0.7.5-verify-artifacts`.
 
 Latest completed stage: Stage 5.5 — package authoring polish.
 
-Current mode: Stage 6 baseline — planning harness insertion before native-context implementation.
+Current mode: Stage 6 baseline — planning harness inserted; verify artifact logging is the next bridge-reduction step before native-context implementation.
 
 ## Current verified loop
 
@@ -21,7 +21,7 @@ tul handoff tul
 
 ## Current next package
 
-`tul_planning_harness_v1`
+`tul_verify_artifacts_v1`
 
 Purpose:
 
@@ -48,3 +48,11 @@ Native no-arg update and package mismatch guidance should be implemented in late
 - The uploaded source baseline does not contain `docs/manifest.md`, `docs/strategy.md`, `docs/learning-log.md`, or `docs/decisions.md`; this package introduces them.
 - Native context is not implemented yet and must not be documented as complete.
 - Stage X target onboarding remains deferred.
+
+## Verify artifacts
+
+`tul verify` writes markdown and JSON artifacts under the platform log root. On Termux, upload this file instead of pasting long terminal output:
+
+```text
+/sdcard/termux/import/tul/logs/verify/tul-verify-latest.md
+```

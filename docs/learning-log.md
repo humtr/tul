@@ -93,3 +93,13 @@ Impact: A static roadmap cannot carry the planning load.
 Reflected in: planning harness.
 
 Follow-up: Introduce manifest/strategy/roadmap/status/learning/decisions separation.
+
+## Stage 6 — Verify output should be an artifact
+
+Observation: Fresh-clone verification output is too long to paste repeatedly.
+
+Impact: The user becomes a log transport layer, which works against the human-bridge minimization vision.
+
+Reflected in: `tul verify` should persist markdown/json artifacts under the platform log root. On Termux, the expected path is `/sdcard/termux/import/tul/logs/verify/`.
+
+Follow-up: Prefer uploading `tul-verify-latest.md` over pasting full terminal logs.

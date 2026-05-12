@@ -10,8 +10,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .config import ProjectContext
-from .gitops import current_branch, head, remote_head, remote_url, status_porcelain
+from .config import ProjectContext, platform_paths
+from .gitops import remote_url
+from .paths import expand_path, mkdirp
 
 
 REQUIRED_DOCS = [
@@ -102,6 +103,98 @@ def run_verify(ctx: ProjectContext, *, fresh_clone: bool = False, clone_root: Pa
         if ok:
             _verify_repo(clone_path, result, label="fresh clone")
     return result
+
+
+def verify_log_root(ctx: ProjectContext, explicit: Path | None = None) -> Path:
+    """Return the directory for persisted verify artifacts.
+
+    Termux defaults to `/sdcard/termux/import/tul/logs/verify` by deriving the
+    log root from the configured work root `/sdcard/termux/import/tul/work`.
+    Windows derives `D:/work/files/downloads/.tul/logs/verify` from the work
+    root unless `platform.verify_log_root` or `platform.log_root` is configured.
+    """
+    if explicit is not None:
+        return explicit.expanduser().resolve()
+    platform = ctx.global_config.get("platform") or {}
+    if platform.get("verify_log_root"):
+        return expand_path(str(platform["verify_log_root"]))
+    if platform.get("log_root"):
+        return expand_path(str(platform["log_root"])) / "verify"
+    paths = platform_paths(ctx.global_config)
+    work_root = paths.get("work_root")
+    if work_root:
+        return Path(work_root).parent / "logs" / "verify"
+    return Path.home() / ".cache" / "tul" / "logs" / "verify"
+
+
+def write_verify_artifacts(
+    ctx: ProjectContext,
+    result: VerifyResult,
+    *,
+    fresh_clone: bool = False,
+    log_dir: Path | None = None,
+) -> dict[str, str]:
+    """Persist verify output as timestamped markdown and JSON artifacts.
+
+    Also writes stable `latest` copies so the user can upload one predictable
+    file instead of copying long terminal output.
+    """
+    root = verify_log_root(ctx, log_dir)
+    mkdirp(root)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    mode = "fresh" if fresh_clone else "local"
+    head_short = (result.head or "unknown")[:12]
+    stem = f"{ctx.project_id}-verify-{mode}-{stamp}-{head_short}"
+    md_path = root / f"{stem}.md"
+    json_path = root / f"{stem}.json"
+    latest_md = root / f"{ctx.project_id}-verify-latest.md"
+    latest_json = root / f"{ctx.project_id}-verify-latest.json"
+
+    payload = result.to_dict()
+    payload["artifact"] = {
+        "mode": mode,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "log_root": str(root),
+        "markdown": str(md_path),
+        "json": str(json_path),
+        "latest_markdown": str(latest_md),
+        "latest_json": str(latest_json),
+    }
+
+    text = result.to_text()
+    text += "\n\n## Artifact metadata\n"
+    text += f"- Mode: {mode}\n"
+    text += f"- Markdown: {md_path}\n"
+    text += f"- JSON: {json_path}\n"
+    text += f"- Latest markdown: {latest_md}\n"
+    text += f"- Latest JSON: {latest_json}\n"
+    text += "\n## Machine-readable summary\n\n```json\n"
+    text += json.dumps(payload, indent=2, ensure_ascii=False)
+    text += "\n```\n"
+
+    md_path.write_text(text, encoding="utf-8", newline="\n")
+    json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    latest_md.write_text(text, encoding="utf-8", newline="\n")
+    latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+
+    return {
+        "markdown": str(md_path),
+        "json": str(json_path),
+        "latest_markdown": str(latest_md),
+        "latest_json": str(latest_json),
+    }
+
+
+def format_verify_artifacts(paths: dict[str, str]) -> str:
+    return "\n".join(
+        [
+            "## Verify artifacts",
+            f"- Log: {paths['markdown']}",
+            f"- JSON: {paths['json']}",
+            f"- Latest log: {paths['latest_markdown']}",
+            f"- Latest JSON: {paths['latest_json']}",
+        ]
+    )
 
 
 def _verify_repo(repo: Path, result: VerifyResult, *, label: str) -> None:

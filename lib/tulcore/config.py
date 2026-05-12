@@ -322,7 +322,7 @@ def resolve_project(target: str) -> ProjectContext:
 def platform_paths(config: dict[str, Any]) -> dict[str, Any]:
     platform = config.get("platform") or {}
     result = dict(platform)
-    for key in ("work_root", "archive_root", "backup_root"):
+    for key in ("work_root", "archive_root", "backup_root", "log_root", "verify_log_root"):
         if result.get(key):
             result[key] = expand_path(str(result[key]))
     roots = []

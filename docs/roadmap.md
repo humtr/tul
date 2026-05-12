@@ -35,6 +35,7 @@ Ready queue items can be bundled when they share a capability area and have comp
 - No-arg mutating commands: `tul update`, `tul import`, `tul rollback` with conflict guards.
 - Context conflict UX: active project vs current-directory project safety messages.
 - Package mismatch guidance: explain incompatible package manifests and present next commands.
+- Verify artifact logging: save long verify output as markdown/json files for upload instead of paste.
 - Verify release gate summary: top-line PASS/FAIL and remediation commands.
 - State compact output: latest state, latest published, latest rollbackable, cleanup suggestion.
 - Package check diagnostics: clearer failure messages and package authoring guidance.
@@ -56,6 +57,17 @@ Scope:
 - `docs/protocols/planning-loop.md`.
 - `docs/checklists/planning-harness.md`.
 - project harness templates.
+
+### Bundle 1.5 — Verify artifact logging
+
+Package: `tul_verify_artifacts_v1`
+
+Scope:
+
+- Persist `tul verify` output to markdown and JSON artifacts.
+- Use `/sdcard/termux/import/tul/logs/verify/` on Termux through platform `log_root`.
+- Print stable latest artifact paths for upload-based review.
+- Keep `--no-log` for exceptional runs.
 
 ### Bundle 2 — Native context v1a
 

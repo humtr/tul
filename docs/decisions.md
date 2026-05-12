@@ -75,3 +75,13 @@ Context: Execution lessons are frequent. If every lesson changes the manifest, t
 Decision: One-off friction goes to learning log and roadmap. Repeated capability pressure goes to strategy. Human authority, safety, or vision changes may change the manifest and should be recorded here.
 
 Consequences: The manifest remains stable but corrigible.
+
+## ADR-008 — Verification output should be file-backed
+
+Status: accepted
+
+Context: `tul verify --fresh-clone` produces long output that is useful but cumbersome to paste into a chat.
+
+Decision: `tul verify` writes markdown and JSON artifacts by default. The terminal output remains visible, but the stable latest artifact can be uploaded for review.
+
+Consequences: The human bridge shifts from log copying to file handoff. This supports the long-term goal of minimizing repetitive bridge labor while preserving inspectability.

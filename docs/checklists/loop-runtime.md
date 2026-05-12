@@ -8,6 +8,8 @@ tul package check /sdcard/Download/<package>.zip --target tul
 tul update tul -l
 tul verify tul
 tul verify tul --fresh-clone
+# Upload instead of pasting long output:
+# /sdcard/termux/import/tul/logs/verify/tul-verify-latest.md
 ```
 
 For package authoring:
@@ -39,3 +41,11 @@ Invariants:
 - [ ] `docs/learning-log.md` records known execution lessons.
 - [ ] `docs/decisions.md` records accepted planning decisions.
 - [ ] `docs/protocols/planning-loop.md` defines top-down and bottom-up planning.
+
+## Verify artifact checkpoint
+
+- [ ] `tul verify tul` prints artifact paths.
+- [ ] `tul verify tul --fresh-clone` writes markdown and JSON artifacts.
+- [ ] Termux default artifact path is `/sdcard/termux/import/tul/logs/verify/`.
+- [ ] The stable latest file can be uploaded instead of pasting terminal output.
+- [ ] `--no-log` remains available for exceptional runs.
