@@ -243,8 +243,11 @@ def archive_states(
         failed=failed,
         keep=keep,
     )
+    protected = set(archive_protected_paths(work_root, project=project).values())
     archived_items: list[tuple[Path, Path, dict[str, Any]]] = []
     for state_path, data in states:
+        if state_path in protected:
+            continue
         state_dir = state_path.parent
         if not state_dir.exists():
             continue

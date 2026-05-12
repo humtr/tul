@@ -240,3 +240,15 @@ It contains release-gate evidence plus compact runtime snapshots. Zip artifacts 
 - backup: Git remote, commit hashes, and rollback state.
 
 See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md). Until the export model is corrected, ask for a repo/source zip only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it.
+
+
+## K1 archive execution safety
+
+State cleanup is dry-run first. Actual archive moves are currently limited to reviewed no-op selections:
+
+```bash
+tul archive --noop --dry-run --keep 3
+tul archive --noop --keep 3
+```
+
+Latest and latest rollbackable state references are protected.

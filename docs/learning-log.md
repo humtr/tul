@@ -323,3 +323,12 @@ Follow-up: Verify the explicit command, then decide whether successful `tul upda
 Observation: J3 proved the review bundle file can be created, but the uploaded latest verify artifact can remain stale unless the export command refreshes runtime snapshots after recording state.
 
 Action: J4 keeps review export explicit while recording its metadata in state/report/handoff and refreshing `tul-vf-latest.md` runtime snapshots. Automatic update-side export remains deferred.
+
+
+## 2026-05-13 — Archive execution must be narrower than archive inspection
+
+Observation: The dry-run archive flow made cleanup candidates visible, but actual movement needs a narrower safety contract than inspection. Latest state and latest rollbackable state are runtime evidence, not ordinary clutter.
+
+Lesson: Allow broad selectors for dry-run diagnosis, but keep first actual cleanup bounded to no-op states. Move mode should refuse default/latest, imported, failed, mixed, and broad selections until those policies have their own acceptance gates.
+
+Action: K1 protects latest/latest-rollbackable references in the archive engine, limits actual moves to `--noop`, and records moved-count evidence in the latest remaining state.

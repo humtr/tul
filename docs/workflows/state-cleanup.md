@@ -32,13 +32,15 @@ The dry-run output should show:
 
 ## Move only after review
 
-After reviewing the dry-run list, rerun without `--dry-run` only if the selected source directories are correct.
+After reviewing the dry-run list, rerun without `--dry-run` only if the selected source directories are correct. K1 intentionally allows actual moves only for no-op selections. Imported, failed, broad, and latest/default archive selections remain inspect-only until a later policy bundle.
 
 ```bash
 tul archive --noop --keep 3
 ```
 
-Imported or failed state cleanup should also start with dry-run:
+A successful no-op move prints the moved count and records an `archive_last_run` summary in the latest remaining state.
+
+Imported or failed state cleanup should still start with dry-run:
 
 ```bash
 tul archive --imported --dry-run --keep 3
@@ -52,6 +54,8 @@ tul archive --failed --dry-run --keep 3
 - `--imported` selects imported/validated states without commits.
 - `--failed` selects failed states.
 - `--keep N` keeps the newest N selected states and archives the older selected states.
-- Published rollbackable states are not selected by `--noop` or `--imported`.
-- Broad `--all` cleanup is a diagnostic tool, not the normal cleanup path.
+- Latest state and latest rollbackable state are protected references and are skipped by the archive engine.
+- Actual moves currently require an explicit `--noop` selector.
+- Default/latest archive without a selector is refused in move mode.
+- Imported, failed, mixed, and broad `--all` cleanup are diagnostic dry-run paths until separately authorized.
 - Archive cleanup moves state directories to the configured archive root; it does not delete them.

@@ -1,16 +1,16 @@
 # Current status
 
-Latest known version: `0.8.18-review-export-state-integration`.
+Latest known version: `0.8.20-archive-execution-safety`.
 
-Current mode: Stage 6 bounded parallel stabilization. The release gate, compact state, handoff discoverability, parallel-readiness gate, import-root latest verify artifact, and runtime snapshots are baseline behavior. Repo/source zip export is explicitly not closed and is being re-scoped.
+Current mode: Stage 6 bounded parallel stabilization, K track. Review bundle export is closed; the next focus is archive/work-state cleanup safety.
 
 ## Verified baseline
 
 Latest verified baseline:
 
 ```text
-HEAD: 88e9a8ccd67e0de4dad4f39d45b4eef7be00b072
-Remote HEAD: 88e9a8ccd67e0de4dad4f39d45b4eef7be00b072
+HEAD: c481e539b47c7e0b232271fa163b8284eda9de49
+Remote HEAD: c481e539b47c7e0b232271fa163b8284eda9de49
 Release gate: PASS
 Working tree: clean
 ```
@@ -85,3 +85,17 @@ Timestamped run artifacts live in YYMMDD date folders directly under the verify 
 ## Deferred
 
 Stage X target onboarding, including `humtr/ai`, remains deferred until tul's self-host loop reduces rather than multiplies bridge work.
+
+
+## K1 archive execution safety
+
+K1 narrows actual archive movement while preserving broad dry-run inspection. Actual moves are allowed only for `--noop` selections. Latest and latest rollbackable states are protected by the archive engine and skipped even if a selector would otherwise include them.
+
+Recommended execution path:
+
+```bash
+tul archive --noop --dry-run --keep 3
+tul archive --noop --keep 3
+```
+
+Do not move imported, failed, mixed, or broad `--all` state selections until separate cleanup policies are accepted.

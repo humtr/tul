@@ -2,9 +2,9 @@
 
 ## Current mode
 
-Stage 6 — bounded parallel stabilization.
+Stage 6 — bounded parallel stabilization, K track.
 
-The current priority is not another convenience feature. The repo zip export work exposed an artifact-model problem, so the next sequence is a stabilization checkpoint followed by smaller export cleanups.
+The J export cleanup track is closed. The current priority is archive/work-state stabilization before returning to manifest, short-term/mid-term/long-term planning, and bounded parallel operations.
 
 ## Verified baseline
 
@@ -115,3 +115,18 @@ Requirements: no wrapper directory, root-layout checks, size/file count/sha256, 
 ## Deferred
 
 Stage X target onboarding, including `humtr/ai`, remains deferred until tul's self-host loop is stable enough to reduce rather than increase bridge work.
+
+
+## K track — stabilization / cleanup
+
+### K1 — Archive execution safety
+
+Goal: make actual no-op state archive moves safe after a dry-run review.
+
+Acceptance:
+
+- `tul archive --noop --dry-run --keep 3` continues to show inventory, protected references, source dirs, and archive dirs.
+- `tul archive --noop --keep 3` moves only older no-op states.
+- Latest and latest rollbackable states are protected.
+- Non-noop actual moves are refused until separately authorized.
+- Successful moves record moved-count evidence in the latest remaining state.

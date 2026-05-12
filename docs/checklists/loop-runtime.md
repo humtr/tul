@@ -142,6 +142,10 @@ Invariants:
 - [x] Archive dry-run output shows source and archive destination directories.
 - [x] Archive dry-run output identifies latest and latest rollbackable reference states.
 - [x] Actual state moves require re-running without `--dry-run`.
+- [x] Actual archive moves require an explicit selector.
+- [x] K1 actual archive moves are limited to `--noop` selections.
+- [x] Latest state and latest rollbackable state are protected from archive movement.
+- [x] Actual archive moves record `archive_last_run` in the latest remaining state.
 
 ## Handoff discoverability checkpoint
 

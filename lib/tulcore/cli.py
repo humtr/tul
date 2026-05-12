@@ -58,6 +58,7 @@ from .state import (
     summarize_compact_state,
     summarize_state,
     set_phase,
+    write_state,
 )
 from .sweep import sweep_repo
 from .verify import run_verify, write_verify_artifacts
@@ -648,6 +649,28 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             print("No platform.archive_root or platform.backup_root configured.")
             return 0
         keep = max(args.keep or 0, 0)
+        explicit_selector = bool(args.all or args.noop or args.imported or args.failed)
+        if not args.dry_run and not explicit_selector:
+            print("# tul archive")
+            print(f"Project: {ctx.project_id}")
+            print("Refusing to move state directories without an explicit selector.")
+            print("Use dry-run first, then choose a bounded selector such as --noop --keep 3.")
+            print("Examples:")
+            print(f"  tul archive {ctx.project_id} --noop --dry-run --keep 3")
+            print(f"  tul archive {ctx.project_id} --noop --keep 3")
+            return 2
+        if not args.dry_run and not args.noop:
+            print("# tul archive")
+            print(f"Project: {ctx.project_id}")
+            print("Refusing to move non-noop states in this safety phase.")
+            print("K1 only allows actual moves for --noop selections. Use --dry-run for imported/failed/all review.")
+            return 2
+        if not args.dry_run and (args.all or args.imported or args.failed):
+            print("# tul archive")
+            print(f"Project: {ctx.project_id}")
+            print("Refusing mixed actual archive selectors in this safety phase.")
+            print("Use only --noop for actual moves; inspect other selectors with --dry-run.")
+            return 2
         selector = archive_selector_label(
             all_states=args.all,
             noop=args.noop,
@@ -719,8 +742,26 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
             print()
             print("No files were moved. Review the list, then re-run without --dry-run only if it is correct.")
         else:
+            latest_after = latest_state(work_root, project=ctx.project_id)
+            if latest_after:
+                latest_path, _latest_data = latest_after
+                write_state(
+                    latest_path,
+                    archive_last_run={
+                        "selector": selector,
+                        "keep": keep,
+                        "moved_count": len(archived),
+                        "archive_root": str(archive_root),
+                        "mode": "move",
+                        "scope": "noop-only",
+                        "moved_states": [str(state_path) for state_path, _dest, _data in archived],
+                    },
+                )
             print()
-            print("Archived state directories were moved out of work_root. Verify with: tul state --all --limit 5")
+            print("Archived state directories were moved out of work_root.")
+            print(f"Moved count: {len(archived)}")
+            print("Safety scope: noop-only actual archive")
+            print("Verify with: tul state --all --limit 5")
         return 0
 
     if command == "config":

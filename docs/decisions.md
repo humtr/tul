@@ -283,3 +283,14 @@ Decision: `tul export review` should remain an explicit command for now, but a s
 Rationale: J3 proved the transport artifact shape. J4 closes observability without re-coupling export to verify or the default update loop.
 
 Consequences: Automatic post-update review export remains a later decision. Full source export remains a separate explicit command.
+
+
+## ADR-025 — Archive move mode is noop-only until broader cleanup policies are accepted
+
+Status: accepted
+
+Context: Archive dry-run output can safely inspect no-op, imported, failed, latest, and broad selections. Actual movement is different: state directories are runtime evidence for rollback, debugging, and handoff. The first execution-safety bundle should reduce clutter without weakening rollback or diagnosis authority.
+
+Decision: Actual `tul archive` move mode requires an explicit selector and is limited to `--noop` selections. Default/latest archive without a selector is refused in move mode. Imported, failed, mixed, and `--all` archive selectors remain dry-run-only until separate policy bundles authorize them. The archive engine skips latest and latest rollbackable reference states even when selected. Successful moves record an `archive_last_run` summary in the latest remaining state.
+
+Consequences: Users can safely run `tul archive --noop --keep 3` after reviewing `tul archive --noop --dry-run --keep 3`. Broader cleanup remains possible to inspect, but cannot silently move important state evidence.
