@@ -4,7 +4,7 @@
 
 Stage 6 — bounded parallel self-host hardening.
 
-The roadmap is a ready queue and bundle planner. The update-integrated verify gate, compact gate/state output, authoring diagnostics, and archive dry-run guidance have passed release gate and are baseline behavior. The active bounded package is `tul_stage6_handoff_discoverability_bundle_v1`.
+The roadmap is a ready queue and bundle planner. The update-integrated verify gate, compact gate/state output, authoring diagnostics, archive dry-run guidance, and handoff discoverability have passed release gate and are baseline behavior. The active bounded package is `tul_stage6_parallel_readiness_gate_bundle_v1`.
 
 ## Completed foundations
 
@@ -35,6 +35,7 @@ The roadmap is a ready queue and bundle planner. The update-integrated verify ga
 - Stage 6.2 — compact verify gate and state output
 - Stage 6.4 — package authoring diagnostics
 - Stage 6.5 — archive cleanup dry-run guidance
+- Stage 6.6 — handoff discoverability
 
 ## Recently completed bundles
 
@@ -56,46 +57,43 @@ Package: `tul_stage6_archive_cleanup_dryrun_bundle_v1`
 
 Result: release gate passed. `tul state` points to dry-run cleanup, and `tul archive --noop --dry-run --keep 3` prints inventory, protected reference states, and source/destination directories without moving files.
 
-## Active bundle
-
 ### Bundle E — Handoff discoverability bundle
 
 Package: `tul_stage6_handoff_discoverability_bundle_v1`
 
+Result: release gate passed. Fresh sessions now have an explicit post-update review guide, compact handoff read-next pointers, and evidence-economy guidance for deciding when `tul-vf-latest.md`, `tul state`, or repo zip is required.
+
+## Active bundle
+
+### Bundle F — Parallel-readiness gate bundle
+
+Package: `tul_stage6_parallel_readiness_gate_bundle_v1`
+
 Scope:
 
-1. Add `docs/llm/post-update-review.md` as the fresh-session review path.
-2. Make README, entrypoint, handoff docs, and handoff output agree on read-next priority.
-3. Clarify when `tul-vf-latest.md`, `tul state`, and repo zip are each necessary.
-4. Keep the bundle docs-first and avoid runtime behavior changes beyond handoff pointers.
+1. Add a parallel-readiness workflow guide.
+2. Define single-bundle readiness conditions.
+3. Define Green/Yellow/Orange/Red bundle classes.
+4. Define touched-file overlap and serialization rules.
+5. Add next-bundle readiness checks to post-update review and handoff pointers.
 
 Success criteria:
 
-- `docs/llm/post-update-review.md` exists and explains evidence economy.
-- Compact handoff points to the post-update review guide.
-- README and LLM entrypoint include the post-update review guide.
-- Loop checklist includes a handoff discoverability checkpoint.
+- `docs/workflows/parallel-readiness.md` exists.
+- Compact handoff includes the parallel-readiness guide in read-next pointers.
+- Post-update review guidance requires next-bundle readiness classification.
+- Loop checklist includes a parallel-readiness checkpoint.
 - Normal `tul update` still produces a release-gate PASS artifact after applying this bundle.
 
 ## Ready queue
 
-Ready queue items can be bundled when they share a capability area and have compatible risk.
+Ready queue items can be bundled when they share a capability area and have compatible risk. Apply the parallel-readiness gate before generating a package.
 
-- Parallel-readiness gate: define how multiple bounded bundles are ordered, checked, and rejected on file conflict.
 - Windows parity pass: launcher shim, config paths, inbox roots, native update, verify fresh.
 - State cleanup policy expansion: imported/failed cleanup guidance after dry-run behavior has been observed.
 - Docs consistency checks: status, roadmap, manifest, strategy, and checklist alignment.
 
 ## Bundle candidates
-
-### Bundle F — Parallel-readiness gate bundle
-
-Scope:
-
-- package conflict checklist;
-- touched-file overlap rules;
-- verify/state/handoff acceptance for multiple small bundles;
-- guidance on when to serialize instead of parallelize.
 
 ### Bundle G — Windows parity bundle
 
@@ -105,6 +103,14 @@ Scope:
 - Windows inbox/log/config paths;
 - `tul update` and post-update verify on Windows;
 - PowerShell fallback scripts.
+
+### Bundle H — State cleanup policy expansion
+
+Scope:
+
+- imported/failed dry-run selectors;
+- archive review guidance;
+- explicit stop rules before actual deletion or pruning.
 
 ## Extraction rules
 

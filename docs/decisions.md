@@ -197,3 +197,18 @@ Context: Compact handoff and verify artifacts reduce bridge work, but a fresh LL
 Decision: Keep handoff compact and add a repo-resident post-update review guide. Compact handoff, README, the LLM entrypoint, and the handoff protocol should all point to the same review path. `tul-vf-latest.md` is the normal release-gate evidence; `tul state` is requested only for state-sensitive behavior; a current repo zip is requested when producing the next package or diagnosing code-level failures.
 
 Consequences: Fresh LLM sessions can review successful updates with less user bridge work while still finding the correct repo documents when implementation is needed. Future discoverability improvements should add or refine repo pointers before increasing terminal output size.
+
+## Stage 6.7 — Parallel readiness gate before more bundles
+
+Decision: Before proposing or generating the next implementation package, a fresh session should apply the parallel-readiness gate.
+
+Rationale: Stage 6 allows bounded parallel planning, but repeated packages share coordination docs and sometimes runtime files. Without a gate, two small packages can still conflict or make acceptance evidence ambiguous.
+
+Accepted rule:
+
+- Generate packages from the latest verified HEAD and current repo zip.
+- Declare expected changed files, excluded files, acceptance criteria, and a Green/Yellow/Orange/Red class.
+- Serialize whenever candidate bundles share runtime files or change verify/update/pipeline/rollback/archive move/push behavior.
+- Apply packages one at a time through `tul update` and close each with `tul-vf-latest.md`.
+
+Reflected in: `docs/workflows/parallel-readiness.md`, `docs/llm/post-update-review.md`, `docs/checklists/loop-runtime.md`, and compact handoff read-next pointers.

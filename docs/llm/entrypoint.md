@@ -24,8 +24,9 @@ Use this order unless the user gives a narrower task:
 3. Read this file.
 4. Read `docs/llm/post-update-review.md` for the review protocol.
 5. Read `docs/status/current.md` and `docs/roadmap.md` for the current bundle boundary.
-6. Read `docs/checklists/loop-runtime.md` for acceptance criteria.
-7. Read implementation files only when generating or reviewing a package.
+6. Read `docs/workflows/parallel-readiness.md` before proposing the next bounded bundle.
+7. Read `docs/checklists/loop-runtime.md` for acceptance criteria.
+8. Read implementation files only when generating or reviewing a package.
 
 Do not ask for a repo zip just to confirm a successful update when `tul-vf-latest.md` already proves release-gate status. Ask for a current repo zip when producing the next package or when the failure is code-level.
 
@@ -49,6 +50,7 @@ Do not ask for a repo zip just to confirm a successful update when `tul-vf-lates
 16. `docs/workflows/verify.md`
 17. `docs/workflows/package-authoring.md`
 18. `docs/workflows/state-cleanup.md`
+19. `docs/workflows/parallel-readiness.md`
 
 ## Current self-host review loop
 

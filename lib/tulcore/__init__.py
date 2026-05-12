@@ -1,3 +1,3 @@
 """tul core package."""
 
-__version__ = "0.8.9-handoff-discoverability-bundle"
+__version__ = "0.8.10-parallel-readiness-gate-bundle"

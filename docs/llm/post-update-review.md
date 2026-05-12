@@ -77,6 +77,22 @@ Before proposing or generating the next package:
 - preserve package shape: `tul-package.yml + files/ + README.md + apply.sh + apply.ps1`;
 - avoid `git add -A`, force push, broad cleanup, and policy hardcoding.
 
+## Next-bundle readiness gate
+
+Before proposing or generating another package, apply `docs/workflows/parallel-readiness.md`. At minimum, state:
+
+- latest verified HEAD;
+- whether local and remote HEAD match;
+- whether the release gate is closed;
+- the completed bundle name;
+- the next bundle name and goal;
+- expected changed files;
+- intentionally excluded files;
+- acceptance criteria;
+- parallel class: Green, Yellow, Orange, or Red.
+
+Generate only one implementation package from the current repo zip. If two candidate bundles touch the same runtime file or acceptance gate, serialize them.
+
 ## Source separation
 
 When summarizing the handoff, separate:

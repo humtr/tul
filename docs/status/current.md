@@ -1,8 +1,8 @@
 # Current status
 
-Latest known version: `0.8.9-handoff-discoverability-bundle`.
+Latest known version: `0.8.10-parallel-readiness-gate-bundle`.
 
-Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, and archive dry-run guidance are baseline behavior. Bundle B, Bundle C, and Bundle D have passed release gate. The active bounded package is the handoff discoverability bundle.
+Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, and handoff discoverability are baseline behavior. Bundle B, Bundle C, Bundle D, and Bundle E have passed release gate. The active bounded package is the parallel-readiness gate bundle.
 
 ## Current verified loop
 
@@ -18,17 +18,17 @@ tul update
 
 ## Current bundle
 
-Package: `tul_stage6_handoff_discoverability_bundle_v1`
+Package: `tul_stage6_parallel_readiness_gate_bundle_v1`
 
-Commit message: `Improve handoff discoverability`
+Commit message: `Add parallel readiness gate`
 
 Scope:
 
-1. Add a dedicated post-update review guide for fresh LLM sessions.
-2. Make README, LLM entrypoint, handoff docs, and handoff output point to the same review path.
-3. Clarify when `tul-vf-latest.md`, `tul state`, or a repo zip is sufficient evidence.
-4. Refresh roadmap, checklist, learning log, and decisions for Bundle E.
-5. Preserve update, verify, package, archive, rollback, and Windows behavior for later bundles.
+1. Add `docs/workflows/parallel-readiness.md` as the bounded-bundle readiness and conflict guide.
+2. Define Green/Yellow/Orange/Red parallel classes for bundle proposals.
+3. Add file-overlap and serialize rules for runtime files and coordination docs.
+4. Add next-bundle readiness checks to the post-update review guide and handoff pointers.
+5. Refresh README, entrypoint, roadmap, checklist, learning log, and decisions.
 
 ## Verify artifact convention
 
@@ -69,15 +69,7 @@ Before distribution, a package should pass:
 tul package check /path/to/package.zip --target tul
 ```
 
-The check should identify:
-
-- missing or nested root `tul-package.yml`;
-- missing root `README.md`;
-- absent or unreferenced `files/` payload;
-- generated/cache files in the archive;
-- `apply.files` sources that are missing from payload;
-- destination/`commit.files` mismatches;
-- target project/repo/branch mismatches when `--target` is supplied.
+The check should identify missing/nested root manifests, absent or unreferenced payload, generated/cache files, missing apply sources, destination/`commit.files` mismatches, and target mismatches when `--target` is supplied.
 
 ## State cleanup convention
 
@@ -97,15 +89,20 @@ Fresh LLM sessions should use this review path:
 2. `tul state` output for state/rollback/cleanup facts when relevant.
 3. `docs/llm/entrypoint.md` for repo read order.
 4. `docs/llm/post-update-review.md` for evidence economy and next-command selection.
-5. `docs/status/current.md` and `docs/roadmap.md` for current bundle state.
+5. `docs/workflows/parallel-readiness.md` before proposing the next bounded bundle.
+6. `docs/status/current.md` and `docs/roadmap.md` for current bundle state.
 
 A repo zip is needed for package generation or code-level diagnosis, not for every successful update review.
 
+## Parallel readiness convention
+
+Stage 6 allows bounded parallel planning but still applies packages one at a time. A new package should be generated only after the latest release gate is PASS and a current repo zip matches the verified HEAD. Candidate bundles must declare expected changed files, excluded files, acceptance criteria, and a Green/Yellow/Orange/Red parallel class. Shared runtime files, verify/update/pipeline changes, rollback behavior, archive moves, deletion, or push behavior force serialization.
+
 ## Next likely bundles
 
-- parallel-readiness gate bundle;
 - Windows parity bundle;
 - state cleanup policy expansion for imported/failed states;
+- docs consistency checks;
 - handoff/runtime prompt polish if fresh-session reviews still miss context.
 
 ## Deferred

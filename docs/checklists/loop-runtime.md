@@ -152,3 +152,14 @@ Invariants:
 - [x] Post-update review guidance states when `tul-vf-latest.md` is sufficient.
 - [x] Post-update review guidance states when `tul state` is needed.
 - [x] Post-update review guidance states when a fresh repo zip is needed.
+
+## Parallel readiness checkpoint
+
+- [x] `docs/workflows/parallel-readiness.md` defines single-bundle readiness conditions.
+- [x] The readiness guide defines Green/Yellow/Orange/Red bundle classes.
+- [x] The readiness guide requires touched-file overlap checks before package generation.
+- [x] Runtime-file overlap forces serialization.
+- [x] Verify/update/pipeline/rollback/archive move/push behavior changes force serialization.
+- [x] Post-update review guidance requires next-bundle readiness classification.
+- [x] Compact handoff points fresh sessions to the parallel-readiness guide.
+- [x] Packages are still applied one at a time through `tul update` and closed with `tul-vf-latest.md`.

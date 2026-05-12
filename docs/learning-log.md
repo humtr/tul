@@ -245,3 +245,13 @@ Impact: Repo-resident docs should make the evidence economy explicit. A successf
 Reflected in: `docs/llm/post-update-review.md`, `docs/llm/entrypoint.md`, `docs/handoff.md`, `docs/protocols/llm-handoff-protocol.md`, and `lib/tulcore/handoff.py`.
 
 Follow-up: If fresh LLM sessions still miss bundle boundaries, add a parallel-readiness gate document rather than expanding terminal handoff output.
+
+### Stage 6.7 — Parallel work still needs a gate
+
+Observation: After several bounded bundles passed, it became tempting to treat Stage 6 as generally parallel. But repeated packages still update coordination files such as status, roadmap, learning log, decisions, checklist, and sometimes shared runtime files.
+
+Impact: Parallel planning is useful, but package generation must classify file overlap and serialize work when runtime files or acceptance gates conflict.
+
+Reflected in: `docs/workflows/parallel-readiness.md`, `docs/llm/post-update-review.md`, `docs/checklists/loop-runtime.md`, and `lib/tulcore/handoff.py`.
+
+Follow-up: Use the Green/Yellow/Orange/Red classification before producing the next package. Keep Windows parity and state cleanup policy expansion separate unless the readiness gate says their touched files and gates are independent.
