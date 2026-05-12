@@ -184,12 +184,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_latest.add_argument("target", nargs="?")
     p_latest.add_argument("--json", action="store_true", help="print machine-readable selected candidate data")
 
-    p_hygiene = package_sub.add_parser("hygiene", help="dry-run or quarantine stale package archives from inbox roots")
+    p_hygiene = package_sub.add_parser("hygiene", help="dry-run, ingest valid packages, or quarantine stale project-inbox archives")
     p_hygiene.add_argument("target", nargs="?")
     p_hygiene.add_argument("--json", action="store_true", help="print machine-readable hygiene data")
     p_hygiene.add_argument("--limit", type=int, default=50, help="maximum planned actions to print")
     p_hygiene.add_argument("--keep-duplicates", type=int, default=1, help="keep newest N matching archives per duplicate package name")
-    p_hygiene.add_argument("--quarantine", action="store_true", help="move selected archives to package-quarantine instead of only printing a dry-run")
+    p_hygiene.add_argument("--ingest", action="store_true", help="move valid matching packages from external roots into the project inbox")
+    p_hygiene.add_argument("--quarantine", action="store_true", help="move project-inbox cleanup candidates to package-quarantine")
     p_hygiene.add_argument("--no-invalid", action="store_true", help="do not select invalid archives")
     p_hygiene.add_argument("--no-duplicates", action="store_true", help="do not select older duplicate matching packages")
 
@@ -550,6 +551,7 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if args.package_command == "hygiene":
             result = run_package_hygiene(
                 ctx,
+                ingest=args.ingest,
                 quarantine=args.quarantine,
                 keep_duplicates=args.keep_duplicates,
                 include_invalid=not args.no_invalid,
@@ -970,7 +972,8 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
         if duplicates or invalid:
             print("Hygiene:")
             print("  - dry-run: tul package hygiene")
-            print("  - quarantine after review: tul package hygiene --quarantine")
+            print("  - ingest valid packages from Download/import roots: tul package hygiene --ingest")
+            print("  - quarantine project-inbox duplicates after review: tul package hygiene --quarantine")
         if incompatible:
             print("Incompatible examples:")
             for item in incompatible[:3]:

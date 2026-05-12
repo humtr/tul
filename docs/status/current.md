@@ -109,3 +109,7 @@ tul package hygiene --quarantine
 ```
 
 The dry-run selects invalid archives and older duplicate matching packages. `--quarantine` moves selected files under the platform package-quarantine root. Files are moved, not deleted. Incompatible packages remain visible but are not quarantined by default.
+
+## K2-fix package inbox ingest policy
+
+K2-fix redefines package hygiene around ingest and project-inbox cleanup. Shared Download invalid archives are report-only; valid matching tul packages can be ingested into the project inbox; quarantine is limited to project-inbox duplicates or invalid package archives.

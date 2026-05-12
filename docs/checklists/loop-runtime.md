@@ -225,3 +225,10 @@ Invariants:
 - [x] Older duplicate matching packages are selected while the newest matching archive per package name is kept.
 - [x] `tul package hygiene --quarantine` moves selected archives instead of deleting them.
 - [x] Incompatible package quarantine remains deferred.
+
+## Package hygiene checklist
+
+- Run `tul package hygiene` before moving package archives.
+- Use `tul package hygiene --ingest` only for valid matching tul packages outside the project inbox.
+- Use `tul package hygiene --quarantine` only after confirming project-inbox cleanup candidates.
+- Do not quarantine unrelated shared Download files.

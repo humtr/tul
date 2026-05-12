@@ -141,3 +141,7 @@ Acceptance:
 - `tul package hygiene` prints inventory, duplicate groups, selected actions, and quarantine destinations.
 - `tul package hygiene --quarantine` moves selected files, not deletes them.
 - Incompatible package cleanup remains deferred.
+
+## K2-fix package hygiene policy
+
+The package hygiene track now separates external ingest from project-inbox quarantine. This avoids moving unrelated shared Download files while still reducing `tul package latest` warning noise.

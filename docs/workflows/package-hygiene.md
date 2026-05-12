@@ -1,18 +1,14 @@
 # Package inbox hygiene
 
-Package inbox hygiene keeps `tul package latest` focused on current candidate packages. It is not package application, not source export, and not backup management.
+Package inbox hygiene keeps `tul package latest` focused on current candidate packages without treating shared download folders as tul-owned storage. It is package transport hygiene, not package application, not source export, and not backup management.
 
-## Problem
+## Storage roles
 
-Configured inbox roots can accumulate:
+- `/sdcard/Download` is a shared external download folder. Tul may scan it for valid package archives, but unrelated zip files are report-only.
+- `/sdcard/termux/import/tul/inbox` is the tul project package inbox. Valid matching tul package archives can be ingested here.
+- `/sdcard/termux/import/tul/package-quarantine/...` is for tul-owned package hygiene moves. Files are moved, not deleted.
 
-- duplicate matching package archives with the same `tul-package.yml` name;
-- invalid zip files without a readable root `tul-package.yml`;
-- incompatible packages for other projects or branches.
-
-Duplicates and invalid archives do not necessarily break package selection, but they increase warning noise and make it harder for the user and LLM to verify which file will be applied.
-
-## Command
+## Commands
 
 Start with a dry-run:
 
@@ -20,31 +16,44 @@ Start with a dry-run:
 tul package hygiene
 ```
 
-The dry-run prints inventory counts, duplicate groups, invalid archives, and the files that would be moved. It does not move files.
+The dry-run separates candidates into three groups:
 
-After review, quarantine selected files:
+- valid matching packages outside the project inbox that can be ingested;
+- duplicate or invalid archives already inside the project inbox that can be quarantined;
+- external invalid archives that are report-only and not selected for movement.
+
+Move valid matching packages from external roots into the project inbox:
+
+```bash
+tul package hygiene --ingest
+```
+
+After review, quarantine stale project-inbox package archives:
 
 ```bash
 tul package hygiene --quarantine
 ```
 
-The command moves selected files under the platform package-quarantine root. It does not delete files.
+`--ingest` and `--quarantine` may be combined, but the recommended flow is to run them separately after reviewing the dry-run output.
 
 ## Selection policy
 
-K2 selects only:
+K2-fix selects only:
 
-- invalid archives;
-- older duplicate matching packages with the same package name.
+- valid matching tul packages outside the project inbox for ingest;
+- invalid archives inside the project inbox for quarantine;
+- older duplicate matching packages inside the project inbox for quarantine.
 
-K2 does not quarantine incompatible packages by default. Incompatible packages may belong to another project or branch and require a separate policy.
+K2-fix does not quarantine invalid archives from shared external roots such as `/sdcard/Download`. Files such as source zips, fonts, NDK archives, subtitles, or other project archives are report-only unless they are valid matching tul packages selected for ingest.
 
-For duplicate matching package groups, the newest package by filesystem mtime is kept by default. Use `--keep-duplicates N` to keep more than one recent duplicate per package name.
+For duplicate matching package groups in the project inbox, the newest package by filesystem mtime is kept by default. Use `--keep-duplicates N` to keep more than one recent duplicate per package name.
 
 ## Safety rules
 
 - Default mode is dry-run.
-- Actual moves require `--quarantine`.
+- Shared external invalid archives are never quarantined by default.
+- Ingest moves valid matching tul packages into the project inbox.
+- Quarantine moves only project-inbox cleanup candidates.
 - Files are moved, not deleted.
 - Current package selection remains based on configured inbox roots and manifest target matching.
 - Work/archive roots remain excluded from package discovery.
@@ -55,5 +64,6 @@ For duplicate matching package groups, the newest package by filesystem mtime is
 tul package latest
 tul package list
 tul package hygiene
+tul package hygiene --ingest
 tul package hygiene --quarantine
 ```

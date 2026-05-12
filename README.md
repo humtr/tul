@@ -270,3 +270,7 @@ tul archive --noop --keep 3
 ```
 
 Latest and latest rollbackable state references are protected.
+
+## Package hygiene note
+
+Package hygiene distinguishes shared external downloads from the tul project inbox. Use `tul package hygiene --ingest` to move valid matching tul packages into the project inbox, and reserve `--quarantine` for project-inbox cleanup candidates.

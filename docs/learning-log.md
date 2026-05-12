@@ -336,3 +336,7 @@ Action: K1 protects latest/latest-rollbackable references in the archive engine,
 ## K2 package inbox hygiene lesson
 
 Package discovery warning noise should be reduced by moving stale transport artifacts out of inbox roots rather than broadening selection rules. The safe pattern is dry-run first, quarantine second, never delete by default. Duplicate matching packages are safe to rank by package name and mtime; incompatible packages require a separate policy because they may be valid for other projects.
+
+## 2026-05-13 — Package hygiene external-root correction
+
+A dry-run showed that treating every invalid zip in `/sdcard/Download` as a quarantine candidate is too broad. The policy now treats shared external invalid archives as report-only and moves only valid matching tul packages into the project inbox.

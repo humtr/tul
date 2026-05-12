@@ -298,3 +298,7 @@ Consequences: Users can safely run `tul archive --noop --keep 3` after reviewing
 ## Decision: package inbox hygiene uses quarantine, not deletion
 
 Accepted for K2. `tul package hygiene` defaults to dry-run and selects only invalid archives plus older duplicate matching package archives. `--quarantine` moves selected files under a package-quarantine root. It does not delete files and does not quarantine incompatible packages by default.
+
+## Decision: shared Download is not tul-owned storage
+
+Tul may scan shared Download roots for valid matching package archives, but it must not quarantine unrelated invalid zips from those roots. Package hygiene uses ingest for valid matching tul packages and reserves quarantine for project-owned inbox cleanup.
