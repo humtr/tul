@@ -9,7 +9,7 @@ Use this order when facts differ:
 1. User-provided terminal artifacts from the current turn, especially `/sdcard/termux/import/tul/tul-vf-latest.md`.
 2. Runtime snapshots inside `tul-vf-latest.md`, especially `### tul state` and `### tul handoff`.
 3. User-provided standalone `tul state` or `tul handoff` output when newer than the latest artifact.
-4. The current repo zip or fresh clone contents.
+4. Source context such as a manually provided repo zip or fresh clone contents when code-level work is needed.
 5. Durable repo documents such as `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
 6. `docs/workflows/artifact-semantics.md` for the current artifact vocabulary.
 7. Prior chat summaries, only as context.
@@ -93,7 +93,7 @@ Before proposing or generating another package, apply `docs/workflows/parallel-r
 - acceptance criteria;
 - parallel class: Green, Yellow, Orange, or Red.
 
-Generate only one implementation package from the current repo zip. If two candidate bundles touch the same runtime file or acceptance gate, serialize them.
+Generate only one implementation package from verified source context. If two candidate bundles touch the same runtime file or acceptance gate, serialize them.
 
 ## Source separation
 

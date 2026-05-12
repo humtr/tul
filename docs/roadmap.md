@@ -9,7 +9,7 @@ The current priority is not another convenience feature. The repo zip export wor
 ## Verified baseline
 
 ```text
-c647c6ebe4dfffc7197185a09da8dca2b064f5e6
+da00aae271a82473f0958e4e66416a4d6f9d5801
 Release gate: PASS
 ```
 
@@ -64,37 +64,30 @@ Reason: state can show a zip path without proving that the current update genera
 
 ### Bundle J1 — Artifact semantics checkpoint
 
-Package: `tul_stage6_artifact_semantics_checkpoint_bundle_v1`
+Status: PASS.
 
-Goal: stop and document the artifact model before further export work.
+### Bundle J2 — Remove misleading source zip state
+
+Package: `tul_stage6_remove_misleading_source_zip_state_bundle_v1`
+
+Goal: remove the runtime signals that made a legacy `repo_zip_export` path look like a successful source/export artifact.
 
 Scope:
 
-1. Define verify artifact, state, handoff, review bundle, source bundle, and backup separately.
-2. Record `tul-main.zip` automatic export as unresolved.
-3. Reframe future upload work around `tul-review-latest.zip` and explicit `tul export source`.
-4. Preserve verified baseline and avoid runtime behavior changes.
+1. Remove automatic source zip export from the default update pipeline.
+2. Suppress legacy `repo_zip_export` paths in compact state and detailed state summaries.
+3. Show unresolved export status only as a warning when legacy state fields exist.
+4. Remove repo zip sections from report/handoff output.
+5. Update docs so review/source export remain explicit future work.
 
 Acceptance:
 
 - Release gate PASS.
-- `docs/workflows/artifact-semantics.md` exists.
-- `docs/status/current.md` says repo zip export is unresolved.
-- `docs/llm/post-update-review.md` no longer treats `tul-main.zip` as automatically trusted evidence.
-- Roadmap lists J2/J3/J4 as separate follow-up bundles.
+- `tul state` no longer prints `repo zip: /path` for legacy states.
+- Runtime snapshots no longer treat `tul-main.zip` as a successful artifact.
+- Update docs say source export is not part of verify and not hidden in update.
 
 ## Next ready queue
-
-### J2 — Remove misleading source zip state
-
-Goal: do not show source zip as successful unless the runtime recorded valid freshness/root-layout/provenance evidence.
-
-Expected files:
-
-- `lib/tulcore/state.py`
-- `lib/tulcore/report.py`
-- `lib/tulcore/handoff.py`
-- docs
 
 ### J3 — Review bundle export
 

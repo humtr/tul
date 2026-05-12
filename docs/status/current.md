@@ -1,6 +1,6 @@
 # Current status
 
-Latest known version: `0.8.15-artifact-semantics-checkpoint`.
+Latest known version: `0.8.16-source-export-state-cleanup`.
 
 Current mode: Stage 6 bounded parallel stabilization. The release gate, compact state, handoff discoverability, parallel-readiness gate, import-root latest verify artifact, and runtime snapshots are baseline behavior. Repo/source zip export is explicitly not closed and is being re-scoped.
 
@@ -9,8 +9,8 @@ Current mode: Stage 6 bounded parallel stabilization. The release gate, compact 
 Latest verified baseline:
 
 ```text
-HEAD: c647c6ebe4dfffc7197185a09da8dca2b064f5e6
-Remote HEAD: c647c6ebe4dfffc7197185a09da8dca2b064f5e6
+HEAD: da00aae271a82473f0958e4e66416a4d6f9d5801
+Remote HEAD: da00aae271a82473f0958e4e66416a4d6f9d5801
 Release gate: PASS
 Working tree: clean
 ```
@@ -37,35 +37,36 @@ Current rule:
 
 See `docs/workflows/artifact-semantics.md`.
 
-## Bundle I status correction
+## Bundle I/J2 status correction
 
-Bundle I and its fixes proved commit/push/verify, but they did not close source zip export semantics.
+Bundle I and its fixes proved commit/push/verify, but they did not close source zip export semantics. J2 removes the misleading runtime path display and detaches source zip export from the default update loop until explicit review/source export commands exist.
 
 Corrected status:
 
 ```text
 Bundle I initial: verify PASS, export incomplete
 Bundle I fix v2: verify PASS, path surfaced, export semantics unresolved
+Bundle J1: artifact vocabulary checkpoint PASS
+Bundle J2: remove misleading source zip state output
 ```
 
-Do not mark repo/source zip export as closed until the runtime records freshness, root layout, and provenance evidence.
+Do not mark repo/source zip export as closed until a future explicit command records freshness, root layout, and provenance evidence.
 
 ## Current next bundle
 
-Package: `tul_stage6_artifact_semantics_checkpoint_bundle_v1`
+Package: `tul_stage6_remove_misleading_source_zip_state_bundle_v1`
 
 Scope:
 
-1. Document artifact roles and corrected ownership.
-2. Stop treating `tul-main.zip` as canonical backup or proven source evidence.
-3. Split future work into review bundle export and explicit source bundle export.
-4. Record Bundle I as unresolved rather than completed.
-5. Preserve the verified baseline and keep runtime behavior changes out of this checkpoint.
+1. Stop automatic hidden source zip export from `tul update`.
+2. Stop showing legacy `repo_zip_export` paths as successful artifacts in `tul state`.
+3. Keep `repozip.py` as unresolved implementation material for a future explicit source export.
+4. Preserve verify/state/handoff behavior apart from misleading source zip display.
+5. Keep review bundle and source bundle as future separate commands.
 
 ## Next implementation queue
 
-1. Remove misleading source zip state output.
-2. Implement `tul export review` for compact diff-oriented upload bundles.
+1. Implement `tul export review` for compact diff-oriented upload bundles.
 3. Implement `tul export source` for explicit source bundles with wrapper/root-layout checks.
 4. Decide later whether `tul update` should automatically run review export.
 

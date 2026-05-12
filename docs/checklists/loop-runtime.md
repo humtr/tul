@@ -183,21 +183,13 @@ Invariants:
 - [x] Timestamped run artifacts remain under `/sdcard/termux/import/tul/logs/verify/YYMMDD/`.
 - [x] No legacy `tul-verify-latest.*` artifacts are generated.
 
-## Repo zip export checkpoint
+## Source/review export checkpoint
 
-- [ ] Successful full `tul update` refreshes `/sdcard/termux/import/tul/tul-main.zip`.
-- [ ] Repo zip export excludes `.git`, caches, build outputs, dependency directories, existing zip files, and backup files.
-- [ ] Export status is recorded in handoff-ready state.
-- [x] `tul-vf-latest.md` runtime `tul state` snapshot shows the repo zip path after the export timing fix.
-- [ ] Export failure is visible in state without retroactively failing a passed release gate.
-
-### Repo zip export timing fix
-
-- [ ] Successful full `tul update` writes `/sdcard/termux/import/tul/tul-main.zip`.
-- [ ] `tul state` shows `repo zip: /sdcard/termux/import/tul/tul-main.zip`.
-- [ ] `tul-vf-latest.md` runtime `tul state` snapshot shows the same repo zip path.
-- [ ] Export failure is visible in state/report/handoff without flipping a passed release gate.
-
+- [x] Automatic `tul-main.zip` source export is not considered closed.
+- [x] Legacy source zip paths are not displayed as successful artifacts in compact state.
+- [ ] `tul export review` creates a compact diff-oriented review bundle.
+- [ ] `tul export source` creates an explicit full source bundle with root-layout checks.
+- [ ] Any automatic post-update export is limited to review evidence until source export is proven.
 
 ## Artifact semantics checkpoint
 
@@ -206,7 +198,7 @@ Invariants:
 - [x] Timestamped verify runs remain under `logs/verify/YYMMDD/`.
 - [x] Zip artifacts are transport artifacts, not backups.
 - [x] Automatic `tul-main.zip` export is not considered closed.
-- [ ] Misleading source zip state output is removed or clearly marked as unresolved.
+- [x] Misleading source zip state output is removed or clearly marked as unresolved.
 - [ ] `tul export review` creates a compact diff-oriented review bundle.
 - [ ] `tul export source` creates an explicit full source bundle with root-layout checks.
 - [ ] Any automatic post-update export is limited to review evidence until source export is proven.

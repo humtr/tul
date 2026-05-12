@@ -86,35 +86,28 @@ The full verification details are written as markdown and JSON artifacts under t
 In the normal `tul update` path, the fresh verify gate runs before the final report, handoff, and handoff-ready state are written. After those files exist, tul rewrites the same verify markdown artifacts so `/sdcard/termux/import/tul/tul-vf-latest.md` includes compact `tul state` and `tul handoff` snapshots.
 
 
-## Repo zip export
+## Export boundary
 
-After a successful full `tul update` with commit, push, and fresh verify passing, tul writes a stable repo zip export to the import root:
+`tul update` no longer treats full source zip export as a hidden default side effect. The failed repo zip experiment showed that a source path in state is not enough to prove freshness, root layout, or provenance.
 
-```text
-/sdcard/termux/import/tul/tul-main.zip
-```
-
-This export is a convenience pointer for the next package-generation session, not an archival history. It is overwritten on each successful full update. The export excludes Git metadata, Python caches, test caches, build outputs, dependency folders, existing zip files, backup files, and transient roots such as `logs`, `work`, and `archive` if they appear inside the repo.
-
-Repo zip export failure should not retroactively fail a release gate that already passed. Instead, tul records `repo_zip_export.ok: false` in the handoff-ready state so the latest verify markdown can surface the export problem in its runtime snapshot.
-
-## Repo zip export timing
-
-For full updates, repo zip export runs after fresh verify passes and before report, handoff, final state, and runtime snapshot rewrite. This order makes the export visible in all post-update review surfaces.
-
-Expected latest pair after a successful update:
+The current update order is:
 
 ```text
-/sdcard/termux/import/tul/tul-vf-latest.md
-/sdcard/termux/import/tul/tul-main.zip
+precheck -> import -> validate -> apply -> checks -> sweep -> publish -> verify -> report/state/handoff -> latest snapshot rewrite
 ```
 
-If export fails, tul records `repo_zip_export.ok=false` with the error type/message and keeps the release gate result unchanged.
+Future export work is split by role:
 
+```bash
+tul export review   # planned compact diff-oriented upload bundle
+tul export source   # planned explicit full source bundle with root-layout checks
+```
+
+Neither command is a backup authority. Recovery remains Git remote + commit hashes + tul rollback state.
 
 ## Artifact semantics correction
 
-The previous repo zip export sections describe the intended convenience export, but that capability is not closed. Treat them as historical design pressure, not a finished invariant.
+The previous repo zip export implementation is retired from the default update loop. Treat it as historical design pressure, not a finished invariant.
 
 Current corrected rule:
 

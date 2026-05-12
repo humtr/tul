@@ -4,7 +4,7 @@ This document freezes the current Stage 6 artifact vocabulary after the repo zip
 
 ## Current baseline
 
-Verified baseline: `c647c6ebe4dfffc7197185a09da8dca2b064f5e6`.
+Verified baseline: `da00aae271a82473f0958e4e66416a4d6f9d5801`.
 
 Known runtime facts:
 
@@ -115,11 +115,10 @@ Full source export remains explicit until its root-layout, freshness, and proven
 
 ## Current implementation status
 
-`repozip.py` exists, but automatic `tul-main.zip` export is not a closed Stage 6 capability. The next implementation bundles should first remove misleading state output, then implement explicit review/source exports with evidence.
+`repozip.py` exists, but automatic `tul-main.zip` export is retired from the default update loop. J2 removes misleading source zip state output. Future implementation should add explicit review/source export commands with evidence instead of reviving hidden update-side source export.
 
 ## Next bundles
 
-1. Remove misleading source zip state.
-2. Implement `tul export review` for diff-oriented review bundles.
+1. Implement `tul export review` for diff-oriented review bundles.
 3. Implement `tul export source` for explicit source bundles with root-layout checks.
 4. Reconsider whether `tul update` should run review export automatically only after the review/source split is stable.

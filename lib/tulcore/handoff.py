@@ -116,12 +116,6 @@ def runtime_facts(
             lines.append(f"Verify latest markdown: {latest_md}")
         if md:
             lines.append(f"Verify timestamped markdown: {md}")
-    if repo_zip_export:
-        if repo_zip_export.get("ok") is False:
-            error = repo_zip_export.get("error") or repo_zip_export.get("error_type") or "failed"
-            lines.append(f"Repo zip export: failed ({error})")
-        elif repo_zip_export.get("path"):
-            lines.append(f"Repo zip: {repo_zip_export['path']}")
     if changed_files is not None:
         lines.extend(["", "## Changed files"])
         if changed_files:

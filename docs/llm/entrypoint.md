@@ -104,6 +104,6 @@ Stage 6 uses bounded parallel self-host hardening. Read `docs/manifest.md`, `doc
 The next package should be a bounded bundle with a clear success gate, not a large all-at-once rewrite.
 
 
-## Repo zip handoff
+## Source context handoff
 
-For package generation or code-level diagnosis, use the current `/sdcard/termux/import/tul/tul-main.zip` alongside `/sdcard/termux/import/tul/tul-vf-latest.md`. Successful full updates refresh the repo zip automatically.
+For package generation or code-level diagnosis, ask for source context when needed and verify its root layout before use. `tul-main.zip` is a transitional/manual source context file, not an automatically trusted update artifact. A future `tul export review` / `tul export source` split will replace this ambiguity.

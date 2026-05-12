@@ -335,18 +335,16 @@ def _verify_artifact_value(
     return None
 
 
-def _repo_zip_export_value(data: dict[str, Any]) -> str | None:
-    export = data.get("repo_zip_export")
-    if isinstance(export, dict):
-        if export.get("ok") is False:
-            error = export.get("error") or export.get("error_type") or "failed"
-            return f"failed ({error})"
-        if export.get("path"):
-            return str(export["path"])
-    for key in ("repo_zip", "repo_zip_path", "latest_repo_zip"):
-        if data.get(key):
-            return str(data[key])
-    return None
+def _has_legacy_repo_zip_export(data: dict[str, Any]) -> bool:
+    """Return true when a state contains the retired repo_zip_export field.
+
+    Stage 6 temporarily surfaced repo zip paths before source/review export
+    semantics were settled. A path alone is not valid evidence of a fresh,
+    wrapper-free source export, so compact state intentionally suppresses it.
+    """
+    if isinstance(data.get("repo_zip_export"), dict):
+        return True
+    return any(data.get(key) for key in ("repo_zip", "repo_zip_path", "latest_repo_zip"))
 
 
 def summarize_compact_state(
@@ -390,9 +388,13 @@ def summarize_compact_state(
         verify_artifact = _verify_artifact_value(data, project=project, work_root=work_root)
         if verify_artifact:
             lines.append(f"- verify: {verify_artifact}")
-        repo_zip = _repo_zip_export_value(data)
-        if repo_zip:
-            lines.append(f"- repo zip: {repo_zip}")
+        if _has_legacy_repo_zip_export(data):
+            lines.extend([
+                "",
+                "Exports:",
+                "- source bundle: unresolved (legacy repo zip path suppressed)",
+                "- review bundle: not generated",
+            ])
 
     lines.extend([
         "",
@@ -432,9 +434,8 @@ def summarize_state(path: Path, data: dict[str, Any]) -> str:
     ):
         if data.get(key):
             lines.append(f"{key.replace('_', ' ').title()}: {data[key]}")
-    repo_zip = _repo_zip_export_value(data)
-    if repo_zip:
-        lines.append(f"Repo Zip: {repo_zip}")
+    if _has_legacy_repo_zip_export(data):
+        lines.append("Source Export: unresolved (legacy repo zip path suppressed)")
     if data.get("outcome") == "noop" or data.get("no_op") is True:
         lines.append("Push verified: not applicable for no-op")
     elif data.get("push_verified") is not None:

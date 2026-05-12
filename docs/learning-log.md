@@ -299,3 +299,12 @@ Observation: A stable `tul-main.zip` path reduced upload friction in theory, but
 Lesson: Do not fix artifact confusion by adding more checks around the wrong abstraction. First name the artifact roles, then implement small commands around those roles.
 
 Action: Freeze an artifact semantics checkpoint. Treat `tul-vf-latest.md` as release-gate evidence, design a future `tul-review-latest.zip` for compact diff-oriented upload, and make full source export explicit rather than automatic backup-like behavior.
+
+
+## 2026-05-12 — Remove misleading source zip state
+
+Observation: Showing `repo zip: /sdcard/termux/import/tul/tul-main.zip` in compact state made a transitional path look like a proven source artifact. This repeated the original artifact-role mixing problem instead of resolving it.
+
+Lesson: Runtime state should display facts with clear evidence boundaries. If an export is not a closed capability, compact state should suppress the path or mark it unresolved rather than treating it as an artifact.
+
+Action: Remove hidden source zip export from the default update pipeline and suppress legacy `repo_zip_export` paths in state/report/handoff surfaces. Keep review/source export as future explicit commands.

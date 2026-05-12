@@ -264,3 +264,14 @@ Context: Bundle I attempted to reduce user bridge work by writing `/sdcard/termu
 Decision: Separate artifact roles. `tul-vf-latest.md` is the canonical release-gate and runtime snapshot artifact. Timestamped verify artifacts are run history. Git remote and commit hashes are the backup/recovery authority. Review bundles and source bundles are transport artifacts and must be implemented separately. Automatic `tul-main.zip` export is not a closed capability and should not be treated as canonical backup or proven source evidence.
 
 Consequences: ADR-020 and ADR-021 are superseded for future implementation. The next work should remove misleading source zip state, then implement `tul export review`, then implement explicit `tul export source` with root-layout/freshness evidence. Only after the review/source split is stable should automatic post-update export be reconsidered.
+
+
+## ADR-023 — Suppress legacy repo zip paths until explicit exports exist
+
+Status: accepted
+
+Context: After ADR-022, compact state could still show `repo zip: /path` from legacy `repo_zip_export` fields. That output made an unresolved source-export path look like a successful artifact.
+
+Decision: Remove hidden repo/source zip export from the default update pipeline. Suppress legacy repo zip paths in compact and detailed state. Report and handoff output should not present `tul-main.zip` as a successful update artifact. Future export work must be role-specific: `tul export review` for compact diff evidence and `tul export source` for explicit full source context.
+
+Consequences: A normal post-update review returns to a single primary artifact: `tul-vf-latest.md`. Code-level package generation may still require manually provided source context until explicit export commands are implemented.

@@ -29,7 +29,7 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
-For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. Source/review zip export semantics are currently under correction; do not treat `tul-main.zip` as canonical backup or as verified source evidence unless the latest runtime artifact explicitly proves its freshness and root layout. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md).
+For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. Source/review zip export semantics are currently under correction; do not treat `tul-main.zip` as canonical backup, as a successful update artifact, or as verified source evidence. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md).
 
 ## Project identity
 
