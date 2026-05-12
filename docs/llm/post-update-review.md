@@ -36,7 +36,7 @@ A review can usually be closed if the artifact shows:
 
 Ask for standalone `tul state` or `tul handoff` output only when the latest artifact is missing the runtime snapshots, appears stale, or the user has run newer commands after the artifact was created.
 
-Ask for source context only when producing the next package, doing code-level review, or investigating a failure that cannot be resolved from the verify artifact and terminal output. Do not assume `tul-main.zip` is a verified current source export merely because a path appears in state. Until source/review export is reworked, verify the zip root layout before using it and prefer the latest verified HEAD as the source-of-truth identifier.
+Ask for source context only when producing the next package, doing code-level review, or investigating a failure that cannot be resolved from the verify artifact and terminal output. A GitHub-generated `tul-main.zip` can be used as manual source context after checking root layout and intended commit. Do not treat it as a tul runtime backup or a tul-proven explicit source export. Prefer the latest verified HEAD as the source-of-truth identifier.
 
 ## Normal next commands
 
@@ -107,14 +107,14 @@ When summarizing the handoff, separate:
 
 ## Artifact caution
 
-Current Stage 6 export semantics are under correction. Treat artifacts as follows:
+Current Stage 7 artifact semantics are separated by role. Treat artifacts as follows:
 
 - `tul-vf-latest.md`: release-gate and runtime snapshot evidence.
 - `tul-review-latest.zip`: explicit compact review/diff bundle created by `tul export review`.
 - `tul-source-latest.zip` or equivalent source export: planned future explicit source context, not backup.
-- `tul-main.zip`: historical/transitional name; do not treat it as automatically trusted evidence unless current runtime output includes freshness and root-layout evidence.
+- `tul-main.zip`: may be a GitHub-generated manual source archive. It can support code/package generation when its root layout and intended commit are understood, but it is not backup evidence and not a tul-proven explicit source export.
 
-A valid source bundle must have repo files at zip root, such as `README.md`, `.tul.yml`, `bin/tul`, and `lib/tulcore/__init__.py`. A wrapper such as `tul-main/README.md` is not the canonical source shape.
+A future tul-proven source bundle should have repo files at zip root, such as `README.md`, `.tul.yml`, `bin/tul`, and `lib/tulcore/__init__.py`. A wrapper such as `tul-main/README.md` is common for GitHub-generated archives, but it is not the canonical tul source-export shape.
 
 
 ## Optional review bundle
@@ -133,6 +133,6 @@ Then upload:
 
 The review bundle is a transport artifact, not a backup and not a full source archive. After export, `tul-vf-latest.md` should be refreshed so the runtime snapshot shows the review bundle path and evidence.
 
-## Stage 6 checkpoint review
+## Stage 7 planning review
 
-When reviewing a K3 or Stage 6 exit package, confirm that `docs/workflows/stage6-stabilization-checkpoint.md` agrees with the latest runtime facts and that no zip artifact is treated as backup evidence.
+When reviewing a Stage 7 planning package, confirm that Stage 6 is closed by the latest runtime facts, Stage 7 is active in the planning docs, artifact roles remain separated, and no runtime behavior change is mixed into a large coordination-doc rewrite.

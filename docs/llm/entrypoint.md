@@ -29,7 +29,7 @@ Use this order unless the user gives a narrower task:
 8. Read `docs/checklists/loop-runtime.md` for acceptance criteria.
 9. Read implementation files only when generating or reviewing a package.
 
-Do not ask for a repo zip just to confirm a successful update when `tul-vf-latest.md` already proves release-gate status and includes runtime snapshots. Ask for standalone `tul state` or `tul handoff` only if the latest artifact is stale or missing those snapshots. Ask for source context when producing the next package or when the failure is code-level, but verify the zip root layout before using it. `tul-main.zip` export semantics are currently unresolved; `tul-vf-latest.md` remains the normal release-gate artifact.
+Do not ask for a repo zip just to confirm a successful update when `tul-vf-latest.md` already proves release-gate status and includes runtime snapshots. Ask for standalone `tul state` or `tul handoff` only if the latest artifact is stale or missing those snapshots. Ask for source context when producing the next package or when the failure is code-level, and verify the zip root layout before using it. A GitHub-generated `tul-main.zip` can be manual source context, but it is not a tul runtime backup or a tul-proven explicit source export.
 
 ## Durable read order
 
@@ -53,6 +53,7 @@ Do not ask for a repo zip just to confirm a successful update when `tul-vf-lates
 18. `docs/workflows/package-authoring.md`
 19. `docs/workflows/state-cleanup.md`
 20. `docs/workflows/parallel-readiness.md`
+21. `docs/workflows/stage7-bounded-parallel-planning.md`
 
 ## Current self-host review loop
 
@@ -99,9 +100,9 @@ Do not ask the user to paste long absolute package paths when the package is alr
 
 ## Current planning mode
 
-Stage 6 uses bounded parallel self-host hardening. Read `docs/manifest.md`, `docs/strategy.md`, `docs/roadmap.md`, `docs/status/current.md`, `docs/learning-log.md`, and `docs/decisions.md` before proposing the next package.
+Stage 7 uses bounded parallel planning with sequential gated application. Read `docs/manifest.md`, `docs/strategy.md`, `docs/roadmap.md`, `docs/status/current.md`, `docs/learning-log.md`, `docs/decisions.md`, and `docs/workflows/stage7-bounded-parallel-planning.md` before proposing the next package.
 
-The next package should be a bounded bundle with a clear success gate, not a large all-at-once rewrite.
+The first Stage 7 package may be a large planning consolidation package because it owns the coordination docs and excludes runtime behavior changes. Later packages should be smaller bounded bundles with clear success gates.
 
 
 ## Source context handoff
@@ -112,8 +113,8 @@ For compact change review, prefer the explicit review bundle:
 tul export review
 ```
 
-For package generation or code-level diagnosis, ask for source context when needed and verify its root layout before use. `tul-main.zip` is a transitional/manual source context file, not an automatically trusted update artifact. A future explicit `tul export source` command will replace this ambiguity.
+For package generation or code-level diagnosis, ask for source context when needed and verify its root layout before use. A GitHub-generated `tul-main.zip` is acceptable manual source context when it plausibly corresponds to the verified HEAD, but it is not a tul runtime backup or a tul-proven explicit source export. A future explicit `tul export source` command should replace this ambiguity.
 
-## Stage 6 stabilization checkpoint
+## Stage 7 planning checkpoint
 
-Before proposing Stage 7 planning work, read `docs/workflows/stage6-stabilization-checkpoint.md` and confirm the latest `tul-vf-latest.md` release gate is PASS.
+Before proposing implementation work, read `docs/workflows/stage7-bounded-parallel-planning.md` and confirm the latest `tul-vf-latest.md` release gate is PASS. Treat Stage 6 as closed only when the runtime artifact confirms the Stage 6 stabilization checkpoint commit.

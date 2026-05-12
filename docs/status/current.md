@@ -1,20 +1,21 @@
 # Current status
 
-Latest known version: `0.8.23-stabilization-checkpoint`.
+Latest known version: `0.8.24-stage7-planning`.
 
-Current mode: Stage 6 bounded parallel stabilization checkpoint. The J artifact-semantics track and K cleanup track are closed enough to prepare Stage 6 exit review.
+Current mode: Stage 7 planning consolidation. Stage 6 is closed as the verified stabilization baseline. Stage 7 now organizes short-term, mid-term, and long-term plans plus bounded parallel candidate management.
 
 ## Verified baseline
 
-Latest verified baseline:
+Latest verified baseline from the current `tul-vf-latest.md` artifact:
 
 ```text
-HEAD: d81989449b813256a4dcbbdd0be60b04180d6dd8
-Remote HEAD: d81989449b813256a4dcbbdd0be60b04180d6dd8
+HEAD: 5086c982ae5d52c586049d4fb21c8e7d4ada006d
+Remote HEAD: 5086c982ae5d52c586049d4fb21c8e7d4ada006d
 Release gate: PASS
 Steps: 25 pass, 0 fail
 Working tree: clean
 Fresh clone verify: PASS
+Latest package: tul-stage6-stabilization-checkpoint-bundle-v1
 ```
 
 Canonical latest artifact:
@@ -22,6 +23,8 @@ Canonical latest artifact:
 ```text
 /sdcard/termux/import/tul/tul-vf-latest.md
 ```
+
+When a newer artifact is provided by the user, treat it as the runtime source of truth over this document.
 
 ## Closed checkpoints
 
@@ -39,15 +42,17 @@ Canonical latest artifact:
 - Bundle J4 — review export rewrite/state integration: PASS.
 - K1 — archive execution safety: PASS.
 - K2 — package inbox ingest policy: PASS.
+- K3 — Stage 6 stabilization checkpoint: PASS.
 
 ## Current artifact model
 
 - `tul-vf-latest.md` is release-gate evidence with runtime snapshots.
 - `tul-review-latest.zip` is explicit review transport from `tul export review`.
-- Source export is not automatic and is not a backup.
+- A GitHub-generated `tul-main.zip` can be manual source context when package generation needs full repo contents, but it is not a tul runtime backup or a tul-proven explicit source export.
+- Future source export must be explicit and must record root layout, freshness, HEAD provenance, sha256, bytes, and exclusions.
 - Git remote, commit hashes, and rollback state remain the recovery authority.
 
-See `docs/workflows/artifact-semantics.md` and `docs/workflows/stage6-stabilization-checkpoint.md`.
+See `docs/workflows/artifact-semantics.md`, `docs/workflows/parallel-readiness.md`, and `docs/workflows/stage7-bounded-parallel-planning.md`.
 
 ## Current cleanup model
 
@@ -57,12 +62,32 @@ See `docs/workflows/artifact-semantics.md` and `docs/workflows/stage6-stabilizat
 - `tul package hygiene --ingest` moves valid matching tul packages into the project inbox.
 - `tul package hygiene --quarantine` only applies to project-inbox cleanup candidates.
 
+## Stage 7 active package
+
+Recommended package:
+
+```text
+tul-stage7-planning-consolidation-bundle-v1
+```
+
+Goal:
+
+```text
+Commit the Stage 7 planning system in one package: Stage 6 baseline closure, roadmap alignment, manifest cleanup, short/mid/long plan, bundle matrix, conflict matrix, and acceptance gates.
+```
+
+Parallel class: Yellow.
+
+Reason: this package touches coordination docs. It may consolidate many plans in one commit, but no competing package should edit `docs/status/current.md`, `docs/roadmap.md`, `docs/manifest.md`, `docs/decisions.md`, or `docs/learning-log.md` until the new baseline is verified.
+
 ## Next ready queue
 
-1. Stage 6 exit review / stabilization checkpoint package.
-2. Stage 7 planning harness expansion for manifest, short-term/mid-term/long-term plans, and bounded parallel candidate management.
-3. Explicit source export, only if a future task needs full source transfer and root-layout checks.
-4. Windows parity, after the self-host loop remains stable across additional packages.
+1. Apply the Stage 7 planning consolidation package and close it with `tul-vf-latest.md`.
+2. If more planning detail is needed, refine acceptance gate templates without touching runtime code.
+3. Specify `tul export source` before implementing it.
+4. Implement `tul export source` only if the spec is accepted and source context remains a repeated bridge cost.
+5. Consider docs drift checking if planning/status baselines drift again.
+6. Run Windows parity smoke only after several self-host packages remain stable.
 
 ## Deferred
 

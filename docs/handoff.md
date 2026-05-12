@@ -32,7 +32,8 @@ A fresh LLM should start with:
 4. `docs/llm/post-update-review.md`;
 5. `docs/status/current.md`;
 6. `docs/roadmap.md`;
-7. `docs/checklists/loop-runtime.md`.
+7. `docs/workflows/stage7-bounded-parallel-planning.md`;
+8. `docs/checklists/loop-runtime.md`.
 
 ## Full and instruction modes
 
@@ -50,3 +51,8 @@ tul instructions [project]
 ```
 
 The README should stay concise. Runtime facts should stay in handoff output and verify artifacts. Durable status and planning should stay in `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
+
+
+## Stage 7 handoff rule
+
+A fresh LLM should treat `tul-vf-latest.md` as runtime truth, then use repo docs for durable planning. For Stage 7, the handoff should point to the bounded parallel planning guide before any package proposal. Parallel planning is allowed; parallel application is not.

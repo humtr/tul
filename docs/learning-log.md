@@ -348,3 +348,20 @@ Observation: After review bundle export stabilized, the main remaining bridge fr
 Lesson: Cleanup features should distinguish ownership boundaries. The tul project inbox is tul-owned; shared Download roots are only scan roots. Move/quarantine policy should be stricter than report policy.
 
 Action: Treat K1 and K2 as the Stage 6 stabilization cleanup baseline, then shift to Stage 7 planning rather than adding more K cleanup features by default.
+
+
+## 2026-05-13 — Planning consolidation can be large if runtime behavior is excluded
+
+Observation: After Stage 6 stabilization, the risk is not package size alone. The higher risk is mixing planning-doc ownership with runtime implementation behavior in one update. A large planning commit can be safer than several overlapping micro-packages when the same coordination files would otherwise be edited repeatedly.
+
+Lesson: Stage 7 should permit one large Yellow planning consolidation package to align manifest, strategy, roadmap, status, checklists, decisions, learning log, and workflow docs. The package must explicitly exclude runtime behavior changes.
+
+Action: Use `parallel planning, sequential gated update` as the Stage 7 control rule. Plan many candidates, but generate and apply one package per verified baseline.
+
+## 2026-05-13 — Source baseline and runtime baseline are different concepts
+
+Observation: A GitHub-generated `tul-main.zip` can be the best available source context for reading code and writing a package. But `tul-vf-latest.md` is the runtime evidence for HEAD, release gate, working tree, and fresh clone status.
+
+Lesson: Do not collapse source context, review evidence, backup, and runtime truth into one artifact. A manual source archive can be useful without becoming canonical recovery authority.
+
+Action: Keep `tul-main.zip` usable as source context while documenting that backup/recovery authority remains Git remote plus commit hashes and rollback state, and that future `tul export source` needs its own provenance evidence.

@@ -30,32 +30,33 @@ LLM proposes package boundary
 → user approves direction
 → LLM or package helper produces package
 → user places package in an inbox root
-→ tul update <project> -l
+→ tul package latest
+→ tul update
 → tul applies/checks/sweeps/commits/pushes/verifies
 → tul prints rollback guidance and compact handoff
-→ tul verify <project> --fresh-clone confirms the release gate
-→ next LLM reads repo docs + handoff and continues
+→ tul writes tul-vf-latest.md with release gate and runtime snapshots
+→ next LLM reads repo docs + latest artifact and continues
 ```
 
-The near-term command loop remains explicit:
+The current normal self-host command loop is:
 
 ```bash
-tul package latest tul
-tul update tul -l
-tul verify tul --fresh-clone
-tul handoff tul
+tul package latest
+tul update
+# upload /sdcard/termux/import/tul/tul-vf-latest.md
 ```
 
-A future native context layer may reduce this to:
+Native context allows concise commands such as:
 
 ```bash
 tul use tul
 tul update
 tul verify fresh
+tul state
 tul handoff
 ```
 
-That future layer must be context-aware and safety-preserving.
+That layer must remain context-aware and safety-preserving.
 
 ## 3. Non-negotiable runtime invariants
 
@@ -109,7 +110,7 @@ If a future command infers a target, the inference must be explained and must st
 
 ## 5. Planning harness contract
 
-Stage 6 introduces a planning harness. The purpose is to let tul accelerate feature work without losing strategic coherence.
+Stage 7 uses the planning harness as the control plane for bounded parallel planning. The purpose is to let tul accelerate feature work without losing strategic coherence, source attribution, or sequential release-gate discipline.
 
 The harness layers are:
 
@@ -197,9 +198,10 @@ Manifest changes should be justified in `docs/decisions.md`.
 - [x] Rollback guidance is printed.
 - [x] Compact handoff exists.
 - [x] Fresh clone verification exists.
-- [ ] Native no-arg context exists.
-- [ ] `tul verify fresh` shorthand exists.
-- [ ] Mutating no-arg commands have context conflict guards.
+- [x] Native active project context exists.
+- [x] `tul verify fresh` shorthand exists.
+- [x] Mutating no-arg commands have context conflict guards.
+- [x] Update-integrated fresh verify writes the latest review artifact.
 
 ### Package contract
 
@@ -208,23 +210,29 @@ Manifest changes should be justified in `docs/decisions.md`.
 - [x] Package inspect/check/scaffold/add/zip/summary exist.
 - [x] Apply plan is generated before copy.
 - [x] Directory copy is guarded.
-- [ ] Incompatible package candidates are explained clearly.
-- [ ] Duplicate package name/hash guidance is strong.
+- [x] Incompatible package candidates are explained before update.
+- [x] Package authoring diagnostics catch nested roots, missing payload, and commit/apply mismatch.
+- [x] Package hygiene distinguishes shared Download roots from the tul-owned inbox.
+- [ ] Duplicate package name/hash guidance can be strengthened if package clutter returns.
 
 ### Planning harness
 
 - [x] README is compact entrypoint.
-- [ ] Manifest/strategy/roadmap/status/learning/decisions harness is present.
-- [ ] Ready queue is maintained.
-- [ ] Capability map guides short-term extraction.
-- [ ] Update lessons are recorded.
-- [ ] Decisions are recorded with rationale.
+- [x] Manifest/strategy/roadmap/status/learning/decisions harness is present.
+- [x] Ready queue is maintained.
+- [x] Capability map guides short-term extraction.
+- [x] Update lessons are recorded.
+- [x] Decisions are recorded with rationale.
+- [x] Parallel-readiness rules classify Green/Yellow/Orange/Red bundles.
+- [x] Stage 7 uses parallel planning with sequential gated application.
 
 ### Human bridge minimization
 
-- [x] Package path can be replaced by `-l` in normal use.
-- [x] Fresh clone checks can be run by `tul verify tul --fresh-clone`.
+- [x] Package path can be replaced by latest package discovery in normal use.
+- [x] Fresh clone checks can be run by `tul verify fresh`.
 - [x] Package authoring helpers reduce manual zip work.
-- [ ] Project names can be omitted safely through active context.
-- [ ] State output is compact and decision-oriented.
-- [ ] Handoff suggests next package boundary effectively.
+- [x] Project names can be omitted safely through active context when guards pass.
+- [x] State output is compact and decision-oriented.
+- [x] Latest verify markdown includes state/handoff snapshots.
+- [x] Explicit review export creates a compact transport bundle when needed.
+- [ ] Explicit source export remains future work and must not be treated as backup.

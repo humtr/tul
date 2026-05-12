@@ -1,1 +1,1 @@
-__version__ = "0.8.23-stabilization-checkpoint"
+__version__ = "0.8.24-stage7-planning"

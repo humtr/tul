@@ -8,7 +8,7 @@
 LLM / assistant → user → terminal environment → local repo/runtime → commit + push → remote verification → LLM handoff
 ```
 
-The first operational target is **`humtr/ai`**. This repo, **`humtr/tul`**, is the self-hosting tooling repo that makes the loop reliable across Windows, Termux, GitHub, and LLM-assisted sessions.
+The current operational target is **`humtr/tul`** itself. Future target repositories such as **`humtr/ai`** remain deferred until this self-hosting loop is stable enough to reduce, rather than multiply, bridge work across Windows, Termux, GitHub, and LLM-assisted sessions.
 
 ## LLM entrypoint
 
@@ -21,16 +21,17 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 5. Read [`docs/strategy.md`](docs/strategy.md) for the medium-term capability map.
 6. Read [`docs/roadmap.md`](docs/roadmap.md) for the short-term ready queue and bundle candidates.
 7. Read [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md) before proposing the next bounded bundle.
-8. Read [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) before treating any zip as review evidence, source evidence, or backup.
-9. Read [`docs/workflows/package-hygiene.md`](docs/workflows/package-hygiene.md) before moving downloaded package archives out of inbox roots.
-10. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
-11. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
-12. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
-13. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
+8. Read [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md) before planning multiple candidate workstreams.
+9. Read [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) before treating any zip as review evidence, source evidence, or backup.
+10. Read [`docs/workflows/package-hygiene.md`](docs/workflows/package-hygiene.md) before moving downloaded package archives out of inbox roots.
+11. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
+12. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
+13. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
+14. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
-For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. When a compact transport bundle is needed, run `tul export review` and upload `/sdcard/termux/import/tul/tul-review-latest.zip`. Do not treat `tul-main.zip` as canonical backup or verified source evidence. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) and [`docs/workflows/stage6-stabilization-checkpoint.md`](docs/workflows/stage6-stabilization-checkpoint.md).
+For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. When a compact transport bundle is needed, run `tul export review` and upload `/sdcard/termux/import/tul/tul-review-latest.zip`. A GitHub-generated `tul-main.zip` may be used as manual source context for package generation after its root layout and intended commit are understood, but it is not a tul runtime backup or a tul-proven explicit source export. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md), [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md), and [`docs/workflows/stage6-stabilization-checkpoint.md`](docs/workflows/stage6-stabilization-checkpoint.md).
 
 ## Project identity
 
@@ -56,6 +57,22 @@ manifest → strategy → roadmap → status → learning log → decisions
 The same harness should be portable to future target repositories such as `humtr/ai`, but `humtr/ai` onboarding remains **Stage X** until tul's self-host loop is sufficiently stable.
 
 
+## Stage 7 planning mode
+
+Stage 6 is closed as the stabilization baseline at `5086c982ae5d52c586049d4fb21c8e7d4ada006d` when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes.
+
+Stage 7 uses **parallel planning, sequential gated update**:
+
+```text
+many candidate plans may be drafted or compared in parallel
+→ one package is generated from the latest verified source baseline
+→ one package is applied through tul update
+→ one release gate closes the new baseline
+```
+
+The first Stage 7 package is a planning consolidation package. It may update many coordination documents in one commit, but it should not change runtime behavior. Subsequent implementation packages must be classified as Green, Yellow, Orange, or Red before generation. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md).
+
+
 ## Non-negotiable invariants
 
 - `tul update <project>` is the default full-loop command.
@@ -71,7 +88,7 @@ The same harness should be portable to future target repositories such as `humtr
 
 ## Native context
 
-Stage 6 introduces native project context in bounded steps. The current model supports an active project, read-only no-arg commands, `tul verify fresh`, and guarded no-arg `tul update` / `tul import` / `tul rollback` when the project can be inferred safely:
+Stage 6 introduced native project context in bounded steps. The current model supports an active project, read-only no-arg commands, `tul verify fresh`, and guarded no-arg `tul update` / `tul import` / `tul rollback` when the project can be inferred safely:
 
 ```bash
 tul use tul
@@ -84,7 +101,7 @@ tul state
 
 No-arg mutating commands use explicit context guards. If the active project differs from the current-directory project, `tul` refuses to continue and prints concrete choices such as `tul update tul`, `tul update <cwd-project>`, or `tul use <cwd-project>`.
 
-Package-target mismatch guidance remains a later bundle: the package manifest is already enforced, but richer explanations for incompatible downloaded zip files are still pending.
+Package-target mismatch guidance is implemented at package discovery/update boundaries; future work may refine duplicate package name/hash guidance if inbox clutter returns.
 
 ## Default command model
 
@@ -256,14 +273,14 @@ The normal post-update review artifact is:
 
 - `/sdcard/termux/import/tul/tul-vf-latest.md`
 
-It contains release-gate evidence plus compact runtime snapshots. Zip artifacts are not backups and are not automatically trusted as canonical source evidence. The Stage 6 artifact model now separates:
+It contains release-gate evidence plus compact runtime snapshots. Zip artifacts are not backups and are not automatically trusted as canonical source evidence. The current artifact model separates:
 
 - verify artifact: release-gate evidence;
-- review bundle: future compact diff-oriented upload artifact;
+- review bundle: explicit compact diff-oriented upload artifact from `tul export review`;
 - source bundle: future explicit full source context for package generation;
 - backup: Git remote, commit hashes, and rollback state.
 
-See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md). Until the export model is corrected, ask for a repo/source zip only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it.
+See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md). Ask for a repo/source zip only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it. A GitHub-generated source archive can be source context, but backup and recovery authority remains Git remote plus commit hashes and rollback state.
 
 
 ## K1 archive execution safety

@@ -316,3 +316,24 @@ Accepted facts:
 - Package hygiene ingests valid tul packages from shared roots and treats unrelated shared invalid zip files as report-only.
 
 Next planning step: start Stage 7 around manifest, short-term/mid-term/long-term planning, and bounded parallel candidate management.
+
+
+## ADR-026 — Stage 7 uses planning consolidation before implementation
+
+Status: accepted
+
+Context: Stage 6 closed with a verified stabilization checkpoint, explicit review bundle export, cleanup safety, and package inbox hygiene. The next pressure is not another immediate runtime change but coordination: manifest, strategy, roadmap, status, checklists, learning log, decisions, artifact semantics, and parallel-readiness must agree before several candidate workstreams are planned.
+
+Decision: Open Stage 7 with one large planning consolidation package. The package may touch many coordination documents in one commit, but it must exclude runtime behavior changes. Stage 7 permits parallel planning and comparison of candidate bundles, while actual package application remains sequential through `tul update` and closes with `tul-vf-latest.md`.
+
+Consequences: The first Stage 7 package is Yellow because it owns coordination docs. Subsequent packages must classify themselves as Green, Yellow, Orange, or Red and serialize whenever they share coordination files, runtime files, artifact semantics, or acceptance gates.
+
+## ADR-027 — GitHub source archives may be source context but not tul runtime artifacts
+
+Status: accepted
+
+Context: A `tul-main.zip` downloaded from GitHub is a valid source archive for reading repo contents, but it has different provenance and root layout semantics from a future tul-generated `tul export source` artifact.
+
+Decision: A GitHub-generated `tul-main.zip` can be used as manual source baseline/context for package generation when it plausibly corresponds to the verified HEAD. It must not be treated as backup, rollback authority, review bundle, or a tul-proven explicit source export. Future `tul export source` must record root layout, freshness, HEAD provenance, sha256, bytes, file count, and exclusions.
+
+Consequences: Package-generation sessions can use GitHub source zips without pretending they are runtime evidence. Runtime truth remains `tul-vf-latest.md`; recovery authority remains Git remote plus commit hashes and rollback state.

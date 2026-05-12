@@ -2,15 +2,20 @@
 
 ## Current mode
 
-Stage 6 stabilization checkpoint. The runtime loop is stable enough to prepare Stage 6 exit review and Stage 7 bounded parallel planning.
+Stage 7 planning consolidation. Stage 6 is treated as closed when the current `tul-vf-latest.md` confirms release gate PASS, matching HEAD/Remote HEAD, clean working tree, and fresh clone verification.
 
 ## Verified baseline
 
 ```text
-d81989449b813256a4dcbbdd0be60b04180d6dd8
+HEAD: 5086c982ae5d52c586049d4fb21c8e7d4ada006d
+Remote HEAD: 5086c982ae5d52c586049d4fb21c8e7d4ada006d
 Release gate: PASS
+Steps: 25 pass, 0 fail
 Fresh clone verify: PASS
+Latest package: tul-stage6-stabilization-checkpoint-bundle-v1
 ```
+
+The runtime baseline remains the latest user-provided `tul-vf-latest.md` when it is newer than this document.
 
 ## Completed foundations
 
@@ -40,6 +45,9 @@ Fresh clone verify: PASS
 - Stage 6.7 — parallel-readiness gate
 - Stage 6.8 — import-root latest verify snapshots
 - Stage 6.9 — state verify path alignment
+- Stage 6 J track — artifact semantics and explicit review export
+- Stage 6 K track — archive execution safety and package inbox hygiene
+- Stage 6 stabilization checkpoint — verified baseline closure
 
 ## Stage 6 closure status
 
@@ -51,22 +59,59 @@ Closed:
 - J4 review export rewrite/state integration.
 - K1 archive execution safety.
 - K2 package inbox ingest policy.
+- K3 Stage 6 stabilization checkpoint.
 
-Not closed as automatic behavior:
+Intentionally not closed as automatic behavior:
 
-- Source zip export. `tul-main.zip` is not a canonical backup or automatic source evidence.
+- Source zip export. A GitHub-generated `tul-main.zip` can be manual source context, but it is not a tul-proven backup or explicit source export.
 - Automatic post-update export. Review export remains explicit until a separate acceptance gate approves automation.
 
-## Stage 7 candidate: planning and bounded parallel operations
+## Stage 7 objective
 
-Goal: use the now-stable loop to manage manifest, short-term/mid-term/long-term plans, and bounded parallel bundle candidates.
+Use the now-stable loop to manage manifest, short-term/mid-term/long-term plans, and bounded parallel bundle candidates.
 
-Initial bundle candidates:
+Stage 7 does not mean unrestricted parallel implementation. It means several candidate workstreams may be planned and compared at once, while actual application remains sequential and release-gated.
 
-1. Planning ledger checkpoint: sync manifest, strategy, roadmap, status, decisions, and learning log around Stage 7 objectives.
-2. Bundle candidate matrix: record touched files, gate type, conflict class, and serialization requirement.
-3. Acceptance-gate templates: standardize per-bundle success criteria before package generation.
-4. Optional source export: implement only if review bundle plus latest verify is insufficient for code generation.
+## Stage 7 ready queue
+
+1. **Planning consolidation package**: sync manifest, strategy, roadmap, status, decisions, learning log, checklists, artifact semantics, and parallel-readiness around Stage 7 objectives.
+2. **Acceptance gate template package**: make per-bundle gate declarations copy-ready if the first package leaves that too implicit.
+3. **Explicit source export spec package**: define exact root layout, freshness, HEAD provenance, sha256, and file-exclusion rules before implementation.
+4. **Explicit source export implementation package**: implement `tul export source` only after the spec is accepted.
+5. **Docs drift checker package**: check that docs/status/current.md and roadmap baseline do not contradict the latest release facts.
+6. **Windows parity smoke package**: verify PowerShell apply/install/update behavior once self-host planning has stabilized.
+
+## Stage 7 candidate matrix
+
+| Candidate | Class | Likely files | Serialize because |
+|---|---|---|---|
+| Planning consolidation | Yellow | README, manifest, strategy, roadmap, status, checklists, decisions, learning log, workflow docs | Owns coordination docs and current status |
+| Acceptance gate template refinement | Green/Yellow | checklists, templates, post-update review guide | Yellow if it touches current status or roadmap |
+| Source export spec-only | Green | artifact semantics, roadmap, new workflow doc | Does not touch runtime files |
+| Explicit `tul export source` implementation | Orange | `lib/tulcore/repozip.py`, `lib/tulcore/cli.py`, docs | Runtime/export behavior must serialize |
+| Docs drift checker | Orange | checks or verify-related modules, docs | May affect release gate semantics |
+| Review export automation | Red | update pipeline, review, state, verify docs | Changes default post-update behavior |
+| Archive policy expansion | Red | archive/sweep/state docs and code | Moves runtime evidence; must have separate dry-run proof |
+| Stage X target onboarding | Red | templates, config, possibly external repo docs | Cross-repo scope expands risk |
+
+## Short-term plan
+
+- Land one large planning consolidation package.
+- Treat the new commit as the Stage 7 planning baseline only after release gate PASS and fresh clone PASS.
+- Generate subsequent packages one at a time from the new verified source baseline.
+- Prefer docs/spec packages before runtime implementation packages.
+
+## Mid-term plan
+
+- Add explicit source export only if package-generation sessions repeatedly need full source context beyond review bundles.
+- Add docs-drift checks if roadmap/status drift recurs after Stage 7 consolidation.
+- Improve Windows parity after self-host behavior stays stable across several packages.
+
+## Long-term plan
+
+- Use the planning harness to reduce human bridge work across additional repositories.
+- Keep Stage X target onboarding deferred until tul can move another project through package/update/verify/handoff without multiplying manual state transfer.
+- Preserve user authority over goals, execution, rollback, cleanup, and artifact trust.
 
 ## Cleanup follow-up candidates
 

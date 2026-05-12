@@ -244,4 +244,19 @@ Invariants:
 - [x] Shared Download invalid archives are report-only by default.
 - [x] Valid matching tul packages can be ingested into the project inbox.
 - [x] Project-inbox quarantine remains explicit and move-based.
-- [x] Stage 6 can enter exit review before Stage 7 planning.
+- [x] Stage 6 is closed as the verified stabilization baseline before Stage 7 planning.
+
+
+## Stage 7 planning consolidation checkpoint
+
+- [x] Latest verified baseline is recorded as `5086c982ae5d52c586049d4fb21c8e7d4ada006d`.
+- [x] Stage 6 stabilization checkpoint is treated as closed when the latest verify artifact is PASS.
+- [x] Stage 7 active mode is `parallel planning, sequential gated update`.
+- [x] Short-term, mid-term, and long-term plans are represented in roadmap/status.
+- [x] Bundle candidates are classified as Green, Yellow, Orange, or Red.
+- [x] Coordination files are identified and serialized.
+- [x] Runtime behavior changes are excluded from the planning consolidation package.
+- [x] Review bundle and source bundle semantics remain separated.
+- [x] GitHub-generated `tul-main.zip` can be source context but not backup or tul-proven source export.
+- [ ] Future `tul export source` has an accepted spec before implementation.
+- [ ] Any automatic review/source export is approved in a separate package.

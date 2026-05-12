@@ -1,17 +1,23 @@
 # Artifact semantics checkpoint
 
-This document freezes the current Stage 6 artifact vocabulary after the repo zip export work exposed a design problem: verification evidence, handoff evidence, source transfer, review transfer, and backup were being treated as one thing.
+This document freezes the Stage 7 artifact vocabulary after the Stage 6 source/review export discussion exposed a design problem: verification evidence, handoff evidence, source transfer, review transfer, and backup were being treated as one thing.
 
 ## Current baseline
 
-Verified baseline: `da00aae271a82473f0958e4e66416a4d6f9d5801`.
+Verified baseline at Stage 7 opening:
+
+```text
+5086c982ae5d52c586049d4fb21c8e7d4ada006d
+```
 
 Known runtime facts:
 
 - `tul-vf-latest.md` lives at `/sdcard/termux/import/tul/tul-vf-latest.md`.
 - Timestamped verify run artifacts live under `/sdcard/termux/import/tul/logs/verify/YYMMDD/`.
 - `tul-vf-latest.md` includes compact `tul state` and `tul handoff` snapshots.
-- `tul-main.zip` export is not yet a closed capability. A path in state is not sufficient proof that the export was produced by the current update, has the expected root layout, or matches the verified HEAD.
+- `tul export review` writes `/sdcard/termux/import/tul/tul-review-latest.zip` and records review bundle evidence in state/report/handoff.
+- Automatic `tul-main.zip` export is not a closed capability.
+- A GitHub-generated `tul-main.zip` may be used as manual source context if the root layout and intended commit are understood, but it is not a tul runtime backup or a tul-proven explicit source export.
 
 ## Artifact roles
 
@@ -44,7 +50,13 @@ Purpose: fresh-session orientation.
 
 Purpose: compact upload artifact for the next LLM review or diff-oriented diagnosis.
 
-Proposed future latest path:
+Current explicit command:
+
+```bash
+tul export review
+```
+
+Current latest path:
 
 ```text
 /sdcard/termux/import/tul/tul-review-latest.zip
@@ -55,32 +67,46 @@ Expected contents:
 ```text
 tul-vf-latest.md
 state.json
+report.md
 handoff.md
+git-head.txt
 git-log-latest.txt
+working-tree.txt
 changed-files.txt
 diff.patch
-files/<changed repo files>
+files/<changed repo files only>
+export-manifest.json
 ```
 
-The review bundle is not a backup. It should carry the smallest useful evidence for change tracking.
+The review bundle is not a backup and not a full source archive. It carries the smallest useful evidence for change tracking and LLM review.
 
 ### Source bundle
 
 Purpose: full repo source context for package generation or code-level diagnosis.
 
-Proposed future explicit command:
+Future explicit command:
 
 ```bash
 tul export source
 ```
 
-Proposed latest path:
+Future latest path:
 
 ```text
 /sdcard/termux/import/tul/tul-source-latest.zip
 ```
 
-A source bundle must have repo files at zip root, for example:
+A tul-proven source bundle must record:
+
+- command that produced it;
+- HEAD and remote HEAD at export time when available;
+- root layout evidence;
+- sha256;
+- byte size;
+- file count;
+- exclusion rules.
+
+A canonical tul source bundle should have repo files at zip root, for example:
 
 ```text
 README.md
@@ -89,7 +115,7 @@ bin/tul
 lib/tulcore/__init__.py
 ```
 
-A wrapper directory such as `tul-main/README.md` is not the canonical source-bundle shape.
+A wrapper directory such as `tul-main/README.md` is not the canonical tul source-export shape. A GitHub-generated archive may still be useful manual source context; it just has different provenance semantics.
 
 ### Backup
 
@@ -108,17 +134,18 @@ update -> verify -> export source zip
 The safer model is:
 
 ```text
-update -> verify -> state/handoff -> optional review export
+update -> verify -> state/handoff -> optional explicit review export -> optional explicit source export
 ```
 
 Full source export remains explicit until its root-layout, freshness, and provenance checks are implemented and verified.
 
 ## Current implementation status
 
-`repozip.py` exists, but automatic `tul-main.zip` export is retired from the default update loop. J2 removes misleading source zip state output. J3 adds explicit `tul export review` for diff-oriented review bundles. J4 records the explicit review export in state/report/handoff and refreshes latest runtime snapshots. Future work should add explicit source export with root-layout checks instead of reviving hidden update-side source export.
+`repozip.py` exists, but automatic `tul-main.zip` export is retired from the default update loop. J2 removed misleading source zip state output. J3 added explicit `tul export review` for diff-oriented review bundles. J4 records the explicit review export in state/report/handoff and refreshes latest runtime snapshots. Stage 7 should add explicit source export only after the spec and acceptance gate are accepted.
 
 ## Next bundles
 
-1. Verify `tul export review` as an explicit command.
-2. Implement `tul export source` for explicit source bundles with root-layout checks.
-3. Reconsider whether `tul update` should run review export automatically only after the review bundle format is stable.
+1. Keep review export explicit and evidence-backed.
+2. Write a source export spec before implementation.
+3. Implement `tul export source` for explicit source bundles with root-layout checks if source context remains a repeated bridge cost.
+4. Reconsider automatic review export only after explicit behavior remains stable across additional packages.
