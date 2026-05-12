@@ -110,3 +110,30 @@ Expected latest pair after a successful update:
 ```
 
 If export fails, tul records `repo_zip_export.ok=false` with the error type/message and keeps the release gate result unchanged.
+
+
+## Artifact semantics correction
+
+The previous repo zip export sections describe the intended convenience export, but that capability is not closed. Treat them as historical design pressure, not a finished invariant.
+
+Current corrected rule:
+
+- `verify.py` owns release-gate artifacts only.
+- `state.py` owns decision-state summaries only.
+- `handoff.py` owns fresh-session orientation only.
+- Review/source zip exports should be separate export responsibilities, not hidden inside verify.
+- A path in state is insufficient evidence of a valid source export.
+
+Future implementation should split:
+
+```bash
+tul export review
+```
+
+from:
+
+```bash
+tul export source
+```
+
+and should only consider automatic post-update review export after the review bundle format is stable.

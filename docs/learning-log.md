@@ -290,3 +290,12 @@ Observation: The Bundle I commit verified successfully and installed `repozip.py
 Impact: Runtime changes that add post-update side effects must be checked for bootstrap behavior. A follow-up update can use the newly installed pipeline, but report, handoff, state, and verify snapshots should record export status in a single coherent order.
 
 Action: Move repo zip export before report/handoff generation and final state snapshot rewrite. Treat export failure as visible runtime metadata, not as a release-gate failure after verify has passed.
+
+
+## 2026-05-12 — Repo zip export exposed artifact-role mixing
+
+Observation: A stable `tul-main.zip` path reduced upload friction in theory, but it blurred the difference between verify evidence, review handoff, source transfer, and backup. A path in state is not enough to prove that a zip was freshly generated, has no wrapper directory, or matches the verified HEAD.
+
+Lesson: Do not fix artifact confusion by adding more checks around the wrong abstraction. First name the artifact roles, then implement small commands around those roles.
+
+Action: Freeze an artifact semantics checkpoint. Treat `tul-vf-latest.md` as release-gate evidence, design a future `tul-review-latest.zip` for compact diff-oriented upload, and make full source export explicit rather than automatic backup-like behavior.

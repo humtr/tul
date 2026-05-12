@@ -25,10 +25,11 @@ Use this order unless the user gives a narrower task:
 4. Read `docs/llm/post-update-review.md` for the review protocol.
 5. Read `docs/status/current.md` and `docs/roadmap.md` for the current bundle boundary.
 6. Read `docs/workflows/parallel-readiness.md` before proposing the next bounded bundle.
-7. Read `docs/checklists/loop-runtime.md` for acceptance criteria.
-8. Read implementation files only when generating or reviewing a package.
+7. Read `docs/workflows/artifact-semantics.md` before treating any zip as review evidence, source evidence, or backup.
+8. Read `docs/checklists/loop-runtime.md` for acceptance criteria.
+9. Read implementation files only when generating or reviewing a package.
 
-Do not ask for a repo zip just to confirm a successful update when `tul-vf-latest.md` already proves release-gate status and includes runtime snapshots. Ask for standalone `tul state` or `tul handoff` only if the latest artifact is stale or missing those snapshots. Ask for a current repo zip when producing the next package or when the failure is code-level.
+Do not ask for a repo zip just to confirm a successful update when `tul-vf-latest.md` already proves release-gate status and includes runtime snapshots. Ask for standalone `tul state` or `tul handoff` only if the latest artifact is stale or missing those snapshots. Ask for source context when producing the next package or when the failure is code-level, but verify the zip root layout before using it. `tul-main.zip` export semantics are currently unresolved; `tul-vf-latest.md` remains the normal release-gate artifact.
 
 ## Durable read order
 
@@ -38,19 +39,20 @@ Do not ask for a repo zip just to confirm a successful update when `tul-vf-lates
 4. `docs/strategy.md`
 5. `docs/roadmap.md`
 6. `docs/llm/post-update-review.md`
-7. `docs/learning-log.md`
-8. `docs/decisions.md`
-9. `docs/checklists/loop-runtime.md`
-10. `docs/checklists/planning-harness.md`
-11. `docs/protocols/planning-loop.md`
-12. `docs/llm/commands.md`
-13. `docs/protocols/llm-handoff-protocol.md`
-14. `docs/protocols/command-grammar.md`
-15. `docs/workflows/update-pipeline.md`
-16. `docs/workflows/verify.md`
-17. `docs/workflows/package-authoring.md`
-18. `docs/workflows/state-cleanup.md`
-19. `docs/workflows/parallel-readiness.md`
+7. `docs/workflows/artifact-semantics.md`
+8. `docs/learning-log.md`
+9. `docs/decisions.md`
+10. `docs/checklists/loop-runtime.md`
+11. `docs/checklists/planning-harness.md`
+12. `docs/protocols/planning-loop.md`
+13. `docs/llm/commands.md`
+14. `docs/protocols/llm-handoff-protocol.md`
+15. `docs/protocols/command-grammar.md`
+16. `docs/workflows/update-pipeline.md`
+17. `docs/workflows/verify.md`
+18. `docs/workflows/package-authoring.md`
+19. `docs/workflows/state-cleanup.md`
+20. `docs/workflows/parallel-readiness.md`
 
 ## Current self-host review loop
 

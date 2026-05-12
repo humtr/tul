@@ -253,3 +253,14 @@ Context: Repo zip export is a convenience artifact for the next LLM package-gene
 Decision: Run repo zip export after fresh verify passes and before report, handoff, final handoff-ready state, and runtime snapshot rewrite. Record either the export path or the failure reason in state/report/handoff.
 
 Consequences: The next uploaded pair should be `tul-vf-latest.md` and `tul-main.zip`. If zip export fails, the latest verify artifact remains valid for release review while visibly reporting that code-level package generation still requires a manual repo zip.
+
+
+## ADR-022 — Export artifacts are not backups and source export is unresolved
+
+Status: accepted
+
+Context: Bundle I attempted to reduce user bridge work by writing `/sdcard/termux/import/tul/tul-main.zip` after successful updates. In practice this mixed at least four concepts: release-gate evidence, handoff evidence, review/diff transfer, and full source transfer. It also made a zip path in state look like proof of a fresh source export even when root layout and freshness were not proven.
+
+Decision: Separate artifact roles. `tul-vf-latest.md` is the canonical release-gate and runtime snapshot artifact. Timestamped verify artifacts are run history. Git remote and commit hashes are the backup/recovery authority. Review bundles and source bundles are transport artifacts and must be implemented separately. Automatic `tul-main.zip` export is not a closed capability and should not be treated as canonical backup or proven source evidence.
+
+Consequences: ADR-020 and ADR-021 are superseded for future implementation. The next work should remove misleading source zip state, then implement `tul export review`, then implement explicit `tul export source` with root-layout/freshness evidence. Only after the review/source split is stable should automatic post-update export be reconsidered.

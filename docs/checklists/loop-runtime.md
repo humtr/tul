@@ -197,3 +197,16 @@ Invariants:
 - [ ] `tul state` shows `repo zip: /sdcard/termux/import/tul/tul-main.zip`.
 - [ ] `tul-vf-latest.md` runtime `tul state` snapshot shows the same repo zip path.
 - [ ] Export failure is visible in state/report/handoff without flipping a passed release gate.
+
+
+## Artifact semantics checkpoint
+
+- [x] `tul-vf-latest.md` is the canonical post-update release-gate artifact.
+- [x] Runtime snapshots in latest verify markdown reduce the need to paste `tul state` and `tul handoff`.
+- [x] Timestamped verify runs remain under `logs/verify/YYMMDD/`.
+- [x] Zip artifacts are transport artifacts, not backups.
+- [x] Automatic `tul-main.zip` export is not considered closed.
+- [ ] Misleading source zip state output is removed or clearly marked as unresolved.
+- [ ] `tul export review` creates a compact diff-oriented review bundle.
+- [ ] `tul export source` creates an explicit full source bundle with root-layout checks.
+- [ ] Any automatic post-update export is limited to review evidence until source export is proven.

@@ -1,129 +1,85 @@
 # Current status
 
-Latest known version: `0.8.13-repo-zip-export-bundle`.
+Latest known version: `0.8.15-artifact-semantics-checkpoint`.
 
-Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, handoff discoverability, parallel-readiness gating, import-root latest snapshots, and state verify path alignment are baseline behavior. Bundle B through Bundle H have passed release gate. The active bounded package is the repo zip export bootstrap fix bundle.
+Current mode: Stage 6 bounded parallel stabilization. The release gate, compact state, handoff discoverability, parallel-readiness gate, import-root latest verify artifact, and runtime snapshots are baseline behavior. Repo/source zip export is explicitly not closed and is being re-scoped.
 
-## Current verified loop
+## Verified baseline
 
-The intended normal self-host loop is:
+Latest verified baseline:
 
-```bash
-tul package latest
-tul update
-# upload /sdcard/termux/import/tul/tul-vf-latest.md when review evidence is needed
+```text
+HEAD: c647c6ebe4dfffc7197185a09da8dca2b064f5e6
+Remote HEAD: c647c6ebe4dfffc7197185a09da8dca2b064f5e6
+Release gate: PASS
+Working tree: clean
 ```
 
-`tul update` should print the update report first, including commit, push verification, rollback, changed files, and checks. It should then run a compact post-update `verify fresh` gate, write markdown/json verify artifacts, and print the LLM handoff. New verify runs use the canonical layout without requiring an extra bootstrap command.
+The latest canonical review artifact remains:
 
-## Current bundle
+```text
+/sdcard/termux/import/tul/tul-vf-latest.md
+```
 
-Package: `tul_stage6_repo_zip_export_bundle_v1`
+## Artifact semantics checkpoint
 
-Commit message: `Fix repo zip export timing`
+The Stage 6 repo zip work exposed a design error: verify evidence, handoff evidence, source transfer, review transfer, and backup were being treated as one artifact family. This checkpoint freezes the corrected model before more implementation work.
+
+Current rule:
+
+- `tul-vf-latest.md` is release-gate and runtime snapshot evidence.
+- Timestamped verify artifacts under `logs/verify/YYMMDD/` are run history.
+- `tul state` is the latest decision view.
+- `tul handoff` is fresh-session orientation.
+- `tul-main.zip` is not accepted as a closed automatic export capability.
+- Zip artifacts are transport artifacts, not backups.
+- Git remote, commit hashes, and rollback state are the recovery authority.
+
+See `docs/workflows/artifact-semantics.md`.
+
+## Bundle I status correction
+
+Bundle I and its fixes proved commit/push/verify, but they did not close source zip export semantics.
+
+Corrected status:
+
+```text
+Bundle I initial: verify PASS, export incomplete
+Bundle I fix v2: verify PASS, path surfaced, export semantics unresolved
+```
+
+Do not mark repo/source zip export as closed until the runtime records freshness, root layout, and provenance evidence.
+
+## Current next bundle
+
+Package: `tul_stage6_artifact_semantics_checkpoint_bundle_v1`
 
 Scope:
 
-1. Generate `/sdcard/termux/import/tul/tul-main.zip` after a successful full update with commit, push, and fresh verify.
-2. Keep the export as a single latest pointer, not a timestamped archive.
-3. Exclude `.git`, caches, build outputs, previous zip files, backups, and transient roots from the zip.
-4. Record export status in handoff-ready state so `tul-vf-latest.md` runtime snapshots can show the repo zip path.
-5. Refresh status, roadmap, checklist, learning log, decisions, and update workflow docs.
+1. Document artifact roles and corrected ownership.
+2. Stop treating `tul-main.zip` as canonical backup or proven source evidence.
+3. Split future work into review bundle export and explicit source bundle export.
+4. Record Bundle I as unresolved rather than completed.
+5. Preserve the verified baseline and keep runtime behavior changes out of this checkpoint.
+
+## Next implementation queue
+
+1. Remove misleading source zip state output.
+2. Implement `tul export review` for compact diff-oriented upload bundles.
+3. Implement `tul export source` for explicit source bundles with wrapper/root-layout checks.
+4. Decide later whether `tul update` should automatically run review export.
 
 ## Verify artifact convention
 
-Canonical latest files live directly under the tul import root so they sit beside `tul-main.zip` for upload:
+Canonical latest files live directly under the tul import root:
 
 ```text
 /sdcard/termux/import/tul/tul-vf-latest.md
 /sdcard/termux/import/tul/tul-vf-latest.json
 ```
 
-The latest markdown includes the release gate plus compact `tul state` and `tul handoff` snapshots. Timestamped run artifacts live in YYMMDD date folders directly under the verify log root. There is no `runs/` layer:
-
-```text
-/sdcard/termux/import/tul/logs/verify/260512/tul-vf-f-260512-153345-a1dcc39.md
-/sdcard/termux/import/tul/logs/verify/260512/tul-vf-f-260512-153345-a1dcc39.json
-/sdcard/termux/import/tul/logs/verify/260512/tul-vf-l-260512-153345-a1dcc39.md
-/sdcard/termux/import/tul/logs/verify/260512/tul-vf-l-260512-153345-a1dcc39.json
-```
-
-Do not write both `vf` and `verify` naming families. `tul-vf-latest.md/json` are the only canonical latest artifacts and live at the import root. Legacy `tul-verify-latest.*` aliases are no longer generated.
-
-Compact state should display the canonical latest verify markdown path:
-
-```text
-/sdcard/termux/import/tul/tul-vf-latest.md
-```
-
-If an older handoff-ready state recorded the bootstrap-time `logs/verify/tul-vf-latest.md` path, compact state normalizes that stale latest pointer for display. Timestamped run artifacts are not rewritten or hidden.
-
-## State output convention
-
-Default `tul state` is a decision view: latest state, latest rollbackable commit, important artifacts, cleanup suggestion, and pointers to full history commands.
-
-Long state output remains available with:
-
-```bash
-tul state --all --limit 5
-tul state --json
-```
-
-## Package authoring convention
-
-Before distribution, a package should pass:
-
-```bash
-tul package check /path/to/package.zip --target tul
-```
-
-The check should identify missing/nested root manifests, absent or unreferenced payload, generated/cache files, missing apply sources, destination/`commit.files` mismatches, and target mismatches when `--target` is supplied.
-
-## State cleanup convention
-
-State cleanup is intentionally dry-run first. Routine inspection should use:
-
-```bash
-tul archive --noop --dry-run --keep 3
-```
-
-The dry-run output should show inventory counts, selected state directories, destination archive directories, latest state, and latest rollbackable state before any files are moved. Actual archive moves remain explicit by re-running without `--dry-run` after review.
-
-## Handoff discoverability convention
-
-Fresh LLM sessions should use this review path:
-
-1. `tul-vf-latest.md` for release-gate facts.
-2. `tul state` output for state/rollback/cleanup facts when relevant.
-3. `docs/llm/entrypoint.md` for repo read order.
-4. `docs/llm/post-update-review.md` for evidence economy and next-command selection.
-5. `docs/workflows/parallel-readiness.md` before proposing the next bounded bundle.
-6. `docs/status/current.md` and `docs/roadmap.md` for current bundle state.
-
-A repo zip is needed for package generation or code-level diagnosis, not for every successful update review. After this bundle, a successful full update should refresh the stable repo zip at:
-
-```text
-/sdcard/termux/import/tul/tul-main.zip
-```
-
-## Parallel readiness convention
-
-Stage 6 allows bounded parallel planning but still applies packages one at a time. A new package should be generated only after the latest release gate is PASS and a current repo zip matches the verified HEAD. Candidate bundles must declare expected changed files, excluded files, acceptance criteria, and a Green/Yellow/Orange/Red parallel class. Shared runtime files, verify/update/pipeline changes, rollback behavior, archive moves, deletion, or push behavior force serialization.
-
-## Next likely bundles
-
-- validate repo zip export in the latest runtime snapshot;
-- Windows parity bundle;
-- state cleanup policy expansion for imported/failed states;
-- docs consistency checks;
-- handoff/runtime prompt polish if fresh-session reviews still miss context.
+Timestamped run artifacts live in YYMMDD date folders directly under the verify log root. There is no `runs/` layer and no legacy `tul-verify-latest.*` alias.
 
 ## Deferred
 
-Stage X target onboarding, including `humtr/ai`, remains deferred until tul's self-host loop is stable enough to reduce rather than increase bridge work.
-
-## Repo zip export bootstrap fix
-
-Bundle I introduced `lib/tulcore/repozip.py`, but the package that introduced the pipeline hook was applied by the previous runtime. Therefore the first update proved commit/push/verify but did not create `tul-main.zip`. The fix moves repo zip export before report and handoff generation for future updates and keeps export status in the handoff-ready state before runtime snapshots are rewritten.
-
-Acceptance: after a successful full update, `/sdcard/termux/import/tul/tul-main.zip` exists and compact `tul state` shows `repo zip: /sdcard/termux/import/tul/tul-main.zip`.
+Stage X target onboarding, including `humtr/ai`, remains deferred until tul's self-host loop reduces rather than multiplies bridge work.

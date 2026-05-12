@@ -21,14 +21,15 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 5. Read [`docs/strategy.md`](docs/strategy.md) for the medium-term capability map.
 6. Read [`docs/roadmap.md`](docs/roadmap.md) for the short-term ready queue and bundle candidates.
 7. Read [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md) before proposing the next bounded bundle.
-8. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
-9. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
-10. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
-11. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
+8. Read [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) before treating any zip as review evidence, source evidence, or backup.
+9. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
+10. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
+11. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
+12. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
-For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. After a successful full `tul update`, tul also refreshes `/sdcard/termux/import/tul/tul-main.zip` so the next package-generation session can upload both files from the same directory.
+For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. Source/review zip export semantics are currently under correction; do not treat `tul-main.zip` as canonical backup or as verified source evidence unless the latest runtime artifact explicitly proves its freshness and root layout. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md).
 
 ## Project identity
 
@@ -210,9 +211,15 @@ Normal operation should use `tul-package.yml`, not arbitrary script execution.
 
 ## Current handoff artifacts
 
-After a successful full `tul update`, the normal upload pair is:
+The normal post-update review artifact is:
 
 - `/sdcard/termux/import/tul/tul-vf-latest.md`
-- `/sdcard/termux/import/tul/tul-main.zip`
 
-The verify markdown is the runtime review artifact. The repo zip is a latest code snapshot for the next package-generation turn.
+It contains release-gate evidence plus compact runtime snapshots. Zip artifacts are not backups and are not automatically trusted as canonical source evidence. The Stage 6 artifact model now separates:
+
+- verify artifact: release-gate evidence;
+- review bundle: future compact diff-oriented upload artifact;
+- source bundle: future explicit full source context for package generation;
+- backup: Git remote, commit hashes, and rollback state.
+
+See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md). Until the export model is corrected, ask for a repo/source zip only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it.

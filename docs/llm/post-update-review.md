@@ -11,7 +11,8 @@ Use this order when facts differ:
 3. User-provided standalone `tul state` or `tul handoff` output when newer than the latest artifact.
 4. The current repo zip or fresh clone contents.
 5. Durable repo documents such as `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
-6. Prior chat summaries, only as context.
+6. `docs/workflows/artifact-semantics.md` for the current artifact vocabulary.
+7. Prior chat summaries, only as context.
 
 Do not treat prior chat claims as repository truth when the artifact or repo contradicts them.
 
@@ -35,7 +36,7 @@ A review can usually be closed if the artifact shows:
 
 Ask for standalone `tul state` or `tul handoff` output only when the latest artifact is missing the runtime snapshots, appears stale, or the user has run newer commands after the artifact was created.
 
-Ask for a fresh repo zip only when producing the next package, doing code-level review, or investigating a failure that cannot be resolved from the verify artifact and terminal output. After a successful full update, the runtime should refresh `/sdcard/termux/import/tul/tul-main.zip`, so package-generation turns can normally ask the user to upload the side-by-side pair `tul-vf-latest.md` and `tul-main.zip` from the import root.
+Ask for source context only when producing the next package, doing code-level review, or investigating a failure that cannot be resolved from the verify artifact and terminal output. Do not assume `tul-main.zip` is a verified current source export merely because a path appears in state. Until source/review export is reworked, verify the zip root layout before using it and prefer the latest verified HEAD as the source-of-truth identifier.
 
 ## Normal next commands
 
@@ -102,3 +103,15 @@ When summarizing the handoff, separate:
 - repo-documented guidance;
 - assistant interpretation;
 - unresolved or unverified assumptions.
+
+
+## Artifact caution
+
+Current Stage 6 export semantics are under correction. Treat artifacts as follows:
+
+- `tul-vf-latest.md`: release-gate and runtime snapshot evidence.
+- `tul-review-latest.zip`: planned future compact review/diff bundle, not yet baseline.
+- `tul-source-latest.zip` or equivalent source export: planned future explicit source context, not backup.
+- `tul-main.zip`: historical/transitional name; do not treat it as automatically trusted evidence unless current runtime output includes freshness and root-layout evidence.
+
+A valid source bundle must have repo files at zip root, such as `README.md`, `.tul.yml`, `bin/tul`, and `lib/tulcore/__init__.py`. A wrapper such as `tul-main/README.md` is not the canonical source shape.
