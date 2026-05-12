@@ -84,3 +84,16 @@ The full verification details are written as markdown and JSON artifacts under t
 ## Latest artifact snapshot rewrite
 
 In the normal `tul update` path, the fresh verify gate runs before the final report, handoff, and handoff-ready state are written. After those files exist, tul rewrites the same verify markdown artifacts so `/sdcard/termux/import/tul/tul-vf-latest.md` includes compact `tul state` and `tul handoff` snapshots.
+
+
+## Repo zip export
+
+After a successful full `tul update` with commit, push, and fresh verify passing, tul writes a stable repo zip export to the import root:
+
+```text
+/sdcard/termux/import/tul/tul-main.zip
+```
+
+This export is a convenience pointer for the next package-generation session, not an archival history. It is overwritten on each successful full update. The export excludes Git metadata, Python caches, test caches, build outputs, dependency folders, existing zip files, backup files, and transient roots such as `logs`, `work`, and `archive` if they appear inside the repo.
+
+Repo zip export failure should not retroactively fail a release gate that already passed. Instead, tul records `repo_zip_export.ok: false` in the handoff-ready state so the latest verify markdown can surface the export problem in its runtime snapshot.

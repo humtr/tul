@@ -13,6 +13,7 @@ from .package import import_package, select_package
 from .precheck import run_precheck
 from .publish import publish_manifest_changes
 from .report import build_report, write_report
+from .repozip import export_repo_zip
 from .state import record_error, set_phase
 from .sweep import sweep_repo
 from .verify import format_verify_gate, rewrite_verify_artifacts_with_runtime_snapshots, run_verify, write_verify_artifacts
@@ -200,6 +201,26 @@ def run_update(
             verify_fresh_ok=verify_result.ok if verify_result is not None else None,
             verify_artifacts=verify_artifacts,
         )
+        if (
+            verify_result is not None
+            and verify_result.ok
+            and publish.commit_hash
+            and not no_commit
+            and not no_push
+        ):
+            try:
+                repo_export = export_repo_zip(ctx)
+                set_phase(state_file, "handoff-ready", repo_zip_export=repo_export.to_dict())
+            except Exception as exc:  # pragma: no cover - defensive export path
+                set_phase(
+                    state_file,
+                    "handoff-ready",
+                    repo_zip_export={
+                        "ok": False,
+                        "error_type": type(exc).__name__,
+                        "error": str(exc),
+                    },
+                )
         if verify_result is not None and verify_artifacts is not None:
             rewrite_verify_artifacts_with_runtime_snapshots(ctx, verify_result, verify_artifacts)
         return UpdateResult(

@@ -1,8 +1,8 @@
 # Current status
 
-Latest known version: `0.8.12-state-verify-path-alignment-bundle`.
+Latest known version: `0.8.13-repo-zip-export-bundle`.
 
-Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, handoff discoverability, and parallel-readiness gating are baseline behavior. Bundle B, Bundle C, Bundle D, Bundle E, Bundle F, and Bundle G have passed release gate. The active bounded package is the state verify path alignment bundle.
+Current mode: Stage 6 bounded parallel self-host hardening. Native context, package mismatch guidance, update-integrated fresh verification, canonical verify artifact layout, compact state output, package authoring diagnostics, archive dry-run guidance, handoff discoverability, parallel-readiness gating, import-root latest snapshots, and state verify path alignment are baseline behavior. Bundle B through Bundle H have passed release gate. The active bounded package is the repo zip export bundle.
 
 ## Current verified loop
 
@@ -18,17 +18,17 @@ tul update
 
 ## Current bundle
 
-Package: `tul_stage6_state_verify_path_alignment_bundle_v1`
+Package: `tul_stage6_repo_zip_export_bundle_v1`
 
-Commit message: `Align state verify latest path`
+Commit message: `Export repo zip after successful update`
 
 Scope:
 
-1. Keep import-root `tul-vf-latest.md/json` as the canonical latest verify artifact pair.
-2. Align compact `tul state` artifact display with the import-root latest path.
-3. Normalize stale bootstrap state references from `logs/verify/<project>-vf-latest.md` to the current import-root latest path in decision-view output.
-4. Preserve timestamped run artifacts under `logs/verify/YYMMDD/`.
-5. Refresh status, roadmap, checklist, learning log, decisions, and verify workflow docs.
+1. Generate `/sdcard/termux/import/tul/tul-main.zip` after a successful full update with commit, push, and fresh verify.
+2. Keep the export as a single latest pointer, not a timestamped archive.
+3. Exclude `.git`, caches, build outputs, previous zip files, backups, and transient roots from the zip.
+4. Record export status in handoff-ready state so `tul-vf-latest.md` runtime snapshots can show the repo zip path.
+5. Refresh status, roadmap, checklist, learning log, decisions, and update workflow docs.
 
 ## Verify artifact convention
 
@@ -100,7 +100,11 @@ Fresh LLM sessions should use this review path:
 5. `docs/workflows/parallel-readiness.md` before proposing the next bounded bundle.
 6. `docs/status/current.md` and `docs/roadmap.md` for current bundle state.
 
-A repo zip is needed for package generation or code-level diagnosis, not for every successful update review.
+A repo zip is needed for package generation or code-level diagnosis, not for every successful update review. After this bundle, a successful full update should refresh the stable repo zip at:
+
+```text
+/sdcard/termux/import/tul/tul-main.zip
+```
 
 ## Parallel readiness convention
 
@@ -108,6 +112,7 @@ Stage 6 allows bounded parallel planning but still applies packages one at a tim
 
 ## Next likely bundles
 
+- validate repo zip export in the latest runtime snapshot;
 - Windows parity bundle;
 - state cleanup policy expansion for imported/failed states;
 - docs consistency checks;

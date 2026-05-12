@@ -28,7 +28,7 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
-For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots; upload the current repo zip only when generating the next package or diagnosing code-level failures.
+For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. After a successful full `tul update`, tul also refreshes `/sdcard/termux/import/tul/tul-main.zip` so the next package-generation session can upload both files from the same directory.
 
 ## Project identity
 

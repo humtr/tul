@@ -335,6 +335,20 @@ def _verify_artifact_value(
     return None
 
 
+def _repo_zip_export_value(data: dict[str, Any]) -> str | None:
+    export = data.get("repo_zip_export")
+    if isinstance(export, dict):
+        if export.get("ok") is False:
+            error = export.get("error") or export.get("error_type") or "failed"
+            return f"failed ({error})"
+        if export.get("path"):
+            return str(export["path"])
+    for key in ("repo_zip", "repo_zip_path", "latest_repo_zip"):
+        if data.get(key):
+            return str(data[key])
+    return None
+
+
 def summarize_compact_state(
     work_root: Path,
     *,
@@ -376,6 +390,9 @@ def summarize_compact_state(
         verify_artifact = _verify_artifact_value(data, project=project, work_root=work_root)
         if verify_artifact:
             lines.append(f"- verify: {verify_artifact}")
+        repo_zip = _repo_zip_export_value(data)
+        if repo_zip:
+            lines.append(f"- repo zip: {repo_zip}")
 
     lines.extend([
         "",
@@ -415,6 +432,9 @@ def summarize_state(path: Path, data: dict[str, Any]) -> str:
     ):
         if data.get(key):
             lines.append(f"{key.replace('_', ' ').title()}: {data[key]}")
+    repo_zip = _repo_zip_export_value(data)
+    if repo_zip:
+        lines.append(f"Repo Zip: {repo_zip}")
     if data.get("outcome") == "noop" or data.get("no_op") is True:
         lines.append("Push verified: not applicable for no-op")
     elif data.get("push_verified") is not None:

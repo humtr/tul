@@ -275,3 +275,10 @@ Observation: Bundle G correctly moved the stable latest verify artifacts to the 
 Decision: Treat compact `tul state` as a decision view. When the stored path is recognizably the stale latest pointer under `logs/verify/`, display the canonical import-root latest path instead. Do not rewrite or hide timestamped run artifacts.
 
 Follow-up: Consider a separate export bundle that writes `/sdcard/termux/import/tul/tul-main.zip` after successful updates when the next step requires a repo zip.
+
+
+## Repo zip export after update
+
+Observation: After latest verify moved to the import root and began carrying state/handoff snapshots, the remaining repetitive bridge step was manually creating `tul-main.zip` before the next package-generation turn. The user still had to run a separate zip command even though tul already knew when an update had succeeded.
+
+Impact: A successful full update is the right moment to refresh a stable repo zip pointer. This makes the next handoff pair predictable: `tul-vf-latest.md` for runtime facts and `tul-main.zip` for code/package generation. The export should stay outside release-gate semantics: if export fails after commit/push/verify passed, record the export failure rather than changing the release result.

@@ -234,3 +234,14 @@ Context: The canonical latest verify markdown/json pair now lives under the tul 
 Decision: Compact `tul state` should display the current import-root latest verify path when a stored state value is recognizably the stale `logs/verify/<project>-vf-latest.md` pointer. Timestamped run artifacts remain unchanged and are still shown by verify artifact metadata.
 
 Consequences: The user can rely on `tul-vf-latest.md` and `tul-main.zip` living side by side in the import root, while historical run artifacts remain under `logs/verify/YYMMDD/`. This is a display alignment rule, not a history rewrite.
+
+
+## ADR-020 — Successful updates refresh a stable repo zip
+
+Status: accepted
+
+Context: The latest verify markdown now lives beside `tul-main.zip` and includes compact state/handoff snapshots. Package generation still needs a current repo zip, and asking the user to manually recreate it after every successful update keeps one avoidable human bridge step in the loop.
+
+Decision: After a successful full `tul update` with commit, push, and fresh verify passing, tul writes a stable repo zip export to `/sdcard/termux/import/tul/tul-main.zip`. The export is a latest pointer, not history. It excludes Git metadata, caches, build outputs, dependency directories, existing zip files, backup files, and transient roots. Export status is recorded in the handoff-ready state.
+
+Consequences: The next package-generation session normally needs only the side-by-side pair `tul-vf-latest.md` and `tul-main.zip`. If repo zip export fails after the release gate passed, the failure is visible in state/runtime snapshots but does not retroactively make the release gate fail.

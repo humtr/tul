@@ -178,7 +178,15 @@ Invariants:
 
 ## State verify path alignment
 
-- [ ] `tul state` shows `/sdcard/termux/import/tul/tul-vf-latest.md` as the verify artifact when a latest verify artifact is available.
-- [ ] `tul-vf-latest.md` runtime snapshot `### tul state` shows the same import-root latest path.
-- [ ] Timestamped run artifacts remain under `/sdcard/termux/import/tul/logs/verify/YYMMDD/`.
-- [ ] No legacy `tul-verify-latest.*` artifacts are generated.
+- [x] `tul state` shows `/sdcard/termux/import/tul/tul-vf-latest.md` as the verify artifact when a latest verify artifact is available.
+- [x] `tul-vf-latest.md` runtime snapshot `### tul state` shows the same import-root latest path.
+- [x] Timestamped run artifacts remain under `/sdcard/termux/import/tul/logs/verify/YYMMDD/`.
+- [x] No legacy `tul-verify-latest.*` artifacts are generated.
+
+## Repo zip export checkpoint
+
+- [ ] Successful full `tul update` refreshes `/sdcard/termux/import/tul/tul-main.zip`.
+- [ ] Repo zip export excludes `.git`, caches, build outputs, dependency directories, existing zip files, and backup files.
+- [ ] Export status is recorded in handoff-ready state.
+- [ ] `tul-vf-latest.md` runtime `tul state` snapshot shows the repo zip path.
+- [ ] Export failure is visible in state without retroactively failing a passed release gate.

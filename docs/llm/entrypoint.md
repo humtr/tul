@@ -100,3 +100,8 @@ Do not ask the user to paste long absolute package paths when the package is alr
 Stage 6 uses bounded parallel self-host hardening. Read `docs/manifest.md`, `docs/strategy.md`, `docs/roadmap.md`, `docs/status/current.md`, `docs/learning-log.md`, and `docs/decisions.md` before proposing the next package.
 
 The next package should be a bounded bundle with a clear success gate, not a large all-at-once rewrite.
+
+
+## Repo zip handoff
+
+For package generation or code-level diagnosis, use the current `/sdcard/termux/import/tul/tul-main.zip` alongside `/sdcard/termux/import/tul/tul-vf-latest.md`. Successful full updates refresh the repo zip automatically.

@@ -35,7 +35,7 @@ A review can usually be closed if the artifact shows:
 
 Ask for standalone `tul state` or `tul handoff` output only when the latest artifact is missing the runtime snapshots, appears stale, or the user has run newer commands after the artifact was created.
 
-Ask for a fresh repo zip only when producing the next package, doing code-level review, or investigating a failure that cannot be resolved from the verify artifact and terminal output.
+Ask for a fresh repo zip only when producing the next package, doing code-level review, or investigating a failure that cannot be resolved from the verify artifact and terminal output. After a successful full update, the runtime should refresh `/sdcard/termux/import/tul/tul-main.zip`, so package-generation turns can normally ask the user to upload the side-by-side pair `tul-vf-latest.md` and `tul-main.zip` from the import root.
 
 ## Normal next commands
 

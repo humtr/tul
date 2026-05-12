@@ -143,3 +143,18 @@ Scope:
 4. Avoid modifying verify, update, rollback, archive, or push behavior.
 
 Next candidate: export a current `tul-main.zip` automatically after a successful update, with explicit excludes and safe defaults.
+
+
+### Bundle I — Repo zip export bundle
+
+Status: active package.
+
+Goal: remove the last routine manual repo-zip bridge step by refreshing `/sdcard/termux/import/tul/tul-main.zip` after successful full updates. Keep it as a latest pointer only, exclude generated/transient content, and surface export status in compact state/runtime snapshots.
+
+Acceptance:
+
+1. `tul update` succeeds normally and still closes with release gate PASS.
+2. `/sdcard/termux/import/tul/tul-main.zip` exists after a successful full update.
+3. The zip excludes `.git`, caches, build outputs, existing zip files, and backup files.
+4. `tul-vf-latest.md` runtime `tul state` snapshot shows the repo zip path.
+5. Export failure is visible in state but does not corrupt the already-passed release gate.
