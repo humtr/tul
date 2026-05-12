@@ -33,7 +33,7 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
-For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. When a compact transport bundle is needed, run `tul export review` and upload `/sdcard/termux/import/tul/tul-review-latest.zip`. A GitHub-generated `tul-main.zip` may be used as manual source context for package generation after its root layout and intended commit are understood, but it is not a tul runtime backup or a tul-proven explicit source export. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md), [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md), and [`docs/workflows/stage6-stabilization-checkpoint.md`](docs/workflows/stage6-stabilization-checkpoint.md).
+For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. When a compact transport bundle is needed, run `tul export review` and upload `/sdcard/termux/import/tul/tul-review-latest.zip`. When full source context is needed, run `tul export source` and use `/sdcard/termux/import/tul/tul-source-latest.zip`; this is explicit source context, not backup, review evidence, or release-gate evidence. A GitHub-generated `tul-main.zip` may still be used as manual source context after its root layout and intended commit are understood. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md), [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md), and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md).
 
 ## Project identity
 
@@ -72,7 +72,7 @@ many candidate plans may be drafted or compared in parallel
 → one release gate closes the new baseline
 ```
 
-The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b714dab33a45079e19`, and the terminology audit package is closed at `7d7b27a4eb81570482ff4d9eaba1dc7c83429272`, when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes. The next Green/Yellow checkpoint is source-export specification and package-gate hardening: accept the source-export contract before any runtime implementation and make bundle gates copy-ready. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md), [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md), [`docs/workflows/source-export-spec.md`](docs/workflows/source-export-spec.md), and [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md).
+The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b714dab33a45079e19`, the terminology audit package is closed at `7d7b27a4eb81570482ff4d9eaba1dc7c83429272`, and the source spec/gates checkpoint is closed at `a3585a7441e320f1ce78f924d293c411854f76ef`, when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes. The current Orange implementation baseline adds explicit `tul export source` as a manual command while keeping automatic source export out of the update pipeline. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md), [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md), [`docs/workflows/source-export-spec.md`](docs/workflows/source-export-spec.md), and [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md).
 
 
 ## Non-negotiable invariants
@@ -206,6 +206,8 @@ Unrelated zip files in shared Download roots are report-only even if they do not
 
 ```bash
 tul export review
+tul export source
+tul export source --json
 ```
 
 The command writes:
@@ -279,10 +281,10 @@ It contains release-gate evidence plus compact runtime snapshots. Zip artifacts 
 
 - verify artifact: release-gate evidence;
 - review bundle: explicit compact diff-oriented upload artifact from `tul export review`;
-- source export: proposed future explicit full source context for package generation; not implemented yet; spec accepted before implementation;
+- source export: implemented explicit full source context for package generation and code-level diagnosis; run manually with `tul export source`;
 - backup: Git remote, commit hashes, and rollback state.
 
-See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md). Ask for source context only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it. A GitHub-generated source archive can be source context, but backup and recovery authority remains Git remote plus commit hashes and rollback state. Do not ask the user to run `tul export source` until a source-export implementation package has been applied and verified.
+See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md). Ask for source context only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it. A GitHub-generated source archive can be source context, but backup and recovery authority remains Git remote plus commit hashes and rollback state. `tul export source` is now an explicit source-context command; it remains separate from `tul update`, `tul verify`, and `tul export review`.
 
 
 ## K1 archive execution safety

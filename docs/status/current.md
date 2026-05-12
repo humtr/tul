@@ -1,6 +1,6 @@
 # Current status
 
-Latest known version: `0.8.26-stage7-source-spec-gates`.
+Latest known version: `0.8.27-stage7-source-export`.
 
 Current mode: Stage 7 Green/Yellow hardening after terminology audit. Stage 6 is closed as the verified stabilization baseline. Stage 7 planning consolidation is closed. Stage 7 terminology audit is closed. The current task is to accept source-export specification and package-gate templates before any Orange runtime implementation.
 
@@ -93,3 +93,13 @@ Reason: this package touches coordination docs, artifact semantics, source-expor
 ## Deferred
 
 Stage X target onboarding, including `humtr/ai`, remains deferred until tul's self-host loop reduces rather than multiplies bridge work.
+
+## Stage 7 explicit source export implementation
+
+Current package target:
+
+- add `tul export source`;
+- write `/sdcard/termux/import/tul/tul-source-latest.zip` by default;
+- include `source-manifest.json`, `source-file-list.txt`, and `source-file-sha256s.txt`;
+- record final SHA256, payload SHA256, size, source file count, root layout, rewrite, and post-replace verification in command output and latest state when available;
+- keep automatic post-update source export out of scope.

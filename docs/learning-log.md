@@ -383,3 +383,7 @@ User direction: resolve Green/Yellow work before implementing runtime behavior.
 Lesson: When a future command name is already being discussed, a spec-only package should make the command contract and non-runnable boundary explicit before code is written. This reduces later bridge work and prevents an assistant from suggesting unimplemented commands.
 
 Applied rule: accept source-export spec and package gates before any `tul export source` implementation package.
+
+## 2026-05-13 — Source export implementation boundary
+
+The safe implementation boundary is explicit source export only. The package can include command wiring, artifact verification, state display, and documentation updates, but not automatic post-update source export. This keeps the user bridge reduction incremental and preserves release-gate clarity.

@@ -168,12 +168,12 @@ Full source export remains explicit and unimplemented until its root-layout, fre
 
 ## Current implementation status
 
-`repozip.py` exists as a retired helper from the source-zip experiment, but it is not wired into the default update loop and does not expose a current `tul export source` CLI command. J2 removed misleading source zip state output. J3 added explicit `tul export review` for diff-oriented review bundles. J4 records the explicit review export in state/report/handoff and refreshes latest runtime snapshots. Stage 7 should add explicit source export only after the spec and acceptance gate package closes and a later Orange implementation package is generated.
+`repozip.py` remains a retired helper from the source-zip experiment, but current source export is implemented separately through `lib/tulcore/source.py` and `tul export source`. J2 removed misleading source zip state output. J3 added explicit `tul export review` for diff-oriented review bundles. J4 records the explicit review export in state/report/handoff and refreshes latest runtime snapshots. Stage 7 adds explicit source export as a manual command; automatic source export remains out of the default update loop.
 
 ## Next bundles
 
 1. Keep review export explicit and evidence-backed.
 2. Keep terminology clear: runtime baseline, review bundle, source context, proposed source export, and backup are separate roles.
 3. Keep the accepted source export spec in `docs/workflows/source-export-spec.md`.
-4. Implement `tul export source` for explicit source exports with root-layout checks only after the spec/gates package closes.
+4. Keep `tul export source` explicit-only unless a later Red-class automation decision closes.
 5. Reconsider automatic review export only after explicit behavior remains stable across additional packages.

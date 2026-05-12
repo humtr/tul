@@ -192,7 +192,7 @@ Invariants:
 - [x] Automatic `tul-main.zip` source export is not considered closed.
 - [x] Legacy source zip paths are not displayed as successful artifacts in compact state.
 - [x] `tul export review` creates a compact diff-oriented review bundle.
-- [ ] Future `tul export source` creates an explicit full source export with root-layout checks. It is not implemented yet; the spec is documented before implementation.
+- [x] `tul export source` creates an explicit full source export with root-layout checks.
 - [ ] Any automatic post-update export is limited to review evidence until source export is proven.
 
 ## Artifact semantics checkpoint
@@ -204,7 +204,7 @@ Invariants:
 - [x] Automatic `tul-main.zip` export is not considered closed.
 - [x] Misleading source zip state output is removed or clearly marked as unresolved.
 - [x] `tul export review` creates a compact diff-oriented review bundle.
-- [ ] Future `tul export source` creates an explicit full source export with root-layout checks. It is not implemented yet; the spec is documented before implementation.
+- [x] `tul export source` creates an explicit full source export with root-layout checks.
 - [ ] Any automatic post-update export is limited to review evidence until source export is proven.
 
 
@@ -258,7 +258,7 @@ Invariants:
 - [x] Runtime behavior changes are excluded from the planning consolidation package.
 - [x] Review bundle and source bundle semantics remain separated.
 - [x] GitHub-generated `tul-main.zip` can be source context but not backup or tul-proven source export.
-- [x] Future `tul export source` has an accepted pre-implementation spec and is not described as runnable before implementation closes.
+- [x] `tul export source` has an accepted implementation spec and is described as explicit/manual only.
 - [ ] Any automatic review/source export is approved in a separate package.
 
 
@@ -268,6 +268,6 @@ Invariants:
 - [x] Stage 7 terminology audit is closed before implementation work.
 - [x] `docs/workflows/source-export-spec.md` defines the source-export contract before runtime implementation.
 - [x] `docs/checklists/stage7-package-gates.md` defines Green/Yellow/Orange/Red gate requirements.
-- [x] `tul export source` remains non-runnable until an Orange implementation package closes.
-- [ ] Explicit `tul export source` implementation closes against the accepted spec.
+- [x] `tul export source` is runnable only after the Orange implementation package closes.
+- [x] Explicit `tul export source` implementation closes against the accepted spec.
 - [ ] Automatic post-update source export remains Red class and unapproved.

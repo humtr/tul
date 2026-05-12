@@ -350,6 +350,42 @@ def _has_legacy_repo_zip_export(data: dict[str, Any]) -> bool:
     return any(data.get(key) for key in ("repo_zip", "repo_zip_path", "latest_repo_zip"))
 
 
+
+
+def _source_bundle_export(data: dict[str, Any]) -> dict[str, Any] | None:
+    export = data.get("source_bundle_export")
+    if isinstance(export, dict):
+        return export
+    return None
+
+
+def _source_bundle_lines(data: dict[str, Any]) -> list[str]:
+    export = _source_bundle_export(data)
+    if not export:
+        return ["- source bundle: explicit source export only"]
+    if export.get("ok") is False:
+        return [f"- source bundle: failed ({export.get('error') or export.get('error_type') or 'unknown error'})"]
+    path = export.get("path") or "unknown"
+    lines = [f"- source bundle: {path}"]
+    if export.get("sha256"):
+        lines.append(f"- source bundle sha256: {export['sha256']}")
+    if export.get("payload_sha256"):
+        lines.append(f"- source bundle payload sha256: {export['payload_sha256']}")
+    if export.get("size_bytes") is not None:
+        lines.append(f"- source bundle bytes: {export['size_bytes']}")
+    if export.get("file_count") is not None:
+        lines.append(f"- source bundle files: {export['file_count']}")
+    if export.get("root_layout"):
+        lines.append(f"- source bundle root layout: {export['root_layout']}")
+    if export.get("rewritten") is not None:
+        lines.append(f"- source bundle rewritten: {str(bool(export['rewritten'])).lower()}")
+    if export.get("verified_after_replace") is not None:
+        lines.append(f"- source bundle verified after replace: {str(bool(export['verified_after_replace'])).lower()}")
+    if export.get("target_mtime"):
+        lines.append(f"- source bundle mtime: {export['target_mtime']}")
+    return lines
+
+
 def _review_bundle_export(data: dict[str, Any]) -> dict[str, Any] | None:
     export = data.get("review_bundle_export")
     if isinstance(export, dict):
@@ -421,12 +457,12 @@ def summarize_compact_state(
         verify_artifact = _verify_artifact_value(data, project=project, work_root=work_root)
         if verify_artifact:
             lines.append(f"- verify: {verify_artifact}")
-        if _has_legacy_repo_zip_export(data) or _review_bundle_export(data):
+        if _has_legacy_repo_zip_export(data) or _source_bundle_export(data) or _review_bundle_export(data):
             lines.extend(["", "Exports:"])
             if _has_legacy_repo_zip_export(data):
                 lines.append("- source bundle: unresolved (legacy repo zip path suppressed)")
             else:
-                lines.append("- source bundle: explicit source export only")
+                lines.extend(_source_bundle_lines(data))
             lines.extend(_review_bundle_lines(data))
 
     lines.extend([
@@ -469,6 +505,12 @@ def summarize_state(path: Path, data: dict[str, Any]) -> str:
             lines.append(f"{key.replace('_', ' ').title()}: {data[key]}")
     if _has_legacy_repo_zip_export(data):
         lines.append("Source Export: unresolved (legacy repo zip path suppressed)")
+    source_export = _source_bundle_export(data)
+    if source_export:
+        if source_export.get("ok") is False:
+            lines.append(f"Source Bundle: failed ({source_export.get('error') or 'unknown error'})")
+        elif source_export.get("path"):
+            lines.append(f"Source Bundle: {source_export.get('path')}")
     review_export = _review_bundle_export(data)
     if review_export:
         if review_export.get("ok") is False:

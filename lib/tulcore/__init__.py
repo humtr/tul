@@ -1,1 +1,1 @@
-__version__ = "0.8.26-stage7-source-spec-gates"
+__version__ = "0.8.27-stage7-source-export"

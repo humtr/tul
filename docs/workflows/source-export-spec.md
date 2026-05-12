@@ -1,8 +1,8 @@
 # Source export specification
 
-Status: accepted pre-implementation specification. This document does not mean `tul export source` exists.
+Status: accepted and implemented as an explicit Orange-class command after the Stage 7 source-export implementation package closes.
 
-`tul export source` remains a future Orange-class runtime/export change until an implementation package wires the command and closes with release-gate evidence.
+`tul export source` exists as a manual command. It remains separate from `tul update`, `tul verify`, and `tul export review`; automatic source export is still Red class and unapproved.
 
 ## Purpose
 
@@ -26,9 +26,9 @@ A source export must not:
 - run implicitly inside `tul update` without a later explicit automation decision;
 - include `.git`, caches, bytecode, dependency directories, previous zip files, backup files, or transient work roots.
 
-## Proposed command
+## Implemented command
 
-Future command shape:
+Command shape:
 
 ```text
 tul export source [project]
@@ -36,15 +36,15 @@ tul export source [project]
 
 Native context rules should match other guarded project commands. No-arg use is allowed only when project inference is unambiguous.
 
-Optional future flags may be considered after the default is stable:
+Implemented flags:
 
 ```text
---output PATH
+--out PATH
 --no-state-update
---include-untracked   # default should be false unless separately accepted
+--json
 ```
 
-The first implementation should keep flags minimal unless needed for tests or recovery.
+The first implementation intentionally does not include untracked files. It exports tracked repository files only, so package generation is tied to committed source context.
 
 ## Output path
 
@@ -105,7 +105,7 @@ Required fields:
 }
 ```
 
-The implementation may write the zip twice or patch the manifest after hashing, but the final artifact must have consistent sha256/bytes evidence available to the runtime state/report/handoff. If storing the zip's own sha256 inside the zip is awkward, the manifest may store `payload_sha256` while state records final zip sha256. The implementation package must document the chosen convention.
+The implementation stores `payload_sha256` in `source-manifest.json` and records the final archive SHA256 in command output and state metadata. The final zip cannot self-embed its own final SHA256 without changing that SHA256, so `source-manifest.json` sets `sha256` to null and `final_zip_sha256_recorded_externally` to true.
 
 ## Default exclusions
 
@@ -164,7 +164,7 @@ Source export validation must additionally prove:
 
 ## State and handoff behavior
 
-A successful explicit source export may be recorded in state/report/handoff, but it must use source-export terminology. It must not appear as:
+A successful explicit source export may be recorded in state and surfaced by `tul state` using source-export terminology. It must not appear as:
 
 ```text
 repo zip
@@ -177,4 +177,4 @@ A failed source export must not retroactively fail a successful release gate unl
 
 ## Automation boundary
 
-The first implementation should be explicit-only. Automatic post-update source export is Red class and requires a later decision because it changes default update behavior and may increase runtime cost, storage use, and artifact confusion.
+The first implementation is explicit-only. Automatic post-update source export remains Red class and requires a later decision because it changes default update behavior and may increase runtime cost, storage use, and artifact confusion.

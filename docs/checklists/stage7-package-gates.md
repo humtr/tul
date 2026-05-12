@@ -73,13 +73,13 @@ Required checks:
 - [ ] rollback and recovery are concrete;
 - [ ] no unrelated work is included.
 
-## Source-export implementation preflight
+## Source-export implementation gate
 
-Before generating an Orange `tul export source` implementation package, confirm:
+For an Orange `tul export source` implementation package, confirm:
 
-- [ ] `docs/workflows/source-export-spec.md` exists;
-- [ ] `docs/workflows/source-context-and-export.md` still says the command is not implemented until implementation closes;
-- [ ] the package does not also change unrelated planning status beyond implementation bookkeeping;
-- [ ] default output path is explicit;
-- [ ] root-layout and exclusion tests are included;
-- [ ] state/report/handoff wording uses source-export terminology only.
+- [x] `docs/workflows/source-export-spec.md` exists;
+- [x] `docs/workflows/source-context-and-export.md` distinguishes implemented explicit source export from manual source context;
+- [x] the package does not also change unrelated planning status beyond implementation bookkeeping;
+- [x] default output path is explicit;
+- [x] root-layout and exclusion checks are included;
+- [x] state wording uses source-export terminology only.

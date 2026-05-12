@@ -79,11 +79,11 @@ Serialize when two candidate bundles change the meaning or production of:
 
 - `tul-vf-latest.md`;
 - `tul-review-latest.zip`;
-- future `tul-source-latest.zip` after implementation;
+- `tul-source-latest.zip` from explicit `tul export source`;
 - state/report/handoff artifact evidence;
 - backup or rollback authority.
 
-A GitHub-generated `tul-main.zip` may be manual source context, but do not treat it as backup or as a tul-proven source export.
+A GitHub-generated `tul-main.zip` may be manual source context, but do not treat it as backup or as a tul-proven source export. Prefer `tul export source` when explicit tul provenance is needed.
 
 ## Required proposal shape
 

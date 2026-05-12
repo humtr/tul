@@ -143,3 +143,7 @@ When reviewing a Stage 7 planning package, confirm that Stage 6 is closed by the
 A source-export specification package is successful only if it keeps `tul export source` non-runnable while defining the future command contract, output path, root layout, manifest/provenance requirements, exclusion rules, and validation gate. Runtime implementation remains a later Orange package.
 
 Use `docs/checklists/stage7-package-gates.md` to classify subsequent Green/Yellow/Orange/Red bundles.
+
+## Source export note
+
+Use `tul export source` only when full source context is needed for package generation or code-level diagnosis. It is explicit/manual and separate from `tul export review`, `tul verify`, and `tul update`.

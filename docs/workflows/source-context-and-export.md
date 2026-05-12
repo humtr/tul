@@ -1,28 +1,28 @@
-# Source context and future source export
+# Source context and source export
 
-This document prevents one specific ambiguity: source context can be available before tul has an implemented source-export command.
+This document prevents one specific ambiguity: source context can come from several places, but only tul-generated source export has tul provenance.
 
 ## Current rule
 
-`tul export source` is not implemented in the current CLI. Do not ask the user to run it until a source-export implementation package has been applied and verified.
+`tul export source` is implemented as an explicit command after the Stage 7 source-export implementation package closes. It is not automatic and does not run inside `tul update`, `tul verify`, or `tul export review`.
 
-Current package-generation sessions may still use source context from:
+Current package-generation sessions may use source context from:
 
+- `tul export source`, which writes a tul-proven source bundle;
 - a GitHub-generated source archive such as `tul-main.zip`;
 - a fresh clone at the verified commit;
 - a manually created source zip whose generation command, root layout, and intended commit are known.
 
-These are source-context inputs, not tul runtime artifacts.
+Only the first is a tul-proven explicit source export. The others remain manual source context.
 
-## Required checks before using manual source context
+## Current commands
 
-Before treating a manual archive as package-generation input, check:
-
-1. the runtime baseline from `tul-vf-latest.md`;
-2. the archive root layout, for example whether it has a wrapper directory such as `tul-main/`;
-3. whether the archive plausibly corresponds to the verified HEAD;
-4. whether the files needed for the package are present;
-5. whether the source context is being used only for reading/writing package payloads, not as backup evidence.
+```bash
+tul export review
+tul export source
+tul export source --json
+tul export source --out /path/to/tul-source-latest.zip
+```
 
 ## Current source-context vocabulary
 
@@ -30,20 +30,26 @@ Before treating a manual archive as package-generation input, check:
 |---|---|
 | `tul-main.zip` | Usually a GitHub-generated archive. Valid as manual source context when root layout and intended commit are understood. |
 | `tul-review-latest.zip` | Implemented review/diff transport from `tul export review`. Not full source context. |
-| `tul-source-latest.zip` | Reserved future latest source-export path. Not currently produced by tul. |
-| `tul export source` | Planned future command. Not currently implemented. |
+| `tul-source-latest.zip` | Implemented explicit full source-context bundle from `tul export source`. |
+| `tul export source` | Explicit source export command. Not automatic. |
 
-## Accepted source-export spec boundary
+## Required checks before using source context
 
-The pre-implementation source-export contract lives in `docs/workflows/source-export-spec.md`. That document is a specification and acceptance gate, not evidence that the command exists.
+Before treating any source archive as package-generation input, check:
 
-Until an implementation package closes, these statements remain true:
+1. the runtime baseline from `tul-vf-latest.md`;
+2. the archive root layout, for example whether it has a wrapper directory such as `tul-main/`;
+3. whether the archive corresponds to the verified HEAD;
+4. whether the files needed for the package are present;
+5. whether the source context is being used only for reading/writing package payloads, not as backup evidence.
 
-- `tul export review` is implemented.
-- `tul export source` is not implemented.
-- `tul-source-latest.zip` is a reserved future output path.
-- GitHub-generated source archives may be source context but not tul-proven source exports.
+For a tul-generated source export, also check:
+
+- `source-manifest.json`;
+- `source-file-list.txt`;
+- `source-file-sha256s.txt`;
+- command output or state metadata for final archive SHA256, payload SHA256, byte count, source file count, root layout, rewritten, and verified-after-replace evidence.
 
 ## Boundary
 
-Do not implement source export inside a terminology-only, spec-only, gate-only, or planning-only package. Source export changes runtime/export behavior and is therefore Orange class. It must serialize after the terminology/spec baseline closes.
+Source export is explicit-only. Automatic post-update source export remains Red class and requires a later decision because it changes default update behavior, storage use, and artifact cadence.

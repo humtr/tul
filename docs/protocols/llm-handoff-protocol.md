@@ -90,3 +90,7 @@ For a successful update review, `tul-vf-latest.md` is usually enough. Ask for `t
 ## Stage 7 package gates
 
 For Stage 7 package generation, read `docs/checklists/stage7-package-gates.md` and declare the package class before writing files. A future source-export implementation must also conform to `docs/workflows/source-export-spec.md`; until that implementation closes, `tul export source` is not a runnable command.
+
+## Source export note
+
+Use `tul export source` only when full source context is needed for package generation or code-level diagnosis. It is explicit/manual and separate from `tul export review`, `tul verify`, and `tul update`.

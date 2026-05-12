@@ -361,3 +361,13 @@ Context: After terminology audit closed, the remaining Green/Yellow work was to 
 Decision: Accept `docs/workflows/source-export-spec.md` as the pre-implementation source-export contract and `docs/checklists/stage7-package-gates.md` as the copy-ready Stage 7 package gate checklist. Source-export implementation remains Orange class and must serialize after this spec/gate baseline. Automatic post-update source export remains Red class and unapproved.
 
 Consequences: Future source-export packages have less room to blur source context, source export, review bundle, and backup authority. Fresh LLM sessions must not ask the user to run `tul export source` until an implementation package closes with release-gate evidence.
+
+## ADR-029 — Explicit source export is implemented as a manual command
+
+Status: accepted
+
+Context: Stage 7 terminology and source-export gate packages separated source context, review bundles, runtime baseline, future source export, and backup authority. The next bounded implementation should reduce GitHub ZIP ambiguity without changing the default update pipeline.
+
+Decision: Implement `tul export source` as an explicit manual command. It writes a wrapper-free source archive, includes `source-manifest.json`, `source-file-list.txt`, and `source-file-sha256s.txt`, verifies the archive after replacement, and records source-export metadata in the latest state when available.
+
+Consequences: `tul export source` is now a runnable explicit command after this package closes. It is not automatic, not review evidence, not release-gate evidence, and not backup or rollback authority. Automatic post-update source export remains Red class and requires a later decision.

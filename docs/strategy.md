@@ -51,3 +51,7 @@ The next pressure cluster is **Stage 7 source-export specification and package g
 - keep Green/Yellow/Orange/Red gates copy-ready and tied to sequential release-gated application.
 
 After this source-spec/gate baseline, implementation work can proceed in smaller packages: explicit source-export implementation, docs drift checks, review/source provenance hardening, Windows parity, or cleanup expansion.
+
+## Stage 7 source-export implementation strategy
+
+The implementation path is explicit-only. It reduces manual GitHub ZIP ambiguity without changing default update cadence. This keeps source context available when package generation needs full repo contents while preserving the canonical recovery authority: Git remote, commit hash, and rollback state.

@@ -115,3 +115,21 @@ Stage 7 does not mean unrestricted parallel implementation. It means several can
 - Reduce human bridge work by making runtime evidence, review transport, and source context explicit and role-separated.
 - Keep user approval, rollback authority, and destructive-action boundaries intact.
 - Apply the tul harness to future target repositories only after the self-host loop demonstrates stable low-friction operation.
+
+## Stage 7 Orange implementation: explicit source export
+
+Status: current implementation package.
+
+Scope:
+
+- implement manual `tul export source`;
+- keep `tul export review` unchanged;
+- keep `tul update` default behavior unchanged;
+- keep automatic source export Red class and unapproved.
+
+Acceptance:
+
+- source zip has repo files at zip root;
+- required root entries and manifest entries exist;
+- excluded directories and suffixes are absent;
+- source export output and state use source-export terminology only.

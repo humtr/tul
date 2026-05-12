@@ -236,3 +236,12 @@ Manifest changes should be justified in `docs/decisions.md`.
 - [x] Latest verify markdown includes state/handoff snapshots.
 - [x] Explicit review export creates a compact transport bundle when needed.
 - [ ] Explicit source export remains future implementation work, is not currently runnable, and must not be treated as backup. Its pre-implementation spec is documented before implementation.
+
+## Stage 7 source-export implementation manifest
+
+- [x] Source export spec accepted before implementation.
+- [x] Implement `tul export source` as explicit/manual command.
+- [x] Add source manifest, file list, and file-hash entries.
+- [x] Add root-layout and exclusion verification.
+- [x] Record source export metadata in latest state when available.
+- [ ] Keep automatic source export pending a separate Red-class decision.

@@ -51,8 +51,8 @@ Serialize packages when they touch any of the same ownership domains:
 |---|---|---|---|
 | Stage 7 planning consolidation | Yellow | Closed | Verified at `79d27fb...` |
 | Terminology audit | Yellow | Closed | Verified at `7d7b27...` |
-| Source export spec and gates | Yellow | Current | Before any source-export implementation |
-| Explicit `tul export source` implementation | Orange | Future | After spec/gates baseline closes |
+| Source export spec and gates | Yellow | Closed | Accepted before source-export implementation |
+| Explicit `tul export source` implementation | Orange | Current | Adds manual source export; automatic export remains out of scope |
 | Docs drift checker | Orange | Future | After planning docs stabilize |
 | Review export automation | Red | Future | Separate decision only |
 | Archive policy expansion | Red | Future | Separate dry-run evidence first |
@@ -99,7 +99,7 @@ The resulting latest artifact must show:
 
 ## Source-export boundary
 
-`docs/workflows/source-export-spec.md` is a pre-implementation contract. It does not make `tul export source` runnable. The implementation remains Orange class and must serialize after the source-spec/gates package closes.
+`docs/workflows/source-export-spec.md` is the implemented command contract after the Orange source-export package closes. `tul export source` is runnable as a manual command; automatic source export remains Red class and must serialize into a later decision package.
 
 ## Stop conditions
 
