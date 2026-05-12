@@ -1,5 +1,14 @@
 # Commands
 
+Native context:
+
+```bash
+tul use tul
+tul use tul --default
+tul current
+tul projects
+```
+
 Primary loop:
 
 ```bash
@@ -44,4 +53,4 @@ tul rollback tul
 tul import tul -l
 ```
 
-Split commands are recovery/debug tools. The default workflow remains `tul update <project> -l`.
+Split commands are recovery/debug tools. The default workflow remains `tul update <project> -l`. Native no-arg update is not implemented yet; use `tul use` only to store the active project context until the later guarded no-arg bundles land.

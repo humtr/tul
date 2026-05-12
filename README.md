@@ -62,6 +62,26 @@ The same harness should be portable to future target repositories such as `humtr
 - Environment paths and aliases belong in global config.
 - LLM packages should use `tul-package.yml + files/ + README.md`.
 
+
+## Native context
+
+Stage 6 introduces native project context in bounded steps. The first step stores the active project without changing update semantics:
+
+```bash
+tul use tul
+tul current
+tul projects
+```
+
+For now, mutating commands still require an explicit target:
+
+```bash
+tul update tul -l
+tul verify tul --fresh-clone
+```
+
+Later bundles will add safe no-arg read-only commands, `tul verify fresh`, and finally guarded no-arg update.
+
 ## Default command model
 
 ## Launcher / install sync

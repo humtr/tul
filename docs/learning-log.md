@@ -113,3 +113,13 @@ Impact: Upload-based review reduces copy/paste, but poor artifact names can rein
 Reflected in: `docs/workflows/verify.md`, `docs/status/current.md`, and `lib/tulcore/verify.py`.
 
 Follow-up: Prefer `tul-vf-f-<yymmdd>-<hhmmss>-<head>.md` for timestamped fresh verification artifacts and `tul-vf-latest.md` for stable latest review.
+
+## Stage 6 — native context should be incremental
+
+Observation: no-arg commands reduce bridge work, but mutating commands can target the wrong repo if active project, current directory, and package manifest disagree.
+
+Impact: native context must be introduced in steps: store active project first, then add read-only inference, then guarded mutating inference, then package mismatch guidance.
+
+Reflected in: `docs/roadmap.md`, `docs/status/current.md`, `docs/checklists/loop-runtime.md`.
+
+Follow-up: implement `tul_native_context_v1b` only after `tul use` and `tul current` are verified.

@@ -73,13 +73,22 @@ Scope:
 
 ### Bundle 2 — Native context v1a
 
+Package: `tul_native_context_v1a`
+
 Scope:
 
 - `tul use <project>`.
 - `tul current`.
-- active project context file.
-- `default_project` support.
-- projects output shows active/default.
+- active project context file at `~/.config/tul/context.json` or next to `$TUL_CONFIG`.
+- `default_project` support through `tul use <project> --default`.
+- `tul projects` output shows active/default markers.
+- `tul doctor` shows runtime context.
+
+Explicitly out of scope until later bundles:
+
+- no-arg `tul update`;
+- no-arg read-only commands;
+- package mismatch guidance.
 
 ### Bundle 3 — Native context v1b
 

@@ -21,7 +21,7 @@ The project is moving from sequential micro-patches into bundled, capability-ori
 | G. Launcher / install | Medium-high | install sync, doctor launcher diagnostics | Windows shim verification and docs |
 | H. Cross-platform parity | Medium-low | package format and fallback scripts exist | repeated Windows tests, PowerShell path behavior |
 | I. Planning harness | New | manifest v2 concept defined | repo-resident harness insertion and use |
-| J. Native project context | Not started | concept designed | `tul use`, `tul current`, no-arg safe inference |
+| J. Native project context | Started | `tul use`, `tul current`, context storage | no-arg read-only commands, then guarded mutating commands |
 | K. Portable project harness | Not started | templates planned | project-harness templates for future `/ai` or other repos |
 
 ## Strategy rules

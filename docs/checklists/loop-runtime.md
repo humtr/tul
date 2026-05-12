@@ -56,3 +56,13 @@ Invariants:
 - [ ] The short timestamped name exposes project, mode, timestamp, and commit hash near the beginning.
 - [ ] `tul-vf-latest.md` is updated for latest-run upload.
 - [ ] Legacy `tul-verify-latest.md` is still written during the compatibility window.
+
+
+## Native context checkpoint
+
+- [ ] `tul use tul` writes an active project context file.
+- [ ] `tul current` reports active/default/current-directory context.
+- [ ] `tul projects` marks active/default projects.
+- [ ] `tul doctor tul` reports runtime context.
+- [ ] `tul use tul --default` safely updates global `default_project`.
+- [ ] No-arg `tul update` is still unavailable until guarded mutating-command inference is implemented.

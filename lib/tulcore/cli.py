@@ -24,6 +24,7 @@ from .authoring import (
 )
 from .checks import run_checks
 from .config import config_path, load_global_config, platform_paths, resolve_project
+from .context import active_project, context_path, format_current_context, set_active_project, set_default_project
 from .errors import TulError
 from .gitops import (
     changed_files,
@@ -108,6 +109,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("instructions", help="print the repo-resident LLM project instructions")
     p.add_argument("target", nargs="?", help="optional project/path whose repo contains templates/project-instructions.md")
+
+    p = sub.add_parser("use", help="set the active project for later native/default commands")
+    p.add_argument("target", help="configured project alias or repo path to use")
+    p.add_argument("--default", action="store_true", help="also set config.default_project to this project")
+
+    sub.add_parser("current", help="show active/default/current-directory project context")
 
     p = sub.add_parser("sweep", help="move repo-local tul backups out of the repo")
     p.add_argument("target")
@@ -337,6 +344,30 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
         if getattr(args, "target", None):
             repo = resolve_project(args.target).repo_path
         print(read_repo_text("templates/project-instructions.md", repo=repo))
+        return 0
+
+    if command == "use":
+        ctx = resolve_project(args.target)
+        context_file = set_active_project(ctx.project_id, repo_path=ctx.repo_path, set_by=f"tul use {args.target}")
+        default_note = "unchanged"
+        if getattr(args, "default", False):
+            set_default_project(ctx.project_id)
+            default_note = ctx.project_id
+        print("# tul use")
+        print(f"Active project: {ctx.project_id}")
+        print(f"Repo: {ctx.repo_path}")
+        print(f"Branch: {current_branch(ctx.repo_path)}")
+        print(f"Context: {context_file}")
+        print(f"Default project: {default_note}")
+        print("Next:")
+        print("- tul current")
+        print(f"- tul status {ctx.project_id}")
+        print(f"- tul update {ctx.project_id} -l")
+        print(f"- tul verify {ctx.project_id} --fresh-clone")
+        return 0
+
+    if command == "current":
+        print(format_current_context())
         return 0
 
     if command == "sweep":
@@ -575,9 +606,20 @@ def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = 
 
     if command == "projects":
         config, path = load_global_config()
+        active = active_project()
+        default = config.get("default_project")
         print(f"Config: {path}")
+        print(f"Context: {context_path()}")
+        print(f"active_project: {active or '(none)'}")
+        print(f"default_project: {default or '(none)'}")
         for key, value in (config.get("projects") or {}).items():
-            print(f"{key}: {value.get('path') if isinstance(value, dict) else value}")
+            markers = []
+            if key == active:
+                markers.append("active")
+            if key == default:
+                markers.append("default")
+            marker = (" [" + ", ".join(markers) + "]") if markers else ""
+            print(f"{key}{marker}: {value.get('path') if isinstance(value, dict) else value}")
         return 0
 
     if command == "import":
@@ -969,6 +1011,10 @@ def print_doctor(target: str | None = None) -> None:
     for key, value in (config.get("projects") or {}).items():
         print(f"- {key}: {value.get('path') if isinstance(value, dict) else value}")
     ctx = None
+    print("runtime context:")
+    print(f"- context path: {context_path()}")
+    print(f"- active_project: {active_project() or '(none)'}")
+    print(f"- default_project: {config.get('default_project') or '(none)'}")
     if target:
         ctx = resolve_project(target)
         print("target:")

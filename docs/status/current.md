@@ -1,8 +1,8 @@
 # Current status
 
-Latest known version after this package: `0.7.6-verify-artifact-names`.
+Latest known version after this package: `0.8.0-native-context-a`.
 
-Current mode: Stage 6 baseline — planning harness is inserted and verify output is artifact-backed.
+Current mode: Stage 6 native context step 1 — active project context is stored, but no-arg update is still deferred.
 
 ## Current verified loop
 
@@ -33,20 +33,33 @@ If only the latest run matters, upload:
 
 Compatibility aliases such as `tul-verify-latest.md` are still written, but the shorter `tul-vf-*` names are preferred.
 
-## Current next package
+## Current package
 
 `tul_native_context_v1a`
 
-Expected scope:
+Implemented scope:
 
 - `tul use <project>`.
 - `tul current`.
 - active project context storage.
-- default project support.
+- optional default project support through `tul use <project> --default`.
+- `tul projects` active/default display.
+- `tul doctor` runtime context display.
 
-Native no-arg update and package mismatch guidance should be implemented in later sub-steps after context storage is stable.
+## Next package
+
+`tul_native_context_v1b`
+
+Expected scope:
+
+- no-arg read-only commands;
+- `tul verify fresh` shorthand;
+- current-directory project inference;
+- read-only conflict banner.
+
+Native no-arg update and package mismatch guidance should remain later sub-steps after read-only inference is stable.
 
 ## Current risk notes
 
-- Native context is not implemented yet and must not be documented as complete.
+- Native context is only partially implemented. `tul use` and `tul current` exist; no-arg update is still not implemented.
 - Stage X target onboarding remains deferred.
