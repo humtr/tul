@@ -2,14 +2,18 @@
 
 `tul` is the Terminal Update Loop runtime for applying LLM-generated packages under user control.
 
-## Invariants
+## Durable invariants
 
 - User approval remains required before applying generated packages.
 - Normal package application must not use `git add -A` or `git add .`.
 - Force push is forbidden in normal operation.
+- Push is included by default after successful validation and commit.
+- `--no-push` and `--no-commit` are recovery/debug exceptions, not the normal path.
 - Project policy belongs in `.tul.yml`.
-- Environment paths belong in global config.
-- Zip artifacts are not backup authority. Recovery authority is Git remote + commit hash + rollback/recovery state.
+- Environment paths and aliases belong in global config.
+- Zip artifacts are transport artifacts, not backup authority.
+- Recovery authority is Git remote + commit hash + rollback/recovery state.
+- Parallel planning is allowed; mutating package application is sequential and gated.
 
 ## Canonical command surface
 
@@ -25,17 +29,17 @@ tul recover
 tul setup
 ```
 
-## Command meanings
+Command ownership:
 
-- `show`: read-only state and diagnostic output.
+- `show`: read-only state, history, handoff, exports, and diagnostic output.
 - `package`: package discovery, inspection, validation, and authoring.
-- `update`: apply package, run safety checks, commit, push, and remote-HEAD check.
-- `verify`: quick/local verification by default; `fresh` writes uploadable verify artifacts.
-- `export`: file creation only; no status-only subcommands live here.
-- `run`: the normal full Terminal Update Loop.
-- `clean`: cleanup planning by default.
-- `recover`: recovery planning by default.
-- `setup`: setup status by default.
+- `update`: apply one package, run safety checks, commit, push, and remote-HEAD check.
+- `verify`: quick/local verification by default; `verify fresh` writes uploadable verification artifacts.
+- `export`: file creation only; status-only behavior belongs under `show`.
+- `run`: normal full Terminal Update Loop.
+- `clean`: cleanup planning by default; guarded mutation requires explicit action.
+- `recover`: recovery planning by default; rollback requires explicit action.
+- `setup`: setup status by default; setup subcommands perform setup tasks.
 
 ## Normal user loop
 
@@ -43,9 +47,9 @@ tul setup
 tul run
 ```
 
-`run` is responsible for the whole user-facing loop. If a compatible package is available, it updates first. If no compatible package is available, it refreshes source/review/verify artifacts for the current HEAD.
+`run` owns the normal user-facing loop. If a compatible package is available, it updates first. If no compatible package is available, it refreshes source/review/verify artifacts for the current HEAD.
 
-## Stepwise loop
+## Stepwise diagnostic loop
 
 ```bash
 tul package
@@ -55,30 +59,53 @@ tul verify fresh
 tul show
 ```
 
-Use the stepwise loop only for debugging, review, or user-directed decomposition.
+Use the stepwise loop only for diagnostics, review, recovery, or explicit user-directed decomposition.
 
-## Artifact model
+## Artifact authority
 
-| Artifact | Role |
+| Artifact | Authority |
 |---|---|
-| Git remote + commit hash | canonical source/recovery authority |
-| `tul-vf-latest.md` | runtime verification evidence |
-| `tul-source-latest.zip` | source-context transport artifact |
+| Git remote + commit hash | source and recovery authority |
+| `tul-vf-latest.md` | latest verification evidence |
+| `tul-source-latest.zip` | full source transport artifact |
 | `tul-review-latest.zip` | changed-file review transport artifact |
-| state/report/handoff files | local runtime records |
+| local state/report/handoff files | runtime records, not backup authority |
 
-## Stage 7 closure
+Source/review bundles are current only when `tul show exports` reports them current for the active HEAD.
 
-Stage 7 closes after these capabilities are in place and verified:
+## Package ownership
 
-- explicit source export;
-- explicit review export;
-- export freshness diagnostics under `tul show exports`;
-- automatic source/review refresh inside the normal loop;
-- compact command surface without legacy top-level aliases;
-- `tul run` as the single normal user loop;
-- command-surface smoke checks in `tul verify fresh`;
-- active-doc command-residue cleanup;
-- conservative auxiliary commands: `clean`, `recover`, and `setup`.
+The package contract is owned by `docs/package-spec.md`.
 
-The verified pre-closure baseline is `e965194ee8573b4a9938c87fab42b058ecf020b2`. The closure checkpoint records completion and moves planning to Stage 8.
+Minimum package structure:
+
+```text
+<package>.zip
+  tul-package.yml
+  README.md
+  files/
+```
+
+Normal packages use `apply.mode: copy`. Every destination must be covered by `commit.files`; this preserves explicit staging and prevents broad package writes from becoming broad git staging.
+
+## Documentation ownership
+
+Active durable docs are:
+
+```text
+README.md
+docs/status/current.md
+docs/manifest.md
+docs/roadmap.md
+docs/commands.md
+docs/package-spec.md
+```
+
+Rationale and lessons are retained in:
+
+```text
+docs/decisions.md
+docs/learning-log.md
+```
+
+Compatibility docs under `docs/llm`, `docs/protocols`, selected `docs/checklists`, and selected `docs/workflows` may remain temporarily while runtime handoff/verify pointers still reference them. They are not independent sources of truth once merged into the active docs.

@@ -1,31 +1,13 @@
-# LLM entrypoint
+# merged compatibility note
 
-Start with the runtime evidence, then the durable repo docs.
+This document is retained temporarily for runtime read-next / verify compatibility. It is not an independent source of truth.
 
-## Read first
+Active ownership has moved to:
 
-1. `tul-vf-latest.md` uploaded by the user.
-2. `README.md`.
-3. `docs/status/current.md`.
-4. `docs/roadmap.md`.
-5. `docs/manifest.md`.
-6. `docs/llm/commands.md`.
-7. `docs/protocols/command-grammar.md`.
+- `README.md`
+- `docs/status/current.md`
+- `docs/manifest.md`
+- `docs/roadmap.md`
+- `docs/commands.md`
 
-When producing a code package or auditing command behavior, also inspect `tul-source-latest.zip`.
-
-## Runtime facts
-
-Treat `tul-vf-latest.md`, `tul show`, `tul show handoff`, and `tul show exports` snapshots as runtime facts.
-
-Treat repo docs as durable guidance, not proof that a command was actually run.
-
-## Normal user command
-
-For normal operation, recommend:
-
-```bash
-tul run
-```
-
-Only split the loop when the user asks for inspection or when diagnosing a failure.
+Do not extend this file. Update the active owner document instead. Remove this compatibility file after runtime handoff and verify pointers are narrowed.

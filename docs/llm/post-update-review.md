@@ -1,33 +1,10 @@
-# post-run review
+# merged compatibility note
 
-After a successful normal loop, the user should upload `tul-vf-latest.md`. For code work, also upload `tul-source-latest.zip` and `tul-review-latest.zip`.
+This document is retained temporarily for runtime read-next / verify compatibility. It is not an independent source of truth.
 
-## Expected normal command
+Active ownership has moved to:
 
-```bash
-tul run
-```
+- `templates/llm-handoff-prompt.md`
+- `README.md`
 
-`run` should leave uploadable verification and transport artifacts current.
-
-## Review order
-
-1. Confirm HEAD and Remote HEAD match.
-2. Confirm release gate PASS and fresh clone PASS.
-3. Check `tul show exports` snapshot for current source/review bundles.
-4. Check docs drift warnings.
-5. Decide whether the next step is report-only audit, document cleanup, or a code package.
-
-## Package generation
-
-When generating a package, use:
-
-```text
-tul-package.yml
-README.md
-files/
-apply.sh
-apply.ps1
-```
-
-Do not use broad staging or force push. Normal user application is `tul run`.
+Do not extend this file. Update the active owner document instead. Remove this compatibility file after runtime handoff and verify pointers are narrowed.

@@ -1,3 +1,47 @@
+# decisions
+
+## Stage 8 — compact active docs before adding new maps
+
+Decision: Do not add another canonical map document for the documentation tree. Compact ownership into the existing active docs instead.
+
+Accepted active ownership:
+
+```text
+README.md
+docs/status/current.md
+docs/manifest.md
+docs/roadmap.md
+docs/commands.md
+docs/package-spec.md
+docs/decisions.md
+docs/learning-log.md
+```
+
+LLM read-next should converge to:
+
+```text
+tul-vf-latest.md
+README.md
+docs/status/current.md
+docs/manifest.md
+docs/roadmap.md
+docs/commands.md
+```
+
+Rationale: Adding a new map would preserve or worsen duplicate ownership. The safer path is to move stable rules into the owning documents, preserve rationale here, and reduce runtime read-next pointers in a follow-up package.
+
+Consequence: Runtime-referenced compatibility docs may remain temporarily until `tul show handoff` and verify required-doc pointers are narrowed.
+
+## Stage 8 — deletion must respect package contract
+
+Decision: Phase 1 document compaction should not hide deletions inside helper scripts.
+
+Rationale: The safe default package path uses `apply.mode: copy`; it does not own delete semantics. Deleting documents should be done only after pointer compaction or through an explicit deletion-capable process.
+
+Consequence: Phase 1 may replace runtime-referenced docs with compatibility notes and leave deletion for Phase 2.
+
+---
+
 # Decisions
 
 This file records accepted planning and design decisions. It is not a full change log; it explains why durable project rules changed.

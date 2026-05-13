@@ -2,13 +2,13 @@
 
 `tul` means **Terminal Update Loop**.
 
-`tul` is a local, human-controlled runtime for safely moving AI-generated work through this loop:
+`tul` is a local, human-controlled runtime for moving LLM-generated work through a bounded loop:
 
 ```text
-LLM / assistant -> user -> terminal environment -> local repo/runtime -> commit + push -> verification/export -> LLM review
+LLM / assistant -> user -> terminal -> local repo/runtime -> commit + push -> verification/export -> LLM review
 ```
 
-The current operational target is **`humtr/tul`** itself. Future target repositories remain deferred until this self-hosting loop is stable enough to reduce bridge work rather than multiply it.
+The current operational target is **`humtr/tul`**. Future target repositories remain deferred until this self-hosting loop reliably reduces bridge work.
 
 ## Normal use
 
@@ -20,7 +20,7 @@ cd ~/prj/tul
 tul run
 ```
 
-`tul run` performs the full user-facing loop:
+`tul run` is the default user loop:
 
 ```text
 package found:
@@ -38,7 +38,7 @@ A successful run prepares the normal upload artifacts:
 /sdcard/termux/import/tul/tul-review-latest.zip
 ```
 
-Use `tul package` only when you want to inspect the newest compatible package before running the loop.
+Use split commands only for inspection, diagnostics, recovery, or explicit user-directed decomposition.
 
 ## Canonical command surface
 
@@ -54,55 +54,32 @@ tul recover
 tul setup
 ```
 
-There is no legacy alias layer in the canonical Stage 7 command surface.
-
 Command boundaries:
 
-- `tul show` is read-only state and diagnostic output. Use `tul show exports` for source/review freshness.
+- `tul show` is read-only state and diagnostic output. Use `tul show exports` to inspect source/review freshness.
 - `tul package` discovers, inspects, validates, and authors packages. With no arguments, it shows the newest compatible package candidate.
-- `tul update` applies a package, runs safety checks, commits, pushes, and verifies remote HEAD.
-- `tul verify` is quick/local and stdout-first. It does not rewrite latest verify artifacts by default.
-- `tul verify fresh` performs fresh clone verification and writes `tul-vf-latest.md/json`.
-- `tul export` creates source and review transport artifacts.
+- `tul update` applies one compatible package, runs safety checks, commits, pushes, and verifies remote HEAD.
+- `tul verify` is quick/local and stdout-first. `tul verify fresh` performs fresh clone verification and writes `tul-vf-latest.md/json`.
+- `tul export` creates file artifacts only. Status belongs under `tul show`, not `tul export`.
 - `tul run` is the full Terminal Update Loop.
-- `tul clean` is plan-only by default; `tul clean ... run` performs guarded moves.
-- `tul recover` prints recovery plans by default and does not silently mutate the repo.
+- `tul clean` is plan-only by default; guarded mutation requires an explicit `run` subcommand.
+- `tul recover` prints recovery plans by default; rollback requires an explicit subcommand.
 - `tul setup` reports setup status by default; setup subcommands perform setup tasks.
 
-Auxiliary command defaults are intentionally conservative:
+## LLM read-next
+
+When reviewing the repo from uploaded artifacts, use this order:
 
 ```text
-tul clean    = plan-only cleanup summary
-tul recover  = recovery plan only; no silent rollback
-tul setup    = setup status only
+1. tul-vf-latest.md
+2. README.md
+3. docs/status/current.md
+4. docs/manifest.md
+5. docs/roadmap.md
+6. docs/commands.md
 ```
 
-Use explicit subcommands for bounded action, for example `tul clean states run`, `tul recover rollback`, or `tul setup use <project>`.
-
-## Stepwise loop
-
-Use this only for diagnostics or when the user explicitly wants to split the loop:
-
-```bash
-tul package
-tul update
-tul export
-tul verify fresh
-tul show
-```
-
-## LLM entrypoint
-
-If you are an LLM, coding agent, or a new session reviewing this repo, start here:
-
-1. Read `tul-vf-latest.md` when the user uploads it.
-2. Read [`docs/llm/entrypoint.md`](docs/llm/entrypoint.md).
-3. Read [`docs/status/current.md`](docs/status/current.md).
-4. Read [`docs/roadmap.md`](docs/roadmap.md).
-5. Read [`docs/manifest.md`](docs/manifest.md).
-6. Read [`docs/llm/commands.md`](docs/llm/commands.md).
-7. Read [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md).
-8. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md) before declaring a bundle safe.
+Read `docs/package-spec.md` only when producing or reviewing a package. Read `docs/decisions.md` or `docs/learning-log.md` only when design rationale or lessons are needed.
 
 Do not rely on prior chat context when repo documents and runtime artifacts answer the question. Runtime facts live in `tul-vf-latest.md` and `tul show` snapshots, not in README prose.
 
@@ -116,7 +93,7 @@ Do not rely on prior chat context when repo documents and runtime artifacts answ
 | `tul-review-latest.zip` | changed-file review transport artifact |
 | state/report/handoff files | local runtime records |
 
-Zip artifacts are not backup authority. Recovery authority is Git remote plus commit hashes and recovery state.
+Zip artifacts are transport artifacts, not backup authority. Recovery authority is Git remote plus commit hashes and recovery state.
 
 Use `tul show exports` to inspect source/review freshness:
 
@@ -126,16 +103,16 @@ tul show exports
 
 ## Package contract
 
-LLM-generated packages must converge on one cross-platform zip. The minimum package contract is `tul-package.yml + files/ + README.md`; normal cross-platform packages also include `apply.sh` and `apply.ps1`:
+LLM-generated packages must converge on one cross-platform archive. The package contract is:
 
 ```text
 <package>.zip
   tul-package.yml
   README.md
   files/
-  apply.sh
-  apply.ps1
 ```
+
+Normal cross-platform packages may also include `apply.sh` and `apply.ps1` as human-readable helpers, but the safe runtime path is package metadata with `apply.mode: copy`.
 
 `tul-package.yml` must declare target project/repo/branch, apply files, commit files, and commit message. Normal operation uses package metadata, not arbitrary script execution.
 
@@ -148,27 +125,8 @@ LLM-generated packages must converge on one cross-platform zip. The minimum pack
 - `--no-push` and `--no-commit` are exceptions for recovery/debug.
 - Project policy belongs in `.tul.yml`.
 - Environment paths and aliases belong in global config.
-- LLM packages should use `tul-package.yml + README.md + files/ + apply.sh + apply.ps1`.
-
-## Planning harness
-
-The durable planning ledger is repo-resident:
-
-```text
-docs/manifest.md
-docs/strategy.md
-docs/roadmap.md
-docs/status/current.md
-docs/learning-log.md
-docs/decisions.md
-```
-
-Stage 7 uses parallel planning and sequential gated update: many candidate plans may be drafted, but only one package is applied against the latest verified baseline at a time.
+- Parallel planning is allowed; package application is sequential and gated against the latest verified baseline.
 
 ## Current focus
 
-Stage 7 has closed command-surface redesign, run default finalization, README package-contract gate fix, run smoke gate, and command residue cleanup. The current work tightens the auxiliary `clean`, `recover`, and `setup` commands before the Stage 7 closure checkpoint.
-
-## Current focus
-
-Stage 7 is closed by the closure checkpoint once `tul verify fresh` reports the 33-step release gate PASS after applying it. The next work should begin Stage 8 planning: gate hardening, a lightweight smoke-test harness, and retired-module review.
+Stage 7 is closed. The current work is Stage 8 document-tree compaction: reduce active documentation ownership, remove duplicated guidance, and keep runtime-facing read-next guidance narrow without changing command behavior.

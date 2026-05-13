@@ -1,15 +1,10 @@
-# loop runtime track
+# merged compatibility note
 
-Current track goal: make `tul run` the single normal user command.
+This document is retained temporarily for runtime read-next / verify compatibility. It is not an independent source of truth.
 
-## Current command split
+Active ownership has moved to:
 
-- `run`: full loop.
-- `update`: apply/commit/push/remote-head check.
-- `export`: source/review artifact creation.
-- `verify fresh`: uploadable verification artifact creation.
-- `show`: final state and diagnostics.
+- `docs/status/current.md`
+- `docs/roadmap.md`
 
-## Next
-
-Finalize package-absent fallback and keep active docs/templates aligned with the canonical command surface.
+Do not extend this file. Update the active owner document instead. Remove this compatibility file after runtime handoff and verify pointers are narrowed.

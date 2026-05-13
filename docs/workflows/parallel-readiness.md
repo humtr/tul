@@ -1,37 +1,10 @@
-# parallel readiness
+# merged compatibility note
 
-Stage 7 allows parallel planning but keeps application sequential and gated.
+This document is retained temporarily for runtime read-next / verify compatibility. It is not an independent source of truth.
 
-## Runtime facts
+Active ownership has moved to:
 
-Use these surfaces:
+- `docs/manifest.md`
+- `docs/roadmap.md`
 
-```bash
-tul show
-tul show exports
-tul verify fresh
-```
-
-`show exports` reports source/review freshness and docs drift as warning-only diagnostics.
-
-## Conflict rule
-
-Serialize packages that touch coordination files:
-
-```text
-docs/status/current.md
-docs/roadmap.md
-docs/manifest.md
-docs/decisions.md
-docs/learning-log.md
-```
-
-Serialize any implementation package against the package that defines its acceptance gate.
-
-## Normal application
-
-```bash
-tul run
-```
-
-Use stepwise commands only for diagnostics or when the user explicitly requests decomposition.
+Do not extend this file. Update the active owner document instead. Remove this compatibility file after runtime handoff and verify pointers are narrowed.

@@ -1,13 +1,13 @@
 # current status
 
-Status: Stage 7 is ready to close. The latest verified baseline has the compact command surface, `tul run` as the normal user loop, source/review exports, command-surface smoke checks, active-doc command cleanup, and conservative `clean` / `recover` / `setup` auxiliary defaults in place.
+Status: Stage 7 is closed. The current verified baseline has the compact command surface, `tul run` as the normal user loop, source/review exports, command-surface smoke checks, active-doc command cleanup, and conservative `clean` / `recover` / `setup` auxiliary defaults in place.
 
-Current verified baseline before this closure checkpoint:
+Baseline entering Stage 8:
 
 ```text
-HEAD: e965194ee8573b4a9938c87fab42b058ecf020b2
-Remote HEAD: e965194ee8573b4a9938c87fab42b058ecf020b2
-Latest package: tul-stage7-clean-recover-setup-ux-bundle-v1
+HEAD: 6d4869a3a7a6d4266a5c8a3f2e5dd9fdebd75b2a
+Remote HEAD: 6d4869a3a7a6d4266a5c8a3f2e5dd9fdebd75b2a
+Latest package: tul-stage7-closure-checkpoint-bundle-v1
 Release gate: PASS
 Steps: 33 pass, 0 fail
 Fresh clone: PASS
@@ -17,11 +17,16 @@ Docs drift: clean
 Warnings: none
 ```
 
-## Stage 7 closure package
+## Active model
 
-Apply `tul-stage7-closure-checkpoint-bundle-v1` to record Stage 7 closure and move the roadmap to Stage 8 planning. The package is documentation-only and does not change runtime behavior.
+- Canonical user loop: `tul run`.
+- Canonical command surface: `show / package / update / verify / export / run / clean / recover / setup`.
+- Runtime verification evidence: `tul-vf-latest.md`.
+- Source transport artifact: `tul-source-latest.zip`.
+- Changed-file review artifact: `tul-review-latest.zip`.
+- Recovery authority: Git remote + commit hash + recovery state.
 
-## Closed Stage 7 checkpoints
+## Stage 7 closed checkpoints
 
 - planning consolidation
 - terminology audit
@@ -38,38 +43,17 @@ Apply `tul-stage7-closure-checkpoint-bundle-v1` to record Stage 7 closure and mo
 - clean / recover / setup UX tightening
 - Stage 7 closure checkpoint
 
-## Canonical command surface
+## Current Stage 8 work
 
-```text
-tul show
-tul package
-tul update
-tul verify
-tul export
-tul run
-tul clean
-tul recover
-tul setup
-```
-
-## Normal loop
-
-```bash
-tul run
-```
-
-Semantics:
-
-```text
-package found:
-  update -> export -> verify fresh -> show
-
-package not found:
-  export -> verify fresh -> show
-```
+1. Compact active documentation ownership.
+2. Keep README, status, manifest, roadmap, commands, and package spec as the active durable docs.
+3. Preserve rationale in decisions and lessons in learning-log.
+4. Keep runtime-referenced compatibility docs until handoff/verify pointers are narrowed in a later package.
+5. Defer Windows environment doc relocation until its ownership is decided.
 
 ## Next queue
 
-1. Apply `tul-stage7-closure-checkpoint-bundle-v1`.
-2. Confirm release gate PASS with `tul run` or `tul verify fresh`.
-3. Begin Stage 8 planning from `docs/roadmap.md`.
+1. Apply the document-tree compaction package.
+2. Run `tul run` or `tul verify fresh` to re-establish the release gate.
+3. In a follow-up package, narrow runtime handoff/read-next and required-doc pointers.
+4. Remove compatibility docs only after the runtime pointers no longer require them.

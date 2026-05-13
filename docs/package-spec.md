@@ -1,16 +1,30 @@
 # tul package spec
 
+This document owns the package contract for `tul`.
+
+## Normal package structure
+
 A normal LLM-to-terminal package is a cross-platform archive with this structure:
 
 ```text
 <package>.zip
   tul-package.yml
-  files/
-    ... repo-relative files ...
   README.md
+  files/
 ```
 
-The manifest must include:
+Optional helper scripts may be included:
+
+```text
+  apply.sh
+  apply.ps1
+```
+
+The safe runtime path uses `tul-package.yml` metadata with `apply.mode: copy`; arbitrary helper scripts are not the normal application mechanism.
+
+## Manifest contract
+
+Example:
 
 ```yaml
 version: 1
@@ -24,20 +38,32 @@ target:
 apply:
   mode: copy
   files:
-    - from: files/bin/tul
-      to: bin/tul
+    - from: files/docs/commands.md
+      to: docs/commands.md
 
 commit:
   files:
-    - bin/tul
+    - docs/commands.md
   message: Example package
 ```
 
-Only `apply.mode: copy` is supported by the safe default runtime.
+Required properties:
+
+- `version: 1`
+- `name`
+- `target.project`
+- `target.repo`
+- `target.branch`
+- `apply.mode: copy`
+- explicit `apply.files`
+- explicit `commit.files`
+- `commit.message`
+
+Every applied destination must be listed in `commit.files`.
 
 ## Directory copy safety
 
-File-to-file copy is the default and preferred form. Directory copy is considered high risk and is rejected unless the apply item explicitly opts in:
+File-to-file copy is preferred. Directory copy is high-risk and rejected unless an apply item explicitly opts in:
 
 ```yaml
 apply:
@@ -48,6 +74,47 @@ apply:
       allow_directory: true
 ```
 
-When directory copy is enabled, every resulting destination file must still be listed in `commit.files`. This keeps the final staged set explicit and prevents broad package writes from becoming broad git staging.
+When directory copy is enabled, every resulting destination file must still be listed in `commit.files`.
 
-Before copying, `tul update` builds an `apply-plan.json` under the package work directory. The plan records every destination, whether a backup will be created, and whether the operation came from a directory copy. The package is rejected before copying if any planned destination falls outside `commit.files` or duplicates another destination.
+## Staging safety
+
+Normal package application must not use:
+
+```bash
+git add -A
+git add .
+```
+
+Only the manifest-declared `commit.files` should be staged.
+
+## Package scope rules
+
+Good packages are small, explicit, and independently verifiable.
+
+- Keep code and documentation changes separated unless one cannot be validated without the other.
+- Avoid broad rewrites when a bounded replacement is enough.
+- Do not modify runtime command behavior in a documentation-only package.
+- Do not change package contract and package content in the same package unless the contract change is the package's explicit purpose.
+- Preserve rollback through Git commit hashes and runtime recovery state.
+
+## Current deletion limitation
+
+The safe default package path supports copy operations. It does not provide a separate delete operation in `apply.mode: copy`.
+
+Therefore document-tree compaction should be staged as:
+
+1. merge active content into canonical docs;
+2. keep runtime-referenced compatibility docs until pointers are narrowed;
+3. delete obsolete docs only through a follow-up package or manual step that explicitly handles deletions and validation.
+
+Do not fake deletion by hiding broad behavior in helper scripts.
+
+## Acceptance gate
+
+Before considering a package ready:
+
+- manifest target must match the active project/repo/branch;
+- `apply.files` and `commit.files` must match exactly;
+- package README must state scope, non-goals, expected result, and validation;
+- no broad staging or force push is allowed;
+- `tul verify fresh` or `tul run` must pass after application.
