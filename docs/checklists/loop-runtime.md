@@ -38,3 +38,12 @@
 - [ ] `tul recover rollback` prints a command and does not silently mutate the repo.
 - [ ] `tul setup` reports setup status.
 - [ ] `tul setup` prints explicit setup subcommands and next commands.
+
+## Stage 7 closure
+
+- [ ] command-surface smoke checks appear in `tul verify fresh`.
+- [ ] active docs/templates use the canonical Stage 7 commands.
+- [ ] historical docs that retain older command examples are marked.
+- [ ] `tul show exports` reports source/review artifacts current.
+- [ ] docs drift reports clean.
+- [ ] the current status and roadmap point to Stage 8 planning after closure.

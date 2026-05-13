@@ -2,7 +2,7 @@
 
 ## Current strategic focus
 
-Stage 7 focuses on reducing user bridge work while preserving user control over approval, risk, rollback, and source attribution.
+Stage 7 is closed by establishing `tul run` as the normal user loop and making the surrounding command surface small, action-oriented, and guarded. The next strategic focus is Stage 8: hardening the gates and test harness around the now-stable user loop without expanding user-facing complexity.
 
 The command surface is intentionally small:
 
@@ -23,14 +23,15 @@ tul setup
 | Area | Maturity | Current direction |
 |---|---|---|
 | Package application | High | keep `update` focused on apply/check/commit/push/remote-head |
-| Full loop orchestration | Medium-high | make `run` the single normal loop |
+| Full loop orchestration | High | keep `run` as the single normal loop |
 | Verification evidence | High | keep `verify fresh` as uploadable evidence writer |
 | Source/review transport | High | keep `export` file-creation only |
-| Status/handoff | Medium-high | keep status under `show` |
-| Cleanup | Medium | keep default plan-only under `clean` |
-| Recovery | Medium | keep default plan-only under `recover` |
-| Setup/context | Medium | status-only default under `setup` |
-| Cross-repo onboarding | Deferred | wait until self-host loop is stable |
+| Status/handoff | High | keep status under `show` |
+| Cleanup | Medium-high | keep default plan-only under `clean` |
+| Recovery | Medium-high | keep default plan-only under `recover` |
+| Setup/context | Medium-high | keep status-only default under `setup` |
+| Gate/test harness | Medium | harden in Stage 8 without overfitting to transient docs |
+| Cross-repo onboarding | Deferred | wait until the self-host loop remains stable across several packages |
 
 ## Normal command model
 
@@ -45,5 +46,6 @@ tul run
 - no broad staging;
 - no force push;
 - no legacy alias layer;
-- warning-only export freshness until explicitly promoted;
-- source/review zip artifacts are transport artifacts, not backup authority.
+- warning-only export freshness unless explicitly promoted;
+- source/review zip artifacts are transport artifacts, not backup authority;
+- Stage 8 gate hardening should begin warning-first before promoting new checks to hard failures.

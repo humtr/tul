@@ -168,3 +168,7 @@ Stage 7 uses parallel planning and sequential gated update: many candidate plans
 ## Current focus
 
 Stage 7 has closed command-surface redesign, run default finalization, README package-contract gate fix, run smoke gate, and command residue cleanup. The current work tightens the auxiliary `clean`, `recover`, and `setup` commands before the Stage 7 closure checkpoint.
+
+## Current focus
+
+Stage 7 is closed by the closure checkpoint once `tul verify fresh` reports the 33-step release gate PASS after applying it. The next work should begin Stage 8 planning: gate hardening, a lightweight smoke-test harness, and retired-module review.

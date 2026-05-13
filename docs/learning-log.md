@@ -451,3 +451,11 @@ Observation: After `tul run` became the normal loop, the remaining user-facing c
 Decision: Keep `tul clean`, `tul recover`, and `tul setup` safe to run without arguments. Require explicit subcommands for guarded moves, rollback command printing, or setup changes.
 
 Follow-up: Close Stage 7 after the auxiliary UX package passes fresh verification and source/review artifacts remain current.
+
+## 2026-05-13 — Stage 7 closure checkpoint
+
+Observation: Stage 7 stabilized after the command surface was reduced, `tul run` became the normal user loop, source/review exports became current after normal runs, and command-surface smoke checks entered the release gate.
+
+Lesson: Reducing user bridge work required separating concepts instead of adding more flags: `run` orchestrates the loop, `update` publishes packages, `verify fresh` writes uploadable verification evidence, `export` creates files, and `show` reports state.
+
+Action: Close Stage 7 with a documentation checkpoint and move Stage 8 toward gate hardening, smoke-test harnesses, retired-module review, and eventually guarded cross-repo onboarding.

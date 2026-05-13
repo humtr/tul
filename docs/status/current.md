@@ -1,20 +1,25 @@
 # current status
 
-Status: Stage 7 command-surface cleanup is stable. `tul run` is the normal user loop, command-surface smoke checks are in the release gate, and active docs/templates have been cleaned. The current package tightens the auxiliary `clean`, `recover`, and `setup` UX before the Stage 7 closure checkpoint.
+Status: Stage 7 is ready to close. The latest verified baseline has the compact command surface, `tul run` as the normal user loop, source/review exports, command-surface smoke checks, active-doc command cleanup, and conservative `clean` / `recover` / `setup` auxiliary defaults in place.
 
-Current verified baseline:
+Current verified baseline before this closure checkpoint:
 
 ```text
-HEAD: 8534311ce661c5ffee34b638705a61a6e4d84874
-Remote HEAD: 8534311ce661c5ffee34b638705a61a6e4d84874
-Latest package: tul-stage7-command-residue-cleanup-bundle-v1
+HEAD: e965194ee8573b4a9938c87fab42b058ecf020b2
+Remote HEAD: e965194ee8573b4a9938c87fab42b058ecf020b2
+Latest package: tul-stage7-clean-recover-setup-ux-bundle-v1
 Release gate: PASS
+Steps: 33 pass, 0 fail
 Fresh clone: PASS
 Source bundle: current
 Review bundle: current
 Docs drift: clean
 Warnings: none
 ```
+
+## Stage 7 closure package
+
+Apply `tul-stage7-closure-checkpoint-bundle-v1` to record Stage 7 closure and move the roadmap to Stage 8 planning. The package is documentation-only and does not change runtime behavior.
 
 ## Closed Stage 7 checkpoints
 
@@ -30,10 +35,22 @@ Warnings: none
 - README package-contract gate fix
 - run smoke gate
 - command residue cleanup
+- clean / recover / setup UX tightening
+- Stage 7 closure checkpoint
 
-## Current package
+## Canonical command surface
 
-Apply `tul-stage7-clean-recover-setup-ux-bundle-v1` to make `clean`, `recover`, and `setup` conservative defaults explicit in code, docs, and checklists.
+```text
+tul show
+tul package
+tul update
+tul verify
+tul export
+tul run
+tul clean
+tul recover
+tul setup
+```
 
 ## Normal loop
 
@@ -41,8 +58,18 @@ Apply `tul-stage7-clean-recover-setup-ux-bundle-v1` to make `clean`, `recover`, 
 tul run
 ```
 
+Semantics:
+
+```text
+package found:
+  update -> export -> verify fresh -> show
+
+package not found:
+  export -> verify fresh -> show
+```
+
 ## Next queue
 
-1. Apply `tul-stage7-clean-recover-setup-ux-bundle-v1`.
+1. Apply `tul-stage7-closure-checkpoint-bundle-v1`.
 2. Confirm release gate PASS with `tul run` or `tul verify fresh`.
-3. Apply `tul-stage7-closure-checkpoint-bundle-v1` to close Stage 7.
+3. Begin Stage 8 planning from `docs/roadmap.md`.

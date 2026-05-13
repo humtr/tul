@@ -458,3 +458,13 @@ Context: After `tul run` became the normal user loop, auxiliary commands still n
 Decision: `tul clean` is plan-only by default, `tul recover` prints recovery plans by default, and `tul setup` reports setup status by default. Mutation or setup actions require explicit subcommands such as `tul clean states run`, `tul recover rollback`, or `tul setup use <project>`.
 
 Consequences: The normal command remains `tul run`; auxiliary commands are safe to run for inspection. Destructive cleanup automation and automatic rollback remain out of scope.
+
+## ADR-038 — Stage 7 closes after command-surface and artifact loop stabilization
+
+Status: accepted
+
+Context: Stage 7 reduced bridge work by implementing explicit source/review exports, export freshness diagnostics, automatic transport artifact refresh, a compact command surface, `tul run` as the normal loop, command-surface smoke checks, active-doc command cleanup, and conservative auxiliary commands.
+
+Decision: Close Stage 7 after `tul-stage7-closure-checkpoint-bundle-v1` applies and `tul verify fresh` passes. Stage 8 starts from the stable command surface rather than adding new user-facing verbs.
+
+Consequences: Future work should harden gates and test harnesses around the current model before expanding to external repositories or destructive automation. `tul run` remains the normal user command; source/review zip artifacts remain transport artifacts, not backup authority.

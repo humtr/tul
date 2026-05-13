@@ -2,9 +2,9 @@
 
 ## Current baseline
 
-The latest verified baseline is `8534311ce661c5ffee34b638705a61a6e4d84874`.
+The latest verified baseline before the Stage 7 closure checkpoint is `e965194ee8573b4a9938c87fab42b058ecf020b2`.
 
-The latest applied package is `tul-stage7-command-residue-cleanup-bundle-v1`.
+The latest applied package is `tul-stage7-clean-recover-setup-ux-bundle-v1`.
 
 ## Closed Stage 7 sequence
 
@@ -20,22 +20,45 @@ The latest applied package is `tul-stage7-command-residue-cleanup-bundle-v1`.
 10. `tul-stage7-readme-package-contract-gate-fix-bundle-v1`
 11. `tul-stage7-run-smoke-gate-bundle-v1`
 12. `tul-stage7-command-residue-cleanup-bundle-v1`
+13. `tul-stage7-clean-recover-setup-ux-bundle-v1`
+14. `tul-stage7-closure-checkpoint-bundle-v1`
 
-## Immediate queue
+## Stage 7 closure criteria
 
-1. `tul-stage7-clean-recover-setup-ux-bundle-v1`
-   - keep `tul clean` plan-only by default;
-   - make `tul clean states run 3` parse `3` as keep count;
-   - keep `tul recover` plan-only by default;
-   - keep `tul setup` status-only by default;
-   - document the auxiliary command contract.
+Stage 7 is closed when the closure checkpoint is applied and the following stay true:
 
-2. `tul-stage7-closure-checkpoint-bundle-v1`
-   - close Stage 7 after run, export, command surface, docs, and auxiliary UX are all verified.
+- `tul run` is the normal user loop.
+- source, review, and verify artifacts are current after a normal run.
+- the command surface is `show`, `package`, `update`, `verify`, `export`, `run`, `clean`, `recover`, and `setup`.
+- removed top-level commands are absent from parser/help.
+- `export` contains file-producing commands only.
+- active docs/templates use current command grammar.
+- historical docs are marked when they retain old command examples.
+- `clean`, `recover`, and `setup` are conservative by default.
+- release gate reports command-surface smoke checks.
+
+## Stage 8 candidate queue
+
+1. `tul-stage8-gate-hardening-plan-bundle-v1`
+   - decide which command-surface and doc-residue scans stay warning-only and which become hard release-gate checks;
+   - add a small matrix for false-positive handling before promoting any scan.
+
+2. `tul-stage8-test-harness-baseline-bundle-v1`
+   - introduce a repo-local smoke test harness for `show`, `package`, `verify`, `export`, `run`, `clean`, `recover`, and `setup` without requiring a live package inbox;
+   - keep it separate from release-gate promotion until stable.
+
+3. `tul-stage8-cleanup-retired-modules-plan-bundle-v1`
+   - review retired helpers and compatibility-only modules such as old repo zip helpers, package hygiene internals, sweep helpers, and publish/debug helpers;
+   - classify keep, hide, fold, or delete candidates;
+   - avoid deletion until a separate source-backed package proves no call sites remain.
+
+4. `tul-stage8-cross-repo-onboarding-plan-bundle-v1`
+   - plan multi-repo adoption only after the self-hosting loop remains stable;
+   - require explicit project policy, path, and package-target mismatch gates.
 
 ## Deferred
 
 - destructive cleanup automation;
 - rollback auto-execution;
-- external repository onboarding;
+- external repository onboarding implementation;
 - legacy alias compatibility layer.

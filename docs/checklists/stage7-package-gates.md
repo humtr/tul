@@ -35,11 +35,10 @@ For command-surface packages, verify the following before claiming closure:
 - `tul run dry` documents both paths: package found and package not found.
 - `tul run` package-not-found fallback refreshes export and verify artifacts instead of failing only because no package exists.
 
+## Closure checkpoint
 
-## Clean / recover / setup UX checks
-
-- `tul clean` must remain plan-only by default.
-- `tul clean states run 3` must parse `3` as the keep count.
-- `tul recover` must remain plan-only by default.
-- `tul recover rollback` must print a safe rollback command rather than silently mutating the repo.
-- `tul setup` must remain status-only by default and print explicit next setup commands.
+- [ ] Stage 7 sequence is recorded in `docs/roadmap.md`.
+- [ ] `docs/status/current.md` records the verified pre-closure baseline.
+- [ ] `docs/manifest.md` records the closed Stage 7 command and artifact model.
+- [ ] `docs/strategy.md` points to Stage 8 gate/test-harness hardening.
+- [ ] Stage 8 candidates are listed without starting implementation in the closure package.

@@ -57,6 +57,28 @@ tul show
 
 Use the stepwise loop only for debugging, review, or user-directed decomposition.
 
-## Current baseline
+## Artifact model
 
-The command-surface redesign, run default finalization, README package-contract gate fix, run smoke gate, and command residue cleanup are closed at `8534311ce661c5ffee34b638705a61a6e4d84874`. The next package tightens the auxiliary `clean`, `recover`, and `setup` UX before the Stage 7 closure checkpoint.
+| Artifact | Role |
+|---|---|
+| Git remote + commit hash | canonical source/recovery authority |
+| `tul-vf-latest.md` | runtime verification evidence |
+| `tul-source-latest.zip` | source-context transport artifact |
+| `tul-review-latest.zip` | changed-file review transport artifact |
+| state/report/handoff files | local runtime records |
+
+## Stage 7 closure
+
+Stage 7 closes after these capabilities are in place and verified:
+
+- explicit source export;
+- explicit review export;
+- export freshness diagnostics under `tul show exports`;
+- automatic source/review refresh inside the normal loop;
+- compact command surface without legacy top-level aliases;
+- `tul run` as the single normal user loop;
+- command-surface smoke checks in `tul verify fresh`;
+- active-doc command-residue cleanup;
+- conservative auxiliary commands: `clean`, `recover`, and `setup`.
+
+The verified pre-closure baseline is `e965194ee8573b4a9938c87fab42b058ecf020b2`. The closure checkpoint records completion and moves planning to Stage 8.
