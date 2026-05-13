@@ -141,4 +141,4 @@ docs/decisions.md
 
 ## Current focus
 
-Stage 7 is closed. Stage 8 is compacting active documentation ownership. Package `tul-doc-tree-compaction-stage2-pointer-compaction-v1` narrows runtime handoff and verify required-doc pointers to the active document set. Compatibility documents remain until the separate 2B deletion step.
+Stage 7 is closed. Stage 8 is compacting active documentation ownership. Package `tul-doc-tree-compaction-stage2-pointer-compaction-v1` narrows runtime handoff and verify required-doc pointers to the active document set. The separate 2B deletion step removes retired compatibility and obsolete documentation from the active tree.

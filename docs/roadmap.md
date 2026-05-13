@@ -2,28 +2,25 @@
 
 ## Current baseline
 
-Stage 7 is closed. The latest verified baseline before 2A is:
+Stage 7 is closed. Stage 8 document tree compaction is reducing active documentation to a small stable set.
+
+Latest verified baseline before 2B:
 
 ```text
-HEAD: 71312088ed070f4cd305f3998980b64b75d9b341
-Latest package: tul-doc-tree-compaction-stage1-readme-gate-fix-v1
+HEAD: b7c2007753bb12eae23c5328b3b8d3be15e2f034
+Latest package: tul-doc-tree-compaction-stage2-pointer-compaction-v1
 Release gate: PASS
+Read-next: six active docs
+Docs drift: clean
 ```
 
 ## Stage 8 — document tree compaction
 
 ### 2A: runtime pointer compaction
 
-Package: `tul-doc-tree-compaction-stage2-pointer-compaction-v1`
+Status: done.
 
-Goal:
-
-- narrow `tul show handoff` read-next to six active docs;
-- narrow `tul verify` required docs to active docs only;
-- stop `tul setup init` from recreating retired docs namespaces;
-- keep compatibility files in place until deletion is safe.
-
-Acceptance:
+Acceptance achieved:
 
 ```text
 tul verify fresh: PASS
@@ -37,26 +34,27 @@ tul show handoff read-next:
 docs drift: clean
 ```
 
-### 2B: compatibility and obsolete-doc deletion
+### 2B: obsolete-doc deletion
 
-Proceed only after 2A passes.
+Status: in progress.
 
-Candidate deletion groups:
+Goal:
+
+- remove retired compatibility docs;
+- remove obsolete workflow and experiment records from the active tree;
+- remove old prompt and project-harness templates;
+- retain durable decision and lesson records;
+- keep the Windows environment note deferred rather than deleting it.
+
+Acceptance:
 
 ```text
-docs/llm/*
-docs/protocols/*
-docs/checklists/*
-docs/handoff.md
-docs/tracks/loop-runtime.md
-docs/workflows/*
-docs/experiments/*
-templates/llm-initial-review-prompt.md
-templates/llm-post-update-review-prompt.md
-templates/project-harness/*
+tul verify fresh: PASS
+tul show handoff read-next remains six active docs
+tul show exports reports current source/review bundles
+docs drift: clean
+source bundle file count decreases from the pre-2B count
 ```
-
-Use a narrow `git rm` list. Do not use broad deletion or `git add -A`.
 
 ## Deferred
 
@@ -64,4 +62,4 @@ Use a narrow `git rm` list. Do not use broad deletion or `git add -A`.
 - broader runtime refactor;
 - retired module cleanup;
 - cross-repo onboarding;
-- relocation decision for `docs/windows-dwork-environment.md`.
+- relocation decision for docs/windows-dwork-environment.md.

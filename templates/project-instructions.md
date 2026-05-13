@@ -12,7 +12,7 @@ You are working with `humtr/tul`, the Terminal Update Loop runtime.
 6. Read `docs/commands.md`.
 7. Read `docs/package-spec.md` before proposing or producing a package.
 
-Do not treat `docs/llm/*`, `docs/protocols/*`, old checklists, old workflow files, or old prompt templates as active sources of truth unless the user asks for historical context.
+Treat only the active read-next documents as current sources of truth. Retired documentation may exist only in Git history or historical ledgers unless the user asks for historical context.
 
 ## Canonical commands
 

@@ -1,13 +1,13 @@
 # current status
 
-Status: Stage 7 is closed. Stage 8 document tree compaction is in progress.
+Status: Stage 7 is closed. Stage 8 document tree compaction 2A is verified, and 2B obsolete-doc deletion is being applied as a narrow git cleanup.
 
-Current verified baseline before this package:
+Verified baseline before 2B:
 
 ```text
-HEAD: 71312088ed070f4cd305f3998980b64b75d9b341
-Remote HEAD: 71312088ed070f4cd305f3998980b64b75d9b341
-Latest package: tul-doc-tree-compaction-stage1-readme-gate-fix-v1
+HEAD: b7c2007753bb12eae23c5328b3b8d3be15e2f034
+Remote HEAD: b7c2007753bb12eae23c5328b3b8d3be15e2f034
+Latest package: tul-doc-tree-compaction-stage2-pointer-compaction-v1
 Release gate: PASS
 Steps: 33 pass, 0 fail
 Fresh clone: PASS
@@ -17,18 +17,9 @@ Docs drift: clean
 Warnings: none
 ```
 
-Current package under review: `tul-doc-tree-compaction-stage2-pointer-compaction-v1`.
+## Active documentation tree
 
-## Current objective
-
-2A narrows runtime document pointers without deleting files:
-
-- `tul show handoff` read-next should point only to active docs.
-- `tul verify` required-doc checks should require active docs only.
-- `tul setup init` should not recreate retired documentation namespaces.
-- README, status, roadmap, manifest, command, and package-spec docs should describe the same active tree.
-
-## Active read-next set
+The active read-next set is:
 
 ```text
 README.md
@@ -39,24 +30,32 @@ docs/commands.md
 docs/package-spec.md
 ```
 
-## Compatibility layer
-
-The following files may still exist after 2A, but they are no longer active sources of truth once this package is applied:
+Supporting ledgers:
 
 ```text
-docs/llm/*
-docs/protocols/*
-docs/checklists/*
-docs/handoff.md
-docs/tracks/loop-runtime.md
-docs/workflows/parallel-readiness.md
-templates/llm-initial-review-prompt.md
-templates/llm-post-update-review-prompt.md
+docs/decisions.md
+docs/learning-log.md
 ```
 
-Actual deletion is deferred to 2B because the safe package apply mechanism supports `apply.mode: copy`, not delete operations.
+Deferred environment note:
 
-## Canonical command surface
+```text
+docs/windows-dwork-environment.md
+```
+
+Templates retained:
+
+```text
+templates/llm-handoff-prompt.md
+templates/milestone-checklist.md
+templates/project-instructions.md
+```
+
+## 2B objective
+
+Remove retired compatibility, workflow, experiment, and harness template files after runtime handoff and verify gates have already stopped requiring them.
+
+This is not a command-surface change. The canonical commands remain:
 
 ```text
 tul show
@@ -76,19 +75,13 @@ tul setup
 tul run
 ```
 
-Semantics:
+## Next verification
 
-```text
-package found:
-  update -> export -> verify fresh -> show
+After the 2B deletion commit is pushed:
 
-package not found:
-  export -> verify fresh -> show
+```bash
+tul export
+tul verify fresh
+tul show handoff
+tul show exports
 ```
-
-## Next queue
-
-1. Apply `tul-doc-tree-compaction-stage2-pointer-compaction-v1`.
-2. Confirm `tul verify fresh` reports PASS.
-3. Confirm `tul show handoff` read-next lists only the active six docs.
-4. Proceed to 2B: narrow `git rm` cleanup of compatibility and obsolete docs.

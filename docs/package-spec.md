@@ -60,7 +60,7 @@ For document compaction, this means:
 
 ```text
 2A: update runtime pointers and active docs through copy-mode package
-2B: delete obsolete compatibility docs through a separate narrow cleanup step
+2B: remove obsolete compatibility docs through a separate narrow cleanup step
 ```
 
 ## Required package strings

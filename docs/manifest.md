@@ -95,4 +95,4 @@ tul-package.yml + files/ + README.md
 
 ## Stage status
 
-Stage 7 is closed. Stage 8 is reducing active documentation ownership and then deleting compatibility/obsolete docs after runtime pointers no longer reference them.
+Stage 7 is closed. Stage 8 has reduced active documentation ownership and moved runtime pointers to the active documentation set; 2B removes retired compatibility and obsolete docs from the active tree.
