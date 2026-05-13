@@ -24,24 +24,17 @@ INVARIANTS = [
 
 DOC_POINTERS = [
     "README.md",
-    "docs/llm/entrypoint.md",
-    "docs/llm/post-update-review.md",
-    "docs/workflows/parallel-readiness.md",
-    "docs/llm/commands.md",
-    "docs/llm/project-instructions.md",
     "docs/status/current.md",
+    "docs/manifest.md",
     "docs/roadmap.md",
-    "docs/checklists/loop-runtime.md",
-    "docs/protocols/command-grammar.md",
-    "docs/protocols/llm-handoff-protocol.md",
-    "docs/tracks/loop-runtime.md",
-    "docs/handoff.md",
+    "docs/commands.md",
+    "docs/package-spec.md",
 ]
 
 TEMPLATE_POINTERS = [
     "templates/project-instructions.md",
-    "templates/llm-initial-review-prompt.md",
-    "templates/llm-post-update-review-prompt.md",
+    "templates/llm-handoff-prompt.md",
+    "templates/milestone-checklist.md",
 ]
 
 
@@ -138,7 +131,7 @@ def compact_handoff(*, repo: Path, project: str, mode: str, expected_repo: str |
         "## LLM task",
         "",
         "1. Verify remote repo, branch, HEAD, and working tree facts when remote access is available.",
-        "2. Read `docs/llm/entrypoint.md`, `docs/llm/post-update-review.md`, and `docs/workflows/parallel-readiness.md` before proposing the next package.",
+        "2. Read `README.md`, `docs/status/current.md`, `docs/manifest.md`, `docs/roadmap.md`, `docs/commands.md`, and `docs/package-spec.md` before proposing the next package.",
         "3. Treat `tul-vf-latest.md`, `tul show`, and handoff output as runtime facts; treat repo docs as durable guidance.",
         "4. Preserve push-by-default, no broad staging, no force push, and config/policy separation.",
         "5. Check bundle overlap and serialize work when files or acceptance gates conflict.",
@@ -168,21 +161,19 @@ def full_handoff(*, repo: Path, project: str, mode: str, expected_repo: str | No
     lines.extend(f"- {repo_doc_path(repo, rel)}" for rel in TEMPLATE_POINTERS)
     lines.extend([
         "",
-        "## LLM-side command grammar",
+        "## LLM-side operating rules",
         "",
-        "- `/tul next <project>`: read the repo and propose the next implementation package scope.",
-        "- `/tul review <project>`: review the just-pushed commit and handoff.",
-        "- `/tul package <project>`: produce a cross-platform tul package for the next accepted scope.",
-        "- `/tul roadmap <project>`: update roadmap/status/checklist documents.",
-        "- `/tul verify <project>`: verify repo state against handoff/protocol/roadmap.",
-        "- `/tul init-review <project>`: perform initial review after clone/init.",
+        "- Use current `tul` commands, not retired slash-style planning commands.",
+        "- Start from runtime facts, then active repo documents.",
+        "- Treat compatibility or historical docs as non-authoritative unless a user explicitly asks for history.",
+        "- Produce packages only after the user asks for package creation.",
         "",
         "## Request to LLM",
         "",
         "1. Treat this handoff as a structured remote-review request.",
         "2. Verify remote repo, branch, and expected HEAD when possible.",
         "3. If remote verification is unavailable, say so explicitly.",
-        "4. Read `docs/llm/entrypoint.md`, `docs/llm/post-update-review.md`, `docs/workflows/parallel-readiness.md`, `docs/status/current.md`, and `docs/roadmap.md` before proposing implementation.",
+        "4. Read `README.md`, `docs/status/current.md`, `docs/manifest.md`, `docs/roadmap.md`, `docs/commands.md`, and `docs/package-spec.md` before proposing implementation.",
         "5. Compare terminal-verified facts against remote state and the latest verify artifact.",
         "6. Identify structural debt, missing automation, and next package boundary.",
         "7. Preserve all tul invariants and do not regress push-by-default semantics.",

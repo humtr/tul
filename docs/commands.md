@@ -1,8 +1,6 @@
-# commands
+# tul commands
 
-This document is the canonical command-surface reference for `tul`.
-
-## Canonical command surface
+Canonical top-level commands:
 
 ```text
 tul show
@@ -16,112 +14,27 @@ tul recover
 tul setup
 ```
 
-There is no legacy alias layer in the canonical command surface.
+There is no legacy alias layer in the current command surface.
 
-## Normal user loop
+## Normal use
 
 ```bash
+cd ~/prj/tul
+
 tul run
 ```
 
-`run` is the ordinary user-facing command.
+`run` is the normal Terminal Update Loop. It applies a package when one is available. If no package is available, it refreshes current verification and transport artifacts.
 
-```text
-package found:
-  update -> export -> verify fresh -> show
-
-package not found:
-  export -> verify fresh -> show
-```
-
-## Command boundaries
-
-### `tul show`
-
-Read-only state and diagnostic output.
-
-Common uses:
-
-```bash
-tul show
-tul show exports
-tul show handoff
-tul show history 5
-tul show --json
-```
-
-State queries belong under `show`, not `export`.
-
-### `tul package`
-
-Package discovery, inspection, validation, and authoring.
-
-Common uses:
+## Optional preflight
 
 ```bash
 tul package
-tul package list tul
-tul package inspect <package.zip>
-tul package check <package.zip> tul
 ```
 
-With no arguments, `tul package` reports the newest compatible package candidate for the inferred project/repo/branch.
+Shows the newest compatible package candidate. It does not apply anything.
 
-### `tul update`
-
-Applies one compatible package, runs safety checks, commits, pushes, and verifies remote HEAD when push is enabled.
-
-Normal package application must stage only the explicit `commit.files` from `tul-package.yml`. Do not use `git add -A` or `git add .` in the normal path.
-
-### `tul verify`
-
-Quick/local verification by default.
-
-```bash
-tul verify
-tul verify fresh
-```
-
-`verify fresh` performs fresh clone verification and writes uploadable latest verification artifacts.
-
-### `tul export`
-
-File creation only.
-
-```bash
-tul export source
-tul export review
-```
-
-Use `tul show exports` for source/review status. `tul export status` is intentionally outside the canonical namespace.
-
-### `tul run`
-
-Full Terminal Update Loop. This is the default command for ordinary use.
-
-### `tul clean`
-
-Plan-only by default. Guarded mutation requires an explicit action such as:
-
-```bash
-tul clean states run
-```
-
-### `tul recover`
-
-Recovery planning by default. Mutating recovery requires an explicit action such as:
-
-```bash
-tul recover rollback
-```
-
-### `tul setup`
-
-Setup status by default. Setup subcommands perform setup tasks such as project selection or initialization.
-
-## Stepwise diagnostic loop
-
-Use this only when splitting the normal loop is useful:
+## Stepwise use
 
 ```bash
 tul package
@@ -131,11 +44,79 @@ tul verify fresh
 tul show
 ```
 
-## Acceptance boundaries
+Use this only when the user wants to inspect or split the loop.
 
-- `show` reads.
-- `export` writes files but does not mutate repo history.
-- `package` inspects or prepares packages.
-- `update` mutates repo files and Git history.
-- `run` may mutate when a compatible package is available.
-- `clean`, `recover`, and `setup` are conservative by default and require explicit subcommands for mutation.
+## Status and handoff
+
+```bash
+tul show
+tul show exports
+tul show handoff
+tul show report
+tul show history 5
+```
+
+`show` commands are read-only. `tul show handoff` prints runtime facts and the active read-next list:
+
+```text
+README.md
+docs/status/current.md
+docs/manifest.md
+docs/roadmap.md
+docs/commands.md
+docs/package-spec.md
+```
+
+## Verification
+
+```bash
+tul verify        # quick/local, stdout-first
+tul verify fresh  # fresh clone + latest verify artifacts
+```
+
+`verify fresh` writes uploadable markdown/json artifacts and includes runtime snapshots.
+
+## Export
+
+```bash
+tul export         # source + review
+tul export source
+tul export review
+```
+
+`export` commands create files. Export freshness/status is shown by `tul show exports`.
+
+## Cleanup
+
+```bash
+tul clean
+tul clean states
+tul clean states run
+tul clean states run 3
+tul clean packages
+tul clean packages run
+tul clean backups
+```
+
+The default `clean` path is plan-only. Use `run` in the clean namespace for guarded moves. `tul clean states run 3` keeps the newest 3 selected noop state directories; the numeric argument is optional and defaults to 3.
+
+## Recovery
+
+```bash
+tul recover
+tul recover rollback
+tul recover resume
+```
+
+Recovery commands print plans or safe commands. They do not silently rewrite history. `tul recover apply` and `tul recover publish` are advanced debug surfaces, not normal workflow commands.
+
+## Setup
+
+```bash
+tul setup
+tul setup init <target>
+tul setup install [target]
+tul setup use <project>
+```
+
+`setup` without arguments is status-only. Setup subcommands are explicit setup actions.

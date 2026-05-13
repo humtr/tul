@@ -125,9 +125,9 @@ def init_project(target: str, *, branch: str | None = None, project: str | None 
     else:
         actions.append(".tul.yml already complete")
 
-    # Create durable docs directories so future status/roadmap/checklist files
-    # can be added without path errors. Do not overwrite existing docs.
-    for rel in ("docs/status", "docs/checklists", "docs/llm", "docs/protocols"):
+    # Create the active status directory without recreating retired documentation
+    # namespaces. Do not overwrite existing docs.
+    for rel in ("docs/status",):
         path = repo_path / rel
         if not path.exists():
             mkdirp(path)

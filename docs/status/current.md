@@ -1,57 +1,94 @@
 # current status
 
-Status: Stage 7 is closed. The current verified baseline has the compact command surface, `tul run` as the normal user loop, source/review exports, command-surface smoke checks, active-doc command cleanup, and conservative `clean` / `recover` / `setup` auxiliary defaults in place.
+Status: Stage 7 is closed. Stage 8 document tree compaction is in progress.
 
-Baseline entering the README gate fix:
+Current verified baseline before this package:
 
 ```text
-Previous verified baseline: 6d4869a3a7a6d4266a5c8a3f2e5dd9fdebd75b2a
-Current applied commit before this fix: a7d8ccca1e4fa89a1f1e4b885c965db2d700c9dd
-Latest package before this fix: tul-doc-tree-compaction-stage1-v1
-Latest package after this fix: tul-doc-tree-compaction-stage1-readme-gate-fix-v1
-Release gate issue being fixed: README entrypoint terms
-Missing terms: LLM entrypoint; tul-package.yml + files/ + README.md
+HEAD: 71312088ed070f4cd305f3998980b64b75d9b341
+Remote HEAD: 71312088ed070f4cd305f3998980b64b75d9b341
+Latest package: tul-doc-tree-compaction-stage1-readme-gate-fix-v1
+Release gate: PASS
+Steps: 33 pass, 0 fail
+Fresh clone: PASS
 Source bundle: current
 Review bundle: current
+Docs drift: clean
+Warnings: none
 ```
 
-## Active model
+Current package under review: `tul-doc-tree-compaction-stage2-pointer-compaction-v1`.
 
-- Canonical user loop: `tul run`.
-- Canonical command surface: `show / package / update / verify / export / run / clean / recover / setup`.
-- Runtime verification evidence: `tul-vf-latest.md`.
-- Source transport artifact: `tul-source-latest.zip`.
-- Changed-file review artifact: `tul-review-latest.zip`.
-- Recovery authority: Git remote + commit hash + recovery state.
+## Current objective
 
-## Stage 7 closed checkpoints
+2A narrows runtime document pointers without deleting files:
 
-- planning consolidation
-- terminology audit
-- source spec and gates
-- explicit source export implementation
-- export integrity hardening
-- post-update export automation
-- command-surface redesign around `tul run`
-- command-surface status sync
-- run default finalization
-- README package-contract gate fix
-- run smoke gate
-- command residue cleanup
-- clean / recover / setup UX tightening
-- Stage 7 closure checkpoint
+- `tul show handoff` read-next should point only to active docs.
+- `tul verify` required-doc checks should require active docs only.
+- `tul setup init` should not recreate retired documentation namespaces.
+- README, status, roadmap, manifest, command, and package-spec docs should describe the same active tree.
 
-## Current Stage 8 work
+## Active read-next set
 
-1. Compact active documentation ownership.
-2. Keep README, status, manifest, roadmap, commands, and package spec as the active durable docs.
-3. Preserve rationale in decisions and lessons in learning-log.
-4. Keep runtime-referenced compatibility docs until handoff/verify pointers are narrowed in a later package.
-5. Defer Windows environment doc relocation until its ownership is decided.
+```text
+README.md
+docs/status/current.md
+docs/manifest.md
+docs/roadmap.md
+docs/commands.md
+docs/package-spec.md
+```
+
+## Compatibility layer
+
+The following files may still exist after 2A, but they are no longer active sources of truth once this package is applied:
+
+```text
+docs/llm/*
+docs/protocols/*
+docs/checklists/*
+docs/handoff.md
+docs/tracks/loop-runtime.md
+docs/workflows/parallel-readiness.md
+templates/llm-initial-review-prompt.md
+templates/llm-post-update-review-prompt.md
+```
+
+Actual deletion is deferred to 2B because the safe package apply mechanism supports `apply.mode: copy`, not delete operations.
+
+## Canonical command surface
+
+```text
+tul show
+tul package
+tul update
+tul verify
+tul export
+tul run
+tul clean
+tul recover
+tul setup
+```
+
+## Normal loop
+
+```bash
+tul run
+```
+
+Semantics:
+
+```text
+package found:
+  update -> export -> verify fresh -> show
+
+package not found:
+  export -> verify fresh -> show
+```
 
 ## Next queue
 
-1. Apply `tul-doc-tree-compaction-stage1-readme-gate-fix-v1` to restore the release gate.
-2. Run `tul run` or `tul verify fresh` to confirm local and fresh-clone PASS.
-3. In a follow-up package, narrow runtime handoff/read-next and required-doc pointers.
-4. Remove compatibility docs only after the runtime pointers no longer require them.
+1. Apply `tul-doc-tree-compaction-stage2-pointer-compaction-v1`.
+2. Confirm `tul verify fresh` reports PASS.
+3. Confirm `tul show handoff` read-next lists only the active six docs.
+4. Proceed to 2B: narrow `git rm` cleanup of compatibility and obsolete docs.

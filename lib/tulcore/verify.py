@@ -21,12 +21,11 @@ from .state import summarize_compact_state
 REQUIRED_DOCS = [
     "README.md",
     ".tul.yml",
-    "docs/llm/entrypoint.md",
     "docs/status/current.md",
+    "docs/manifest.md",
     "docs/roadmap.md",
-    "docs/checklists/loop-runtime.md",
-    "docs/protocols/command-grammar.md",
-    "docs/protocols/llm-handoff-protocol.md",
+    "docs/commands.md",
+    "docs/package-spec.md",
 ]
 
 CANONICAL_TOP_LEVEL_COMMANDS = [

@@ -1,30 +1,16 @@
 # tul package spec
 
-This document owns the package contract for `tul`.
-
-## Normal package structure
-
-A normal LLM-to-terminal package is a cross-platform archive with this structure:
+A normal LLM-to-terminal package is a cross-platform archive with this minimum structure:
 
 ```text
 <package>.zip
   tul-package.yml
   README.md
   files/
+    ... repo-relative files ...
 ```
 
-Optional helper scripts may be included:
-
-```text
-  apply.sh
-  apply.ps1
-```
-
-The safe runtime path uses `tul-package.yml` metadata with `apply.mode: copy`; arbitrary helper scripts are not the normal application mechanism.
-
-## Manifest contract
-
-Example:
+The manifest must include:
 
 ```yaml
 version: 1
@@ -38,83 +24,49 @@ target:
 apply:
   mode: copy
   files:
-    - from: files/docs/commands.md
-      to: docs/commands.md
+    - from: files/bin/tul
+      to: bin/tul
 
 commit:
   files:
-    - docs/commands.md
+    - bin/tul
   message: Example package
 ```
 
-Required properties:
-
-- `version: 1`
-- `name`
-- `target.project`
-- `target.repo`
-- `target.branch`
-- `apply.mode: copy`
-- explicit `apply.files`
-- explicit `commit.files`
-- `commit.message`
-
-Every applied destination must be listed in `commit.files`.
+Only `apply.mode: copy` is supported by the safe default runtime.
 
 ## Directory copy safety
 
-File-to-file copy is preferred. Directory copy is high-risk and rejected unless an apply item explicitly opts in:
+File-to-file copy is the default and preferred form. Directory copy is considered high risk and is rejected unless the apply item explicitly opts in:
 
 ```yaml
 apply:
   mode: copy
   files:
-    - from: files/docs/llm
-      to: docs/llm
+    - from: files/docs/status
+      to: docs/status
       allow_directory: true
 ```
 
-When directory copy is enabled, every resulting destination file must still be listed in `commit.files`.
+When directory copy is enabled, every resulting destination file must still be listed in `commit.files`. This keeps the final staged set explicit and prevents broad package writes from becoming broad git staging.
 
-## Staging safety
+Before copying, `tul update` builds an `apply-plan.json` under the package work directory. The plan records every destination, whether a backup will be created, and whether the operation came from a directory copy. The package is rejected before copying if any planned destination falls outside `commit.files` or duplicates another destination.
 
-Normal package application must not use:
+## Deletion boundary
 
-```bash
-git add -A
-git add .
+The package mechanism does not currently support safe delete operations. A package may replace files through explicit copy items, but it must not pretend to delete obsolete files. Deletion work requires a separate narrow `git rm` plan or a future package contract extension for safe deletes.
+
+For document compaction, this means:
+
+```text
+2A: update runtime pointers and active docs through copy-mode package
+2B: delete obsolete compatibility docs through a separate narrow cleanup step
 ```
 
-Only the manifest-declared `commit.files` should be staged.
+## Required package strings
 
-## Package scope rules
+Documentation and verification gates may refer to the exact contract phrase:
 
-Good packages are small, explicit, and independently verifiable.
-
-- Keep code and documentation changes separated unless one cannot be validated without the other.
-- Avoid broad rewrites when a bounded replacement is enough.
-- Do not modify runtime command behavior in a documentation-only package.
-- Do not change package contract and package content in the same package unless the contract change is the package's explicit purpose.
-- Preserve rollback through Git commit hashes and runtime recovery state.
-
-## Current deletion limitation
-
-The safe default package path supports copy operations. It does not provide a separate delete operation in `apply.mode: copy`.
-
-Therefore document-tree compaction should be staged as:
-
-1. merge active content into canonical docs;
-2. keep runtime-referenced compatibility docs until pointers are narrowed;
-3. delete obsolete docs only through a follow-up package or manual step that explicitly handles deletions and validation.
-
-Do not fake deletion by hiding broad behavior in helper scripts.
-
-## Acceptance gate
-
-Before considering a package ready:
-
-- manifest target must match the active project/repo/branch;
-- `apply.files` and `commit.files` must match exactly;
-- package README must state scope, non-goals, expected result, and validation;
-- no broad staging or force push is allowed;
-- `tul verify fresh` or `tul run` must pass after application.
+```text
+tul-package.yml + files/ + README.md
+```

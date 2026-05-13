@@ -1,47 +1,3 @@
-# decisions
-
-## Stage 8 — compact active docs before adding new maps
-
-Decision: Do not add another canonical map document for the documentation tree. Compact ownership into the existing active docs instead.
-
-Accepted active ownership:
-
-```text
-README.md
-docs/status/current.md
-docs/manifest.md
-docs/roadmap.md
-docs/commands.md
-docs/package-spec.md
-docs/decisions.md
-docs/learning-log.md
-```
-
-LLM read-next should converge to:
-
-```text
-tul-vf-latest.md
-README.md
-docs/status/current.md
-docs/manifest.md
-docs/roadmap.md
-docs/commands.md
-```
-
-Rationale: Adding a new map would preserve or worsen duplicate ownership. The safer path is to move stable rules into the owning documents, preserve rationale here, and reduce runtime read-next pointers in a follow-up package.
-
-Consequence: Runtime-referenced compatibility docs may remain temporarily until `tul show handoff` and verify required-doc pointers are narrowed.
-
-## Stage 8 — deletion must respect package contract
-
-Decision: Phase 1 document compaction should not hide deletions inside helper scripts.
-
-Rationale: The safe default package path uses `apply.mode: copy`; it does not own delete semantics. Deleting documents should be done only after pointer compaction or through an explicit deletion-capable process.
-
-Consequence: Phase 1 may replace runtime-referenced docs with compatibility notes and leave deletion for Phase 2.
-
----
-
 # Decisions
 
 This file records accepted planning and design decisions. It is not a full change log; it explains why durable project rules changed.
@@ -512,3 +468,24 @@ Context: Stage 7 reduced bridge work by implementing explicit source/review expo
 Decision: Close Stage 7 after `tul-stage7-closure-checkpoint-bundle-v1` applies and `tul verify fresh` passes. Stage 8 starts from the stable command surface rather than adding new user-facing verbs.
 
 Consequences: Future work should harden gates and test harnesses around the current model before expanding to external repositories or destructive automation. `tul run` remains the normal user command; source/review zip artifacts remain transport artifacts, not backup authority.
+
+## ADR-0XX — Runtime read-next is limited to active docs
+
+Status: accepted
+
+Context: Stage 7 closed with a functional but oversized handoff read-next list. The list still pointed at compatibility documents under `docs/llm`, `docs/protocols`, `docs/checklists`, `docs/tracks`, and selected workflow files even after active ownership moved into README, status, manifest, roadmap, commands, and package-spec.
+
+Decision: Package `tul-doc-tree-compaction-stage2-pointer-compaction-v1` narrows runtime handoff read-next and verify required docs to the active document set:
+
+```text
+README.md
+docs/status/current.md
+docs/manifest.md
+docs/roadmap.md
+docs/commands.md
+docs/package-spec.md
+```
+
+Compatibility docs are no longer active sources of truth once this package is applied.
+
+Consequences: Obsolete and compatibility docs can be removed in a separate 2B cleanup after `tul verify fresh` passes with the narrowed required-doc set. Deletion remains separate because the current package contract supports `apply.mode: copy`, not safe delete operations.

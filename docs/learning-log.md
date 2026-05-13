@@ -1,23 +1,3 @@
-# learning log
-
-## Stage 8 — active docs should have one owner each
-
-Observation: README, LLM entrypoint docs, command grammar docs, workflow docs, and checklist docs can all repeat the same `tul run`, command surface, and artifact model. When that happens, LLM review sessions spend context deciding which duplicate is newer.
-
-Lesson: Keep active ownership narrow. README should orient; status should say what is true now; manifest should hold invariants; commands should own command semantics; package-spec should own package structure; roadmap should own next work.
-
-Follow-up: Keep compatibility docs only while runtime pointers require them, then delete them after pointer compaction.
-
-## Stage 8 — deletion support is separate from document compaction
-
-Observation: The safe package path supports explicit file copy. It does not provide a first-class delete operation.
-
-Lesson: Do not smuggle deletion into helper scripts when the runtime contract is metadata-driven. Split document content compaction from deletion mechanics when needed.
-
-Follow-up: Use a second package or explicit manual deletion plan after handoff/verify pointers are updated.
-
----
-
 # Learning Log
 
 This log records bottom-up lessons from actual update, verify, package, and handoff work. Not every lesson changes the manifest. Most lessons should first affect the ready queue or strategy.
@@ -479,3 +459,13 @@ Observation: Stage 7 stabilized after the command surface was reduced, `tul run`
 Lesson: Reducing user bridge work required separating concepts instead of adding more flags: `run` orchestrates the loop, `update` publishes packages, `verify fresh` writes uploadable verification evidence, `export` creates files, and `show` reports state.
 
 Action: Close Stage 7 with a documentation checkpoint and move Stage 8 toward gate hardening, smoke-test harnesses, retired-module review, and eventually guarded cross-repo onboarding.
+
+### 2026-05-14 — Delete only after runtime pointers move
+
+Observation: Stage 8 document compaction cannot safely delete compatibility docs while `tul show handoff` and `tul verify` still point at them.
+
+Impact: Delete-first compaction would convert a documentation cleanup into a release-gate failure.
+
+Reflected in: `tul-doc-tree-compaction-stage2-pointer-compaction-v1` updates `lib/tulcore/handoff.py`, `lib/tulcore/verify.py`, and active docs before any obsolete file deletion.
+
+Follow-up: Run 2B as a separate narrow deletion step after 2A passes fresh verification.

@@ -2,32 +2,17 @@
 
 You are working with `humtr/tul`, the Terminal Update Loop runtime.
 
-## Evidence order
+## Start here
 
-Use the latest uploaded artifacts first:
+1. Read `tul-vf-latest.md` when the user uploads it.
+2. Read `README.md`.
+3. Read `docs/status/current.md`.
+4. Read `docs/manifest.md`.
+5. Read `docs/roadmap.md`.
+6. Read `docs/commands.md`.
+7. Read `docs/package-spec.md` before proposing or producing a package.
 
-```text
-1. tul-vf-latest.md
-2. tul-source-latest.zip
-3. tul-review-latest.zip
-4. git-files.txt
-```
-
-Runtime facts from `tul-vf-latest.md`, `tul show`, `tul show handoff`, and `tul show exports` override older prose and prior chat memory.
-
-## Read-next
-
-Start with:
-
-```text
-README.md
-docs/status/current.md
-docs/manifest.md
-docs/roadmap.md
-docs/commands.md
-```
-
-Read `docs/package-spec.md` when package creation or review is requested. Read `docs/decisions.md` and `docs/learning-log.md` only when rationale or lessons are needed.
+Do not treat `docs/llm/*`, `docs/protocols/*`, old checklists, old workflow files, or old prompt templates as active sources of truth unless the user asks for historical context.
 
 ## Canonical commands
 
@@ -48,16 +33,13 @@ tul setup
 ## Normal user path
 
 ```bash
-cd ~/prj/tul
-
 tul run
 ```
 
-`run` applies a compatible package when one is available. If no compatible package is available, it refreshes verification and transport artifacts for the current HEAD.
+`run` applies a compatible package when available. If no compatible package is available, it refreshes verification and transport artifacts for the current HEAD.
 
 ## Invariants
 
-- User approval remains required before applying generated packages.
 - Push is included by default after successful validation and commit.
 - `--no-push` and `--no-commit` are exceptions.
 - Remote HEAD verification is part of successful update when push is enabled.
@@ -65,23 +47,21 @@ tul run
 - Do not force push in the normal path.
 - Project policy belongs in `.tul.yml`.
 - Environment paths and aliases belong in global config.
-- Package application is sequential and gated against the latest verified baseline.
+- LLM packages should use `tul-package.yml + files/ + README.md`.
 
-## Package output boundary
-
-Do not create a package unless the user explicitly asks for one.
+## Package output
 
 When producing a package, create one cross-platform zip:
 
 ```text
 <package>.zip
   tul-package.yml
-  files/
   README.md
+  files/
 ```
 
-Optional `apply.sh` and `apply.ps1` files may be included as helpers, but the normal application path is metadata-driven.
+The zip root must contain `tul-package.yml` directly.
 
 ## Source separation
 
-Separate user-stated goals, terminal-verified facts, repo-documented facts, assistant interpretation, and unresolved uncertainty. Do not attribute assistant-created frames to the user unless the user explicitly accepts them.
+Separate user-stated goals, terminal-verified facts, repo-documented facts, assistant interpretation, and unresolved uncertainty.

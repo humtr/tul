@@ -2,13 +2,13 @@
 
 `tul` means **Terminal Update Loop**.
 
-`tul` is a local, human-controlled runtime for moving LLM-generated work through a bounded loop:
+`tul` is a local, human-controlled runtime for moving AI-generated work through this loop:
 
 ```text
-LLM / assistant -> user -> terminal -> local repo/runtime -> commit + push -> verification/export -> LLM review
+LLM / assistant -> user -> terminal environment -> local repo/runtime -> commit + push -> verification/export -> LLM review
 ```
 
-The current operational target is **`humtr/tul`**. Future target repositories remain deferred until this self-hosting loop reliably reduces bridge work.
+The current operational target is **`humtr/tul`** itself. Future target repositories remain deferred until this self-hosting loop reduces bridge work rather than multiplies it.
 
 ## Normal use
 
@@ -20,7 +20,7 @@ cd ~/prj/tul
 tul run
 ```
 
-`tul run` is the default user loop:
+`tul run` performs the full user-facing loop:
 
 ```text
 package found:
@@ -38,7 +38,7 @@ A successful run prepares the normal upload artifacts:
 /sdcard/termux/import/tul/tul-review-latest.zip
 ```
 
-Use split commands only for inspection, diagnostics, recovery, or explicit user-directed decomposition.
+Use `tul package` only when you want to inspect the newest compatible package before running the loop.
 
 ## Canonical command surface
 
@@ -54,34 +54,32 @@ tul recover
 tul setup
 ```
 
+There is no legacy alias layer in the canonical command surface.
+
 Command boundaries:
 
-- `tul show` is read-only state and diagnostic output. Use `tul show exports` to inspect source/review freshness.
+- `tul show` is read-only state and diagnostic output. Use `tul show exports` for source/review freshness.
 - `tul package` discovers, inspects, validates, and authors packages. With no arguments, it shows the newest compatible package candidate.
-- `tul update` applies one compatible package, runs safety checks, commits, pushes, and verifies remote HEAD.
-- `tul verify` is quick/local and stdout-first. `tul verify fresh` performs fresh clone verification and writes `tul-vf-latest.md/json`.
-- `tul export` creates file artifacts only. Status belongs under `tul show`, not `tul export`.
+- `tul update` applies a package, runs safety checks, commits, pushes, and verifies remote HEAD.
+- `tul verify` is quick/local and stdout-first. It does not rewrite latest verify artifacts by default.
+- `tul verify fresh` performs fresh clone verification and writes `tul-vf-latest.md/json`.
+- `tul export` creates source and review transport artifacts.
 - `tul run` is the full Terminal Update Loop.
-- `tul clean` is plan-only by default; guarded mutation requires an explicit `run` subcommand.
-- `tul recover` prints recovery plans by default; rollback requires an explicit subcommand.
+- `tul clean` is plan-only by default; `tul clean ... run` performs guarded moves.
+- `tul recover` prints recovery plans by default and does not silently mutate the repo.
 - `tul setup` reports setup status by default; setup subcommands perform setup tasks.
 
-## LLM read-next
+## LLM entrypoint
 
-LLM entrypoint: `README.md` is the compact durable repo entrypoint for LLM review. Runtime facts still come from `tul-vf-latest.md` and `tul show` snapshots.
+If you are an LLM, coding agent, or a new session reviewing this repo, start here:
 
-When reviewing the repo from uploaded artifacts, use this order:
-
-```text
-1. tul-vf-latest.md
-2. README.md
-3. docs/status/current.md
-4. docs/manifest.md
-5. docs/roadmap.md
-6. docs/commands.md
-```
-
-Read `docs/package-spec.md` only when producing or reviewing a package. Read `docs/decisions.md` or `docs/learning-log.md` only when design rationale or lessons are needed.
+1. Read `tul-vf-latest.md` when the user uploads it.
+2. Read [`README.md`](README.md).
+3. Read [`docs/status/current.md`](docs/status/current.md).
+4. Read [`docs/manifest.md`](docs/manifest.md).
+5. Read [`docs/roadmap.md`](docs/roadmap.md).
+6. Read [`docs/commands.md`](docs/commands.md).
+7. Read [`docs/package-spec.md`](docs/package-spec.md) before proposing or producing a package.
 
 Do not rely on prior chat context when repo documents and runtime artifacts answer the question. Runtime facts live in `tul-vf-latest.md` and `tul show` snapshots, not in README prose.
 
@@ -95,7 +93,7 @@ Do not rely on prior chat context when repo documents and runtime artifacts answ
 | `tul-review-latest.zip` | changed-file review transport artifact |
 | state/report/handoff files | local runtime records |
 
-Zip artifacts are transport artifacts, not backup authority. Recovery authority is Git remote plus commit hashes and recovery state.
+Zip artifacts are not backup authority. Recovery authority is Git remote plus commit hashes and recovery state.
 
 Use `tul show exports` to inspect source/review freshness:
 
@@ -105,7 +103,7 @@ tul show exports
 
 ## Package contract
 
-LLM-generated packages must converge on one cross-platform archive. The release-gate package contract phrase is `tul-package.yml + files/ + README.md`. The package contract is:
+LLM-generated packages must converge on one cross-platform zip. The minimum package contract is `tul-package.yml + files/ + README.md`; normal cross-platform packages may also include helper scripts when explicitly needed:
 
 ```text
 <package>.zip
@@ -113,8 +111,6 @@ LLM-generated packages must converge on one cross-platform archive. The release-
   README.md
   files/
 ```
-
-Normal cross-platform packages may also include `apply.sh` and `apply.ps1` as human-readable helpers, but the safe runtime path is package metadata with `apply.mode: copy`.
 
 `tul-package.yml` must declare target project/repo/branch, apply files, commit files, and commit message. Normal operation uses package metadata, not arbitrary script execution.
 
@@ -127,8 +123,22 @@ Normal cross-platform packages may also include `apply.sh` and `apply.ps1` as hu
 - `--no-push` and `--no-commit` are exceptions for recovery/debug.
 - Project policy belongs in `.tul.yml`.
 - Environment paths and aliases belong in global config.
-- Parallel planning is allowed; package application is sequential and gated against the latest verified baseline.
+- LLM packages should use `tul-package.yml + files/ + README.md`.
+
+## Planning harness
+
+The active planning ledger is repo-resident:
+
+```text
+docs/manifest.md
+docs/roadmap.md
+docs/status/current.md
+docs/learning-log.md
+docs/decisions.md
+```
+
+`docs/decisions.md` and `docs/learning-log.md` preserve rationale and lessons, but they are not part of the default read-next path.
 
 ## Current focus
 
-Stage 7 is closed. The current work is Stage 8 document-tree compaction: reduce active documentation ownership, remove duplicated guidance, and keep runtime-facing read-next guidance narrow without changing command behavior.
+Stage 7 is closed. Stage 8 is compacting active documentation ownership. Package `tul-doc-tree-compaction-stage2-pointer-compaction-v1` narrows runtime handoff and verify required-doc pointers to the active document set. Compatibility documents remain until the separate 2B deletion step.
