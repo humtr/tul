@@ -1,1 +1,1 @@
-__version__ = "0.8.32-stage7-run-smoke-gate"
+__version__ = "0.8.33-stage7-clean-recover-setup-ux"

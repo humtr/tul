@@ -1,23 +1,26 @@
 # cleanup workflow
 
-Cleanup is under `clean`.
+Cleanup is under `clean`. The default behavior is always plan-only.
 
-## Default
+## Default summary
 
 ```bash
 tul clean
 ```
 
-Default cleanup is plan-only. It must not move or delete files.
+This prints bounded state cleanup and package cleanup plans. It must not move or delete files.
 
 ## State cleanup
 
 ```bash
 tul clean states
+tul clean states run
 tul clean states run 3
 ```
 
-`clean states` shows the guarded cleanup plan. `clean states run 3` moves bounded selected state directories according to the current selector and keep count.
+`tul clean states` shows the guarded cleanup plan. `tul clean states run` executes the bounded state cleanup with the default keep count of 3. `tul clean states run 3` is the explicit form and keeps the newest 3 selected noop state directories.
+
+The numeric keep argument is interpreted as a keep count when it appears after `run`. A project/path target remains available for non-active project workflows.
 
 ## Package cleanup
 
@@ -26,7 +29,7 @@ tul clean packages
 tul clean packages run
 ```
 
-Package cleanup should preserve the shared Download folder rule: unrelated files outside the project inbox are report-only unless explicitly ingested by the package policy.
+Package cleanup preserves the shared Download folder rule: unrelated files outside the project inbox are report-only unless explicitly ingested by the package policy.
 
 ## Backup cleanup
 
@@ -35,4 +38,4 @@ tul clean backups
 tul clean backups run
 ```
 
-Backup cleanup is guarded and should report source and destination paths before moving anything.
+Backup cleanup is guarded. The plan form reports the repo and scope before anything moves. The run form moves repo-local tul backup files/directories out of the repo.

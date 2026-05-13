@@ -59,4 +59,4 @@ Use the stepwise loop only for debugging, review, or user-directed decomposition
 
 ## Current baseline
 
-The command-surface redesign, run default finalization, README package-contract gate fix, and run smoke gate are closed at `70292083094d71387371c8705ae5828bb1442e31`. The next package cleans active docs/templates and marks historical documents so future command-surface scans can distinguish current guidance from old design records.
+The command-surface redesign, run default finalization, README package-contract gate fix, run smoke gate, and command residue cleanup are closed at `8534311ce661c5ffee34b638705a61a6e4d84874`. The next package tightens the auxiliary `clean`, `recover`, and `setup` UX before the Stage 7 closure checkpoint.

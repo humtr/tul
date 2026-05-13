@@ -78,11 +78,14 @@ tul export review
 ```bash
 tul clean
 tul clean states
+tul clean states run
 tul clean states run 3
 tul clean packages
+tul clean packages run
+tul clean backups
 ```
 
-The default `clean` path is plan-only. Use `run` in the clean namespace for guarded moves.
+The default `clean` path is plan-only. Use `run` in the clean namespace for guarded moves. `tul clean states run 3` keeps the newest 3 selected noop state directories; the numeric argument is optional and defaults to 3.
 
 ## Recovery
 
@@ -92,13 +95,15 @@ tul recover rollback
 tul recover resume
 ```
 
-Recovery commands print plans or safe commands. They do not silently rewrite history.
+Recovery commands print plans or safe commands. They do not silently rewrite history. `tul recover apply` and `tul recover publish` are advanced debug surfaces, not normal workflow commands.
 
 ## Setup
 
 ```bash
 tul setup
 tul setup init <target>
-tul setup install
+tul setup install [target]
 tul setup use <project>
 ```
+
+`setup` without arguments is status-only. Setup subcommands are explicit setup actions.

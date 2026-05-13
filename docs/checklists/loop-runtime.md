@@ -33,5 +33,8 @@
 - [ ] `tul package` works.
 - [ ] `tul verify` works as quick/local verification.
 - [ ] `tul clean` is plan-only by default.
+- [ ] `tul clean states run 3` treats `3` as keep count, not as a project target.
 - [ ] `tul recover` is plan-only by default.
+- [ ] `tul recover rollback` prints a command and does not silently mutate the repo.
 - [ ] `tul setup` reports setup status.
+- [ ] `tul setup` prints explicit setup subcommands and next commands.

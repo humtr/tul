@@ -442,3 +442,12 @@ Impact: Templates are higher risk than historical docs because they can be copie
 Reflected in: active command docs, LLM handoff templates, milestone checklist, and historical banners on pre-Stage 7 docs.
 
 Follow-up: Add a warning-first release-gate scan that excludes historical documents and checks active docs/templates for removed command forms.
+
+
+## 2026-05-13 — Auxiliary commands need conservative defaults
+
+Observation: After `tul run` became the normal loop, the remaining user-facing commands are mostly inspection or support surfaces. If `clean`, `recover`, or `setup` mutate by default, they undermine the simplified command model.
+
+Decision: Keep `tul clean`, `tul recover`, and `tul setup` safe to run without arguments. Require explicit subcommands for guarded moves, rollback command printing, or setup changes.
+
+Follow-up: Close Stage 7 after the auxiliary UX package passes fresh verification and source/review artifacts remain current.

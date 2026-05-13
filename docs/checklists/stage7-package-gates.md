@@ -34,3 +34,12 @@ For command-surface packages, verify the following before claiming closure:
 - the removed export-status form remains rejected; use `tul show exports` for diagnostics.
 - `tul run dry` documents both paths: package found and package not found.
 - `tul run` package-not-found fallback refreshes export and verify artifacts instead of failing only because no package exists.
+
+
+## Clean / recover / setup UX checks
+
+- `tul clean` must remain plan-only by default.
+- `tul clean states run 3` must parse `3` as the keep count.
+- `tul recover` must remain plan-only by default.
+- `tul recover rollback` must print a safe rollback command rather than silently mutating the repo.
+- `tul setup` must remain status-only by default and print explicit next setup commands.

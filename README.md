@@ -69,6 +69,16 @@ Command boundaries:
 - `tul recover` prints recovery plans by default and does not silently mutate the repo.
 - `tul setup` reports setup status by default; setup subcommands perform setup tasks.
 
+Auxiliary command defaults are intentionally conservative:
+
+```text
+tul clean    = plan-only cleanup summary
+tul recover  = recovery plan only; no silent rollback
+tul setup    = setup status only
+```
+
+Use explicit subcommands for bounded action, for example `tul clean states run`, `tul recover rollback`, or `tul setup use <project>`.
+
 ## Stepwise loop
 
 Use this only for diagnostics or when the user explicitly wants to split the loop:
@@ -157,4 +167,4 @@ Stage 7 uses parallel planning and sequential gated update: many candidate plans
 
 ## Current focus
 
-Stage 7 has closed command-surface redesign, run default finalization, and the README package-contract gate fix. The current work expands smoke coverage around `tul run` and the canonical command surface.
+Stage 7 has closed command-surface redesign, run default finalization, README package-contract gate fix, run smoke gate, and command residue cleanup. The current work tightens the auxiliary `clean`, `recover`, and `setup` commands before the Stage 7 closure checkpoint.

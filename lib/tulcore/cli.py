@@ -502,20 +502,31 @@ def command_clean(args: argparse.Namespace) -> int:
     scope = args.scope or "summary"
     run = args.scope == "run" or args.action == "run"
     target = args.target
+    keep = args.keep
+
+    # Parser compatibility for the documented form:
+    #   tul clean states run 3
+    # The third positional slot is named target so project/path can still be
+    # supplied for non-active projects. If that slot is a bare integer, treat
+    # it as the keep count instead of a project target.
+    if target and target.isdigit():
+        keep = int(target)
+        target = None
+
     if scope == "summary":
         ctx = read_project(args, command="clean")
         print("# tul clean")
         print("Default mode: plan only. No files were moved.")
         print()
-        print_clean_states(ctx, keep=args.keep, dry_run=True)
+        print_clean_states(ctx, keep=keep, dry_run=True)
         print()
         print_clean_packages(ctx, as_json=args.json, run=False)
         print()
-        print("To move guarded cleanup candidates, use: tul clean states run 3 or tul clean packages run")
+        print("To move guarded cleanup candidates, use: tul clean states run [keep] or tul clean packages run")
         return 0
     ctx = infer_mutating_project(target, command="clean").ctx if run else read_project(args, command=f"clean {scope}")
     if scope == "states" or scope == "run":
-        print_clean_states(ctx, keep=args.keep, dry_run=not run)
+        print_clean_states(ctx, keep=keep, dry_run=not run)
         return 0
     if scope == "packages":
         print_clean_packages(ctx, as_json=args.json, run=run)
@@ -523,8 +534,10 @@ def command_clean(args: argparse.Namespace) -> int:
     if scope == "backups":
         if not run:
             print("# tul clean backups")
-            print("Default mode: plan only. Backup sweep has no detailed dry-run yet.")
-            print("Run `tul clean backups run` to move repo-local tul backups out of the repo.")
+            print("Default mode: plan only. No files were moved.")
+            print(f"Repo: {ctx.repo_path}")
+            print("Scope: repo-local tul backup files/directories")
+            print("Run `tul clean backups run` to move guarded repo-local tul backups out of the repo.")
             return 0
         moved = sweep_repo(ctx.repo_path, ctx.global_config)
         print("# tul clean backups")
@@ -799,7 +812,7 @@ def print_clean_states(ctx, *, keep: int = 3, dry_run: bool = True) -> None:
     for state_path, dest, data in archived:
         print(f"- {state_path.parent} -> {dest} ({data.get('phase')})")
     if dry_run:
-        print("No files were moved. Run `tul clean states run 3` to execute this bounded cleanup.")
+        print("No files were moved. Run `tul clean states run [keep]` to execute this bounded cleanup.")
 
 
 def print_clean_packages(ctx, *, as_json: bool = False, run: bool = False) -> None:
@@ -832,10 +845,10 @@ def print_recover_summary(ctx) -> None:
             print_rollback_plan(ctx, commit_id=state_commit(rollbackable[1]), source=f"latest rollbackable state: {rollbackable[0]}")
     print()
     print("Subcommands:")
-    print("- tul recover rollback")
-    print("- tul recover resume")
-    print("- tul recover apply")
-    print("- tul recover publish")
+    print("- tul recover rollback   # print a safe git revert command")
+    print("- tul recover resume     # print latest state and safe next commands")
+    print("- tul recover apply      # advanced debug; does not modify the repo")
+    print("- tul recover publish    # advanced debug; does not commit or push")
 
 
 def print_rollback_plan(ctx, *, commit_id: str | None = None, source: str | None = None) -> None:
@@ -898,6 +911,11 @@ def print_setup_summary(target: str | None = None) -> None:
         print(f"- repo: {ctx.repo_path}")
         print(f"- branch: {current_branch(ctx.repo_path)}")
         print(f"- dirty: {is_dirty(ctx.repo_path)}")
+    print("Subcommands:")
+    print("- tul setup init <target>     # register a project")
+    print("- tul setup install [target]  # install or refresh launcher")
+    print("- tul setup use <project>     # set active project context")
+    print("Next: tul show, tul run")
     print("launcher diagnostics:")
     for line in path_launcher_info(ctx.repo_path if ctx else None):
         print(line)

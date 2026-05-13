@@ -2,9 +2,9 @@
 
 ## Current baseline
 
-The latest verified baseline is `70292083094d71387371c8705ae5828bb1442e31`.
+The latest verified baseline is `8534311ce661c5ffee34b638705a61a6e4d84874`.
 
-The latest applied package is `tul-stage7-run-smoke-gate-bundle-v1`.
+The latest applied package is `tul-stage7-command-residue-cleanup-bundle-v1`.
 
 ## Closed Stage 7 sequence
 
@@ -19,25 +19,23 @@ The latest applied package is `tul-stage7-run-smoke-gate-bundle-v1`.
 9. `tul-stage7-run-default-finalization-bundle-v1`
 10. `tul-stage7-readme-package-contract-gate-fix-bundle-v1`
 11. `tul-stage7-run-smoke-gate-bundle-v1`
+12. `tul-stage7-command-residue-cleanup-bundle-v1`
 
 ## Immediate queue
 
-1. `tul-stage7-command-residue-cleanup-bundle-v1`
-   - clean active docs/templates so they use the canonical Stage 7 command surface;
-   - replace old command examples with `tul run`, `tul show`, `tul show exports`, `tul verify fresh`, `tul export`, `tul clean`, and `tul recover`;
-   - add historical banners to pre-Stage 7 documents that intentionally retain old command examples.
+1. `tul-stage7-clean-recover-setup-ux-bundle-v1`
+   - keep `tul clean` plan-only by default;
+   - make `tul clean states run 3` parse `3` as keep count;
+   - keep `tul recover` plan-only by default;
+   - keep `tul setup` status-only by default;
+   - document the auxiliary command contract.
 
-2. `tul-stage7-release-gate-command-surface-bundle-v1`
-   - add broader warning-first scans for active docs/templates;
-   - exclude files marked historical;
-   - promote checks to gate conditions only after false positives are understood.
-
-3. `tul-stage7-closure-checkpoint-bundle-v1`
-   - close Stage 7 after `tul run` smoke coverage, command residue cleanup, and command-surface scan coverage are stable.
+2. `tul-stage7-closure-checkpoint-bundle-v1`
+   - close Stage 7 after run, export, command surface, docs, and auxiliary UX are all verified.
 
 ## Deferred
 
-- release-gate failure on export freshness warnings;
 - destructive cleanup automation;
+- rollback auto-execution;
 - external repository onboarding;
 - legacy alias compatibility layer.

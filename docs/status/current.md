@@ -1,13 +1,13 @@
 # current status
 
-Status: Stage 7 `tul run` is the normal user loop. The latest verified baseline after the run smoke gate package is stable. The next package cleans command-surface residue from active docs/templates and marks historical documents.
+Status: Stage 7 command-surface cleanup is stable. `tul run` is the normal user loop, command-surface smoke checks are in the release gate, and active docs/templates have been cleaned. The current package tightens the auxiliary `clean`, `recover`, and `setup` UX before the Stage 7 closure checkpoint.
 
 Current verified baseline:
 
 ```text
-HEAD: 70292083094d71387371c8705ae5828bb1442e31
-Remote HEAD: 70292083094d71387371c8705ae5828bb1442e31
-Latest package: tul-stage7-run-smoke-gate-bundle-v1
+HEAD: 8534311ce661c5ffee34b638705a61a6e4d84874
+Remote HEAD: 8534311ce661c5ffee34b638705a61a6e4d84874
+Latest package: tul-stage7-command-residue-cleanup-bundle-v1
 Release gate: PASS
 Fresh clone: PASS
 Source bundle: current
@@ -29,24 +29,11 @@ Warnings: none
 - run default finalization
 - README package-contract gate fix
 - run smoke gate
+- command residue cleanup
 
 ## Current package
 
-Apply `tul-stage7-command-residue-cleanup-bundle-v1` to remove old command examples from active docs/templates and mark historical docs that intentionally retain pre-Stage 7 command grammar.
-
-## Canonical command surface
-
-```text
-tul show
-tul package
-tul update
-tul verify
-tul export
-tul run
-tul clean
-tul recover
-tul setup
-```
+Apply `tul-stage7-clean-recover-setup-ux-bundle-v1` to make `clean`, `recover`, and `setup` conservative defaults explicit in code, docs, and checklists.
 
 ## Normal loop
 
@@ -54,19 +41,8 @@ tul setup
 tul run
 ```
 
-Semantics:
-
-```text
-package found:
-  update -> export -> verify fresh -> show
-
-package not found:
-  export -> verify fresh -> show
-```
-
 ## Next queue
 
-1. Apply `tul-stage7-command-residue-cleanup-bundle-v1`.
+1. Apply `tul-stage7-clean-recover-setup-ux-bundle-v1`.
 2. Confirm release gate PASS with `tul run` or `tul verify fresh`.
-3. Add warning-first scans for removed command examples in active docs/templates.
-4. Close Stage 7 after command residue cleanup and gate expansion are stable.
+3. Apply `tul-stage7-closure-checkpoint-bundle-v1` to close Stage 7.

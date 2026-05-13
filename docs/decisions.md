@@ -438,7 +438,7 @@ Decision: `tul verify fresh` should include lightweight command-surface smoke ch
 Consequence: The gate now detects command-surface drift closer to the CLI boundary while avoiding mutation and avoiding package-inbox-dependent behavior.
 
 
-## ADR-035 — Command residue cleanup keeps active docs current and marks historical docs
+## ADR-036 — Command residue cleanup keeps active docs current and marks historical docs
 
 Status: accepted
 
@@ -447,3 +447,14 @@ Context: Stage 7 reduced the user-facing command surface to `show`, `package`, `
 Decision: Active docs and templates must use the canonical Stage 7 commands. Historical or experiment documents may retain legacy examples only when marked with a historical note.
 
 Consequences: New LLM handoffs and user-facing templates point to `tul run`, `tul show`, `tul show exports`, `tul verify fresh`, `tul export`, `tul clean`, and `tul recover`. Later release gates can scan active docs/templates without blocking on intentionally historical material.
+
+
+## ADR-037 — Auxiliary commands are conservative by default
+
+Status: accepted
+
+Context: After `tul run` became the normal user loop, auxiliary commands still needed a clear contract. The names `clean`, `recover`, and `setup` can imply mutation unless their no-argument defaults are conservative and explicit.
+
+Decision: `tul clean` is plan-only by default, `tul recover` prints recovery plans by default, and `tul setup` reports setup status by default. Mutation or setup actions require explicit subcommands such as `tul clean states run`, `tul recover rollback`, or `tul setup use <project>`.
+
+Consequences: The normal command remains `tul run`; auxiliary commands are safe to run for inspection. Destructive cleanup automation and automatic rollback remain out of scope.

@@ -29,7 +29,7 @@ tul setup
 | Status/handoff | Medium-high | keep status under `show` |
 | Cleanup | Medium | keep default plan-only under `clean` |
 | Recovery | Medium | keep default plan-only under `recover` |
-| Setup/context | Medium | consolidate under `setup` |
+| Setup/context | Medium | status-only default under `setup` |
 | Cross-repo onboarding | Deferred | wait until self-host loop is stable |
 
 ## Normal command model
