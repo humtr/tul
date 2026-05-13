@@ -64,6 +64,7 @@ docs/manifest.md            durable invariants and ownership map
 docs/roadmap.md             future queue and deferred work
 docs/commands.md            command grammar and command boundaries
 docs/package-spec.md        package contract and package safety
+docs/environments/README.md environment profiles and platform-local boundaries
 docs/decisions.md           historical decisions
 docs/learning-log.md        historical lessons
 ```

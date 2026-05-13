@@ -9,7 +9,7 @@
 - Force push is forbidden in normal operation.
 - Push is included by default after successful validation and commit.
 - Project policy belongs in `.tul.yml`.
-- Environment paths and aliases belong in global config.
+- Environment-specific profiles belong under `docs/environments/` when they are repo-relevant; global user aliases and local machine secrets remain outside the repo.
 - Zip artifacts are not backup authority.
 - Recovery authority is Git remote + commit hash + rollback/recovery state.
 - Parallel planning is allowed; update/apply work remains sequential and gated against the latest verified baseline.
@@ -61,6 +61,7 @@ Ownership:
 | `docs/roadmap.md` | future queue and deferred work only |
 | `docs/commands.md` | command grammar and command boundaries |
 | `docs/package-spec.md` | package contract and package safety |
+| `docs/environments/README.md` | repo-relevant environment profiles and platform-local boundaries |
 | `docs/decisions.md` | historical decisions and rationale |
 | `docs/learning-log.md` | historical lessons |
 | `templates/*` | copy-ready prompts/checklists, not source of truth |
@@ -91,4 +92,4 @@ tul-package.yml + files/ + README.md
 
 Stage 7 is closed.
 
-Stage 8 document tree compaction is closed after active ownership consolidation, runtime pointer compaction, obsolete-doc deletion, and ownership finalization.
+Stage 8 document tree compaction is closed after active ownership consolidation, runtime pointer compaction, obsolete-doc deletion, ownership finalization, and environment-note normalization.

@@ -1,21 +1,32 @@
 # current status
 
-Status: **Stage 8 document tree compaction is closed.**
+Status: **Stage 8 document tree compaction and environment-note normalization are closed.**
 
-Verified repo baseline:
+Runtime truth remains `tul-vf-latest.md` and `tul show`. This file records the latest durable status summary and must mention the latest package so docs-drift checks can stay clean.
+
+## Verified baseline before this package
 
 ```text
 Project: tul
 Repo: humtr/tul
 Branch: main
-HEAD: fb7ea10b93371e33f0f90a61e949eb621a7087b3
-Remote HEAD: fb7ea10b93371e33f0f90a61e949eb621a7087b3
+Verified HEAD: 4b3354678b476d34a9d741b1db64247f5ccc8942
+Remote HEAD: 4b3354678b476d34a9d741b1db64247f5ccc8942
 Release gate: PASS
 Steps: 33 pass, 0 fail
 Fresh clone: PASS
 Working tree: clean
-Docs drift: clean
+Source bundle: current, 47 files
+Review bundle: current, 9 changed files
 ```
+
+## Latest package marker
+
+```text
+Latest package: tul-doc-tree-compaction-stage8-env-profile-sync-v1
+```
+
+After this package is applied, the exact post-apply commit hash is recorded by `tul-vf-latest.md`, `tul show`, and Git remote state.
 
 ## Closed work
 
@@ -23,7 +34,8 @@ Docs drift: clean
 Stage 1: active docs were consolidated into canonical owners.
 2A: runtime handoff/read-next and verify required-doc pointers were narrowed.
 2B: obsolete compatibility/workflow/experiment/template documents were removed.
-Stage 8 finalization: active ownership overlap is closed in README, status, manifest, roadmap, commands, package-spec, and templates.
+Stage 8 ownership finalization: active ownership overlap was closed.
+Environment note normalization: Windows D:\work was moved conceptually under a general environment-profile area.
 ```
 
 ## Active read-next
@@ -44,10 +56,10 @@ docs/decisions.md
 docs/learning-log.md
 ```
 
-Deferred environment note:
+Environment profiles:
 
 ```text
-docs/windows-dwork-environment.md
+docs/environments/README.md
 ```
 
 Retained templates:
@@ -57,12 +69,6 @@ templates/llm-handoff-prompt.md
 templates/milestone-checklist.md
 templates/project-instructions.md
 ```
-
-## Artifact status boundary
-
-The source bundle is the source-context transport artifact and is current at the Stage 8 deletion baseline with 47 files.
-
-The review bundle can remain stale after a narrow manual `git rm` deletion commit because the latest package state still points at the previous package-run state. This does not invalidate the release gate or the source tree compaction; it is a known artifact/state-model boundary and a candidate for a later review/state-model improvement.
 
 ## Current command surface
 
@@ -95,5 +101,5 @@ Optional later work belongs outside Stage 8:
 ```text
 - make manual git rm / delete commits produce current review evidence;
 - add safe package-level delete support, if explicitly approved;
-- decide whether docs/windows-dwork-environment.md belongs in this repo or a separate environment notebook.
+- split large runtime modules only when a concrete feature requires it.
 ```
