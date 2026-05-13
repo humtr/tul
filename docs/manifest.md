@@ -2,15 +2,16 @@
 
 `tul` is the Terminal Update Loop runtime for applying LLM-generated packages under user control.
 
-## Invariants
+## Durable invariants
 
 - User approval remains required before applying generated packages.
 - Normal package application must not use `git add -A` or `git add .`.
 - Force push is forbidden in normal operation.
 - Push is included by default after successful validation and commit.
 - Project policy belongs in `.tul.yml`.
-- Environment paths belong in global config.
-- Zip artifacts are not backup authority. Recovery authority is Git remote + commit hash + rollback/recovery state.
+- Environment paths and aliases belong in global config.
+- Zip artifacts are not backup authority.
+- Recovery authority is Git remote + commit hash + rollback/recovery state.
 - Parallel planning is allowed; update/apply work remains sequential and gated against the latest verified baseline.
 
 ## Canonical command surface
@@ -27,17 +28,7 @@ tul recover
 tul setup
 ```
 
-## Command meanings
-
-- `show`: read-only state and diagnostic output.
-- `package`: package discovery, inspection, validation, and authoring.
-- `update`: apply package, run safety checks, commit, push, and remote-HEAD check.
-- `verify`: quick/local verification by default; `fresh` writes uploadable verify artifacts.
-- `export`: file creation only; no status-only subcommands live here.
-- `run`: the normal full Terminal Update Loop.
-- `clean`: cleanup planning by default.
-- `recover`: recovery planning by default.
-- `setup`: setup status by default.
+Command semantics are owned by `docs/commands.md`.
 
 ## Normal user loop
 
@@ -45,7 +36,7 @@ tul setup
 tul run
 ```
 
-`run` is responsible for the whole user-facing loop. If a compatible package is available, it updates first. If no compatible package is available, it refreshes source/review/verify artifacts for the current HEAD.
+`run` is the whole user-facing loop. If a compatible package is available, it updates first. If no compatible package is available, it refreshes current artifacts for the current HEAD.
 
 ## Active document ownership
 
@@ -64,14 +55,17 @@ Ownership:
 
 | File | Owns |
 |---|---|
-| `README.md` | user/LLM entrypoint and artifact model summary |
-| `docs/status/current.md` | current verified state and immediate queue |
-| `docs/manifest.md` | durable invariants |
-| `docs/roadmap.md` | future queue and deferred work |
+| `README.md` | entrypoint and artifact summary only |
+| `docs/status/current.md` | current verified state only |
+| `docs/manifest.md` | durable invariants and ownership map |
+| `docs/roadmap.md` | future queue and deferred work only |
 | `docs/commands.md` | command grammar and command boundaries |
 | `docs/package-spec.md` | package contract and package safety |
+| `docs/decisions.md` | historical decisions and rationale |
+| `docs/learning-log.md` | historical lessons |
+| `templates/*` | copy-ready prompts/checklists, not source of truth |
 
-`docs/decisions.md` and `docs/learning-log.md` preserve rationale and lessons. They are not default read-next docs.
+A command name may appear in multiple files for orientation, but the ownership table decides which file carries the authoritative explanation.
 
 ## Package contract
 
@@ -95,4 +89,6 @@ tul-package.yml + files/ + README.md
 
 ## Stage status
 
-Stage 7 is closed. Stage 8 has reduced active documentation ownership and moved runtime pointers to the active documentation set; 2B removes retired compatibility and obsolete docs from the active tree.
+Stage 7 is closed.
+
+Stage 8 document tree compaction is closed after active ownership consolidation, runtime pointer compaction, obsolete-doc deletion, and ownership finalization.

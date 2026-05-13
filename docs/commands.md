@@ -1,6 +1,8 @@
 # tul commands
 
-Canonical top-level commands:
+This file owns command grammar and command boundaries.
+
+## Canonical top-level commands
 
 ```text
 tul show
@@ -20,11 +22,10 @@ There is no legacy alias layer in the current command surface.
 
 ```bash
 cd ~/prj/tul
-
 tul run
 ```
 
-`run` is the normal Terminal Update Loop. It applies a package when one is available. If no package is available, it refreshes current verification and transport artifacts.
+`run` is the normal Terminal Update Loop. It applies a package when one is available. If no compatible package is available, it refreshes current verification and transport artifacts.
 
 ## Optional preflight
 
@@ -44,7 +45,22 @@ tul verify fresh
 tul show
 ```
 
-Use this only when the user wants to inspect or split the loop.
+Use this only when intentionally inspecting or splitting the loop.
+
+## Command boundaries
+
+| Command | Boundary |
+|---|---|
+| `tul show` | read-only state and diagnostic output |
+| `tul package` | package discovery, inspection, validation, and authoring |
+| `tul update` | package application, safety checks, commit, push, and remote-HEAD check |
+| `tul verify` | quick/local verification by default |
+| `tul verify fresh` | fresh clone verification and uploadable verify artifacts |
+| `tul export` | file artifact creation only |
+| `tul run` | full Terminal Update Loop |
+| `tul clean` | cleanup planning by default |
+| `tul recover` | recovery planning by default |
+| `tul setup` | setup status by default |
 
 ## Status and handoff
 
@@ -56,7 +72,9 @@ tul show report
 tul show history 5
 ```
 
-`show` commands are read-only. `tul show handoff` prints runtime facts and the active read-next list:
+`show` commands are read-only.
+
+`tul show handoff` prints runtime facts and the active read-next list:
 
 ```text
 README.md
@@ -67,19 +85,10 @@ docs/commands.md
 docs/package-spec.md
 ```
 
-## Verification
-
-```bash
-tul verify        # quick/local, stdout-first
-tul verify fresh  # fresh clone + latest verify artifacts
-```
-
-`verify fresh` writes uploadable markdown/json artifacts and includes runtime snapshots.
-
 ## Export
 
 ```bash
-tul export         # source + review
+tul export
 tul export source
 tul export review
 ```
@@ -98,7 +107,7 @@ tul clean packages run
 tul clean backups
 ```
 
-The default `clean` path is plan-only. Use `run` in the clean namespace for guarded moves. `tul clean states run 3` keeps the newest 3 selected noop state directories; the numeric argument is optional and defaults to 3.
+The default `clean` path is plan-only. Use `run` in the clean namespace for guarded moves.
 
 ## Recovery
 
@@ -108,15 +117,17 @@ tul recover rollback
 tul recover resume
 ```
 
-Recovery commands print plans or safe commands. They do not silently rewrite history. `tul recover apply` and `tul recover publish` are advanced debug surfaces, not normal workflow commands.
+Recovery commands print plans or safe commands. They do not silently rewrite history.
+
+`recover apply` and `recover publish` are advanced debug surfaces, not normal workflow commands.
 
 ## Setup
 
 ```bash
 tul setup
-tul setup init <target>
+tul setup init
 tul setup install [target]
-tul setup use <project>
+tul setup use
 ```
 
 `setup` without arguments is status-only. Setup subcommands are explicit setup actions.

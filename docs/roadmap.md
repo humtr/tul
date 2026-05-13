@@ -1,65 +1,51 @@
 # roadmap
 
-## Current baseline
+This file owns future work only. Current verified state belongs in `docs/status/current.md`; durable invariants belong in `docs/manifest.md`.
 
-Stage 7 is closed. Stage 8 document tree compaction is reducing active documentation to a small stable set.
-
-Latest verified baseline before 2B:
+## Closed
 
 ```text
-HEAD: b7c2007753bb12eae23c5328b3b8d3be15e2f034
-Latest package: tul-doc-tree-compaction-stage2-pointer-compaction-v1
+Stage 7: command surface and artifact loop stabilization
+Stage 8: active documentation tree compaction
+```
+
+Stage 8 closed outcomes:
+
+```text
+- active read-next reduced to six documents;
+- obsolete compatibility/workflow/experiment/template documents removed;
+- source tree reduced to the compact active surface;
+- ownership boundaries are explicit in docs/manifest.md;
+- no command-surface change introduced;
+- no package contract change introduced.
+```
+
+## Optional next work
+
+These are candidates, not active work:
+
+```text
+1. Review/state model improvement
+   - allow manual git rm / delete commits to produce current review evidence;
+   - make latest state distinguish package-run commits from manual cleanup commits.
+
+2. Safe package-level delete support
+   - design only if deletion needs to re-enter the package mechanism;
+   - keep separate from ordinary copy-mode package application.
+
+3. Windows environment note disposition
+   - decide whether docs/windows-dwork-environment.md stays in this repo, moves to a platform/environment area, or leaves the tul repo.
+
+4. Broader runtime hardening
+   - test harnesses, stale artifact diagnostics, and cross-repo onboarding remain separate stages.
+```
+
+## Stop point
+
+If no optional work is selected, the project can stop after `tul verify fresh` passes with:
+
+```text
 Release gate: PASS
-Read-next: six active docs
+Read next: six active docs
 Docs drift: clean
 ```
-
-## Stage 8 — document tree compaction
-
-### 2A: runtime pointer compaction
-
-Status: done.
-
-Acceptance achieved:
-
-```text
-tul verify fresh: PASS
-tul show handoff read-next:
-  README.md
-  docs/status/current.md
-  docs/manifest.md
-  docs/roadmap.md
-  docs/commands.md
-  docs/package-spec.md
-docs drift: clean
-```
-
-### 2B: obsolete-doc deletion
-
-Status: in progress.
-
-Goal:
-
-- remove retired compatibility docs;
-- remove obsolete workflow and experiment records from the active tree;
-- remove old prompt and project-harness templates;
-- retain durable decision and lesson records;
-- keep the Windows environment note deferred rather than deleting it.
-
-Acceptance:
-
-```text
-tul verify fresh: PASS
-tul show handoff read-next remains six active docs
-tul show exports reports current source/review bundles
-docs drift: clean
-source bundle file count decreases from the pre-2B count
-```
-
-## Deferred
-
-- safe package-level delete support;
-- broader runtime refactor;
-- retired module cleanup;
-- cross-repo onboarding;
-- relocation decision for docs/windows-dwork-environment.md.

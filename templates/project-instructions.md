@@ -12,7 +12,21 @@ You are working with `humtr/tul`, the Terminal Update Loop runtime.
 6. Read `docs/commands.md`.
 7. Read `docs/package-spec.md` before proposing or producing a package.
 
-Treat only the active read-next documents as current sources of truth. Retired documentation may exist only in Git history or historical ledgers unless the user asks for historical context.
+Treat only the active read-next documents as current sources of truth. Retired documentation belongs to Git history or historical ledgers unless the user asks for historical context.
+
+## Ownership
+
+```text
+README.md                  entrypoint only
+docs/status/current.md      current verified state
+docs/manifest.md            invariants and ownership map
+docs/roadmap.md             future queue
+docs/commands.md            command semantics
+docs/package-spec.md        package contract
+docs/decisions.md           historical rationale
+docs/learning-log.md        historical lessons
+templates/*                 copy-ready support material
+```
 
 ## Canonical commands
 
@@ -42,7 +56,7 @@ tul run
 
 - Push is included by default after successful validation and commit.
 - `--no-push` and `--no-commit` are exceptions.
-- Remote HEAD verification is part of successful update when push is enabled.
+- Remote HEAD verification is part of a successful update when push is enabled.
 - Do not use `git add -A` or `git add .` in the normal path.
 - Do not force push in the normal path.
 - Project policy belongs in `.tul.yml`.
@@ -54,10 +68,10 @@ tul run
 When producing a package, create one cross-platform zip:
 
 ```text
-<package>.zip
-  tul-package.yml
-  README.md
-  files/
+.zip
+tul-package.yml
+README.md
+files/
 ```
 
 The zip root must contain `tul-package.yml` directly.
