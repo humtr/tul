@@ -2,19 +2,17 @@
 
 Status: Stage 7 is closed. The current verified baseline has the compact command surface, `tul run` as the normal user loop, source/review exports, command-surface smoke checks, active-doc command cleanup, and conservative `clean` / `recover` / `setup` auxiliary defaults in place.
 
-Baseline entering Stage 8:
+Baseline entering the README gate fix:
 
 ```text
-HEAD: 6d4869a3a7a6d4266a5c8a3f2e5dd9fdebd75b2a
-Remote HEAD: 6d4869a3a7a6d4266a5c8a3f2e5dd9fdebd75b2a
-Latest package: tul-stage7-closure-checkpoint-bundle-v1
-Release gate: PASS
-Steps: 33 pass, 0 fail
-Fresh clone: PASS
+Previous verified baseline: 6d4869a3a7a6d4266a5c8a3f2e5dd9fdebd75b2a
+Current applied commit before this fix: a7d8ccca1e4fa89a1f1e4b885c965db2d700c9dd
+Latest package before this fix: tul-doc-tree-compaction-stage1-v1
+Latest package after this fix: tul-doc-tree-compaction-stage1-readme-gate-fix-v1
+Release gate issue being fixed: README entrypoint terms
+Missing terms: LLM entrypoint; tul-package.yml + files/ + README.md
 Source bundle: current
 Review bundle: current
-Docs drift: clean
-Warnings: none
 ```
 
 ## Active model
@@ -53,7 +51,7 @@ Warnings: none
 
 ## Next queue
 
-1. Apply the document-tree compaction package.
-2. Run `tul run` or `tul verify fresh` to re-establish the release gate.
+1. Apply `tul-doc-tree-compaction-stage1-readme-gate-fix-v1` to restore the release gate.
+2. Run `tul run` or `tul verify fresh` to confirm local and fresh-clone PASS.
 3. In a follow-up package, narrow runtime handoff/read-next and required-doc pointers.
 4. Remove compatibility docs only after the runtime pointers no longer require them.

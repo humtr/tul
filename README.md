@@ -68,6 +68,8 @@ Command boundaries:
 
 ## LLM read-next
 
+LLM entrypoint: `README.md` is the compact durable repo entrypoint for LLM review. Runtime facts still come from `tul-vf-latest.md` and `tul show` snapshots.
+
 When reviewing the repo from uploaded artifacts, use this order:
 
 ```text
@@ -103,7 +105,7 @@ tul show exports
 
 ## Package contract
 
-LLM-generated packages must converge on one cross-platform archive. The package contract is:
+LLM-generated packages must converge on one cross-platform archive. The release-gate package contract phrase is `tul-package.yml + files/ + README.md`. The package contract is:
 
 ```text
 <package>.zip
