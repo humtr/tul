@@ -1,6 +1,6 @@
 # LLM handoff protocol
 
-A tul handoff is a compact remote-review request. It should contain runtime facts and pointers to repo-resident documents, not a full repo dump.
+A tul LLM handoff is a compact remote-review request. It should contain runtime facts and pointers to repo-resident documents, not a full repo dump.
 
 ## Current surfaces
 
@@ -14,7 +14,7 @@ Runtime facts in `tul-vf-latest.md` and `tul show` snapshots outrank repo prose.
 
 ## Receiver obligations
 
-When receiving a tul handoff, the LLM must:
+When receiving a tul LLM handoff, the LLM must:
 
 1. verify HEAD/Remote HEAD, branch, working tree, and release-gate facts from the uploaded verify artifact;
 2. read `docs/llm/entrypoint.md`, `docs/status/current.md`, and `docs/roadmap.md` before proposing the next package;

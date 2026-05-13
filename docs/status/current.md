@@ -1,13 +1,13 @@
 # current status
 
-Status: Stage 7 `tul run` is the normal user loop. The latest verified baseline after the README package-contract gate fix is stable, and the next package adds command-surface/run smoke checks to the release gate.
+Status: Stage 7 `tul run` is the normal user loop. The latest verified baseline after the run smoke gate package is stable. The next package cleans command-surface residue from active docs/templates and marks historical documents.
 
 Current verified baseline:
 
 ```text
-HEAD: 5984adba54866b5ae55844feade83bd3d4477355
-Remote HEAD: 5984adba54866b5ae55844feade83bd3d4477355
-Latest package: tul-stage7-readme-package-contract-gate-fix-bundle-v1
+HEAD: 70292083094d71387371c8705ae5828bb1442e31
+Remote HEAD: 70292083094d71387371c8705ae5828bb1442e31
+Latest package: tul-stage7-run-smoke-gate-bundle-v1
 Release gate: PASS
 Fresh clone: PASS
 Source bundle: current
@@ -28,10 +28,11 @@ Warnings: none
 - command-surface status sync
 - run default finalization
 - README package-contract gate fix
+- run smoke gate
 
 ## Current package
 
-Apply `tul-stage7-run-smoke-gate-bundle-v1` to make the release gate check the Stage 7 command surface more directly.
+Apply `tul-stage7-command-residue-cleanup-bundle-v1` to remove old command examples from active docs/templates and mark historical docs that intentionally retain pre-Stage 7 command grammar.
 
 ## Canonical command surface
 
@@ -49,8 +50,6 @@ tul setup
 
 ## Normal loop
 
-The default user-facing loop is one command:
-
 ```bash
 tul run
 ```
@@ -65,11 +64,9 @@ package not found:
   export -> verify fresh -> show
 ```
 
-`package not found` is not an error for `tul run`; it means there is no update to apply, so the command refreshes uploadable verification and transport artifacts for the current HEAD.
-
 ## Next queue
 
-1. Apply `tul-stage7-run-smoke-gate-bundle-v1`.
+1. Apply `tul-stage7-command-residue-cleanup-bundle-v1`.
 2. Confirm release gate PASS with `tul run` or `tul verify fresh`.
-3. Continue command residue cleanup and historical-doc marking.
-4. Add broader warning-first scans for old command examples in active docs/templates.
+3. Add warning-first scans for removed command examples in active docs/templates.
+4. Close Stage 7 after command residue cleanup and gate expansion are stable.

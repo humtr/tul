@@ -22,7 +22,7 @@ Impact: Do not infer repository corruption from raw-view oddities alone.
 
 Reflected in: README, LLM entrypoint, verify/fresh clone workflow.
 
-Follow-up: Use file/blob view or `tul verify <project> --fresh-clone` for line/syntax confidence.
+Follow-up: Use file/blob view or `tul verify fresh` for line/syntax confidence.
 
 ### Stage 2–3 — Repo-wide download constraints differ from per-file review
 
@@ -403,7 +403,7 @@ Action: Add a post-update export phase that refreshes source and review bundles,
 
 ## 2026-05-13 — Command names must describe user-visible action
 
-Observation: `tul export status` violated the command grammar because `export` implies file creation while `status` only prints diagnostics.
+Observation: the removed export-status command form violated the command grammar because `export` implies file creation while that form only printed diagnostics.
 
 Lesson: CLI namespaces should be action-oriented and user-visible. Internal concepts such as export integrity, source context, handoff, state, and recovery-debug should not appear as scattered top-level commands.
 
@@ -431,3 +431,14 @@ Impact: User-facing docs and templates must avoid pre-redesign commands and shou
 ## 2026-05-13 — Stage 7 run smoke gate
 
 The README package-contract hotfix closed the narrow release-gate failure after run default finalization. The next stability gap is command-surface drift: the runtime can compile and still accidentally reintroduce old top-level commands or status-only commands under `export`. The gate should smoke-test parser/help behavior that does not require project configuration.
+
+
+### 2026-05-13 — Command residue cleanup protects the new surface
+
+Observation: After `tul run` became the normal user loop, active docs and templates still needed cleanup so fresh LLM sessions would not reintroduce older command grammar.
+
+Impact: Templates are higher risk than historical docs because they can be copied directly into new sessions or package prompts. Historical docs may keep old command examples if they are clearly marked.
+
+Reflected in: active command docs, LLM handoff templates, milestone checklist, and historical banners on pre-Stage 7 docs.
+
+Follow-up: Add a warning-first release-gate scan that excludes historical documents and checks active docs/templates for removed command forms.

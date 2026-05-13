@@ -1,3 +1,5 @@
+> Historical note: This document predates the Stage 7 command surface redesign. Command examples may use legacy forms. Current canonical commands are `tul show`, `tul package`, `tul update`, `tul verify`, `tul export`, `tul run`, `tul clean`, `tul recover`, and `tul setup`.
+
 # Test protocol
 
 This experiment should be validated through an actual commit/push so that a new LLM session can inspect the repo state without relying on prior chat context.

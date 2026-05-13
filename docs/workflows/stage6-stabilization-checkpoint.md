@@ -1,3 +1,5 @@
+> Historical note: This document predates the Stage 7 command surface redesign. Command examples may use legacy forms. Current canonical commands are `tul show`, `tul package`, `tul update`, `tul verify`, `tul export`, `tul run`, `tul clean`, `tul recover`, and `tul setup`.
+
 # Stage 6 stabilization checkpoint
 
 This checkpoint records the state after the J artifact-semantics cleanup, K stabilization cleanup, and Stage 6 closure package.

@@ -59,4 +59,4 @@ Use the stepwise loop only for debugging, review, or user-directed decomposition
 
 ## Current baseline
 
-The command-surface redesign, run default finalization, and README package-contract gate fix are closed at `5984adba54866b5ae55844feade83bd3d4477355`. The next package adds release-gate smoke checks for the canonical command surface and `tul run` fallback semantics.
+The command-surface redesign, run default finalization, README package-contract gate fix, and run smoke gate are closed at `70292083094d71387371c8705ae5828bb1442e31`. The next package cleans active docs/templates and marks historical documents so future command-surface scans can distinguish current guidance from old design records.

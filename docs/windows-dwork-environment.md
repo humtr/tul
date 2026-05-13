@@ -1,3 +1,5 @@
+> Historical note: This document predates the Stage 7 command surface redesign. Command examples may use legacy forms. Current canonical commands are `tul show`, `tul package`, `tul update`, `tul verify`, `tul export`, `tul run`, `tul clean`, `tul recover`, and `tul setup`.
+
 # Windows `D:\work` Environment
 
 This document describes the Windows track for `tul`.

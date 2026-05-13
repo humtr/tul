@@ -80,9 +80,9 @@ Consequences: The manifest remains stable but corrigible.
 
 Status: accepted
 
-Context: `tul verify --fresh-clone` produces long output that is useful but cumbersome to paste into a chat.
+Context: fresh verification output is useful but cumbersome to paste into a chat. The current command is `tul verify fresh`.
 
-Decision: `tul verify` writes markdown and JSON artifacts by default. The terminal output remains visible, but the stable latest artifact can be uploaded for review.
+Decision: `tul verify fresh` writes markdown and JSON artifacts. The quick `tul verify` path remains stdout-first, while the stable latest artifact can be uploaded for review.
 
 Consequences: The human bridge shifts from log copying to file handoff. This supports the long-term goal of minimizing repetitive bridge labor while preserving inspectability.
 
@@ -436,3 +436,14 @@ Context: Stage 7 intentionally removed the legacy command surface and made `tul 
 Decision: `tul verify fresh` should include lightweight command-surface smoke checks that do not require project configuration: canonical help terms, removed top-level command rejection, `export status` rejection, and static `run` fallback markers.
 
 Consequence: The gate now detects command-surface drift closer to the CLI boundary while avoiding mutation and avoiding package-inbox-dependent behavior.
+
+
+## ADR-035 — Command residue cleanup keeps active docs current and marks historical docs
+
+Status: accepted
+
+Context: Stage 7 reduced the user-facing command surface to `show`, `package`, `update`, `verify`, `export`, `run`, `clean`, `recover`, and `setup`, but older docs and templates can still carry legacy command examples.
+
+Decision: Active docs and templates must use the canonical Stage 7 commands. Historical or experiment documents may retain legacy examples only when marked with a historical note.
+
+Consequences: New LLM handoffs and user-facing templates point to `tul run`, `tul show`, `tul show exports`, `tul verify fresh`, `tul export`, `tul clean`, and `tul recover`. Later release gates can scan active docs/templates without blocking on intentionally historical material.

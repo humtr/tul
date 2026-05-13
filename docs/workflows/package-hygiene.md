@@ -1,6 +1,6 @@
-# Package hygiene workflow
+# Package cleanup workflow
 
-Package hygiene keeps shared download folders from polluting package selection without treating unrelated zip files as tul-owned files.
+Package cleanup keeps shared download folders from polluting package selection without treating unrelated zip files as tul-owned files.
 
 ## Roles
 
@@ -18,10 +18,10 @@ Package hygiene keeps shared download folders from polluting package selection w
   Project-owned quarantine for moved package archives.
 ```
 
-## Dry-run first
+## Plan first
 
 ```bash
-tul package hygiene
+tul clean packages
 ```
 
 The dry-run separates:
@@ -30,21 +30,17 @@ The dry-run separates:
 - project-inbox cleanup candidates;
 - shared external invalid archives that are report-only.
 
-## Ingest valid tul packages
+## Run guarded package cleanup
 
 ```bash
-tul package hygiene --ingest
+tul clean packages run
 ```
 
-`--ingest` moves valid matching tul packages from shared external roots into the project inbox. It does not move unrelated zip files that lack `tul-package.yml`.
+The run form ingests valid matching tul packages from shared external roots into the project inbox and quarantines guarded project-inbox cleanup candidates. It does not move unrelated zip files that lack `tul-package.yml`.
 
 ## Quarantine project-inbox cleanup candidates
 
-```bash
-tul package hygiene --quarantine
-```
-
-`--quarantine` is limited to project-inbox cleanup candidates such as older duplicate matching package archives or invalid package archives already inside the tul project inbox. Files are moved, not deleted.
+The run form is limited to project-inbox cleanup candidates such as older duplicate matching package archives or invalid package archives already inside the tul project inbox. Files are moved, not deleted.
 
 ## External invalid archives
 
@@ -55,10 +51,10 @@ Do not quarantine shared external invalid archives just because they lack a root
 ## Normal sequence
 
 ```bash
-tul package hygiene
-tul package hygiene --ingest
-tul package hygiene
-tul package latest
+tul clean packages
+tul clean packages run
+tul clean packages
+tul package
 ```
 
-Run `--quarantine` only when the dry-run shows project-inbox cleanup candidates.
+Run cleanup only when the plan shows valid matching packages to ingest or project-inbox cleanup candidates.
