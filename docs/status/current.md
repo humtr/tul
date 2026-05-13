@@ -1,15 +1,17 @@
 # current status
 
-Status: Stage 7 command surface is closed, verified, and ready for `tul run` finalization.
+Status: Stage 7 `tul run` finalization is applied, exports are current, and the remaining release-gate issue is a narrow README package-contract phrase fix.
 
-Current verified baseline:
+Current verified baseline before this hotfix:
 
 ```text
-HEAD: e36383dcd8a4e427971a675da93eaa744be4db9d
-Remote HEAD: e36383dcd8a4e427971a675da93eaa744be4db9d
-Latest package: tul-stage7-command-surface-status-sync-bundle-v1
-Release gate: PASS
-Fresh clone: PASS
+HEAD: 3c99639f04ae5cf8d2a5356e26a00b3cc113ebd6
+Remote HEAD: 3c99639f04ae5cf8d2a5356e26a00b3cc113ebd6
+Latest package: tul-stage7-run-default-finalization-bundle-v1
+Release gate: FAIL
+Failure scope: README entrypoint terms only
+Missing term: tul-package.yml + files/ + README.md
+Fresh clone: otherwise PASS
 Source bundle: current
 Review bundle: current
 Docs drift: clean
@@ -26,6 +28,11 @@ Warnings: none
 - post-update export automation
 - command-surface redesign around `tul run`
 - command-surface status sync
+- run default finalization
+
+## Current hotfix
+
+Apply `tul-stage7-readme-package-contract-gate-fix-bundle-v1` to restore the exact README package-contract phrase required by the current release gate while preserving the simplified Stage 7 command surface.
 
 ## Canonical command surface
 
@@ -43,7 +50,7 @@ tul setup
 
 ## Normal loop
 
-The default user-facing loop is now one command:
+The default user-facing loop is one command:
 
 ```bash
 tul run
@@ -75,7 +82,7 @@ tul show
 
 ## Next queue
 
-1. Apply `tul-stage7-run-default-finalization-bundle-v1`.
-2. Confirm that `tul run` works both when a package is present and when no package is present.
-3. Continue cleanup of active docs and templates so new sessions see `tul run` as the normal path.
-4. Defer release-gate expansion until the command surface has passed one normal-use cycle.
+1. Apply `tul-stage7-readme-package-contract-gate-fix-bundle-v1`.
+2. Confirm release gate PASS with `tul verify fresh`.
+3. Run `tul run` once with no pending package to confirm artifact-refresh fallback behavior.
+4. Continue command residue cleanup and release-gate expansion only after this narrow gate fix is closed.

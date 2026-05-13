@@ -116,7 +116,7 @@ tul show exports
 
 ## Package contract
 
-LLM-generated packages must converge on one cross-platform zip:
+LLM-generated packages must converge on one cross-platform zip. The minimum package contract is `tul-package.yml + files/ + README.md`; normal cross-platform packages also include `apply.sh` and `apply.ps1`:
 
 ```text
 <package>.zip
