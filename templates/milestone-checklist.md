@@ -1,113 +1,53 @@
 # tul Milestone Checklist
 
-Use this checklist before cutting a milestone.
+Use this checklist before closing a milestone.
 
-The checklist is platform-neutral unless a line explicitly says Windows or Termux.
+## Runtime baseline
 
----
+- [ ] `git rev-parse HEAD` matches `git rev-parse origin/main`.
+- [ ] `tul verify fresh` reports release gate PASS.
+- [ ] fresh clone verification passes.
+- [ ] working tree is clean.
+- [ ] `python3 -m py_compile bin/tul lib/tulcore/*.py` passes.
+- [ ] `git diff --check` passes.
 
-## v0.1 — status / sync / check / report / import
+## Canonical command surface
 
-- [ ] `bin/tul help`
-- [ ] `bin/tul status <repo>`
-- [ ] `bin/tul sync <repo>`
-- [ ] `bin/tul check <repo>`
-- [ ] `bin/tul report <repo>`
-- [ ] `bin/tul import latest`
-- [ ] project id detection works
-- [ ] assistant-ready report format exists
-- [ ] safe staging area exists
-- [ ] no automatic apply yet
-- [ ] no `git add -A`
+- [ ] `tul show` works.
+- [ ] `tul package` works.
+- [ ] `tul update dry` works.
+- [ ] `tul verify` works as quick/local verification.
+- [ ] `tul verify fresh` writes latest verify artifacts.
+- [ ] `tul export` writes source and review artifacts.
+- [ ] `tul run dry` works.
+- [ ] `tul clean` is plan-only by default.
+- [ ] `tul recover` is plan-only by default.
+- [ ] `tul setup` reports setup status.
 
-Windows-specific:
+## Normal loop
 
-- [ ] D Work paths are recognized
-- [ ] `D:\work\files\downloads` is recognized as the ordinary download intake folder
-- [ ] `D:\work\files\downloads\.tul\work` can be used as package-local staging
-- [ ] `D:\work\var\tmp` remains available for large scratch or non-download temp work
-- [ ] `D:\work\var\cache` is not treated as repo content
-- [ ] `D:\work\home` is not mutated during repo work
+- [ ] `tul run` applies a package when one is available.
+- [ ] `tul run` refreshes artifacts when no package is available.
+- [ ] `tul run` leaves source and review bundles current.
+- [ ] `tul run` leaves `tul-vf-latest.md` current.
 
-Termux-specific:
+## Artifact model
 
-- [ ] `/sdcard/Download` scan is limited and safe
-- [ ] `/sdcard/termux/import/tul/work` queue exists
-- [ ] no broad `/sdcard` scan
+- [ ] `tul-vf-latest.md` is the runtime verification evidence.
+- [ ] `tul-source-latest.zip` is current when source context is needed.
+- [ ] `tul-review-latest.zip` is current when changed-file review is needed.
+- [ ] `tul show exports` reports warnings none, or warnings are understood.
 
----
+## Package safety
 
-## v0.2 — update full-loop skeleton
+- [ ] package zip root contains `tul-package.yml`, `README.md`, `files/`, `apply.sh`, and `apply.ps1`.
+- [ ] `apply.files`, `commit.files`, and payload files match.
+- [ ] normal path does not use `git add -A` or `git add .`.
+- [ ] normal path does not force push.
 
-- [ ] `tul update <repo>`
-- [ ] update imports latest package
-- [ ] update detects target package
-- [ ] update applies with confirmation when needed
-- [ ] update runs check after apply
-- [ ] update runs sweep
-- [ ] update runs report
-- [ ] update stops before commit if commit files/message are missing
-- [ ] split commands are available for debugging
+## Documentation
 
----
-
-## v0.3 — update commit path
-
-- [ ] `tul update <repo> --files ... --message ...`
-- [ ] package manifest can provide commit files/message
-- [ ] explicit file list required when manifest is absent
-- [ ] no `git add -A`
-- [ ] staged diff check
-- [ ] staged file allowlist check
-- [ ] commit hash is recorded
-- [ ] rollback hint is prepared
-
----
-
-## v0.4 — update push/remote verification
-
-- [ ] `tul update <repo>` pushes by default after successful commit
-- [ ] `--no-push` exists for debugging/manual intervention
-- [ ] update fetches after push
-- [ ] update verifies local HEAD == origin/<branch>
-- [ ] update prints `git revert <commit>` rollback instructions
-- [ ] update does not force-push
-- [ ] another platform can run `tul sync <repo>` and continue
-
----
-
-## v0.5 — split commands and recovery
-
-- [ ] `tul import [latest|path]`
-- [ ] `tul apply <repo>`
-- [ ] `tul check <repo>`
-- [ ] `tul sweep <repo>`
-- [ ] `tul publish <repo>`
-- [ ] `tul rollback <repo>`
-- [ ] `publish` replaces the vague `finish` concept
-- [ ] `sweep` moves artifacts instead of deleting them
-- [ ] rollback uses revert + push by default
-
-Windows-specific:
-
-- [ ] clipboard staging works from D Work Terminal where feasible
-- [ ] watch mode can monitor `D:\work\files\downloads` and stage packages under `.tul\work`
-
-Termux-specific:
-
-- [ ] `termux-clipboard-get` integration is optional
-- [ ] `termux-clipboard-set` can receive reports where available
-
----
-
-## v1.0 — stable multi-project update loop
-
-- [ ] stable package manifest
-- [ ] stable queue/state format
-- [ ] rollback hook support
-- [ ] multi-project examples
-- [ ] Windows D Work example
-- [ ] Android Termux example
-- [ ] `humtr/ai` regression example
-- [ ] assistant-ready reports
-- [ ] recovery documentation
+- [ ] README normal path uses `tul run`.
+- [ ] active LLM docs use the canonical command surface.
+- [ ] templates use `tul run` as the normal application command.
+- [ ] historical docs with old commands are clearly marked historical.

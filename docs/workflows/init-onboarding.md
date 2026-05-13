@@ -1,31 +1,21 @@
-# Init workflow
+# setup onboarding
 
-`tul init` onboards an existing or cloneable repo into the Terminal Update Loop.
+Repository setup is under `setup`.
 
-Accepted targets:
+## Commands
 
 ```bash
-tul init tul
-tul init ~/prj/tul
-tul init humtr/tul
+tul setup
+tul setup init <target>
+tul setup install
+tul setup use <project>
 ```
 
-Responsibilities:
+`setup` without arguments reports current setup status. Setup subcommands perform setup tasks.
 
-1. Resolve the target as alias, path, or GitHub slug.
-2. Clone a slug if the repo path does not exist.
-3. Fetch and `pull --ff-only` only when the working tree is clean and the branch
-   is simply behind.
-4. Register or repair the global project alias.
-5. Create or fill missing `.tul.yml` fields.
-6. Preserve existing config values and create backups before overwriting config
-   files.
-7. Print an initial-review handoff by default.
+## After setup
 
-Non-goals:
-
-- no branch switching
-- no merge/rebase
-- no force push
-- no deletion of existing config keys
-- no automatic package application
+```bash
+tul show
+tul run
+```

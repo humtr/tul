@@ -1,23 +1,13 @@
-# tul LLM handoff prompt template
+# tul LLM handoff prompt
 
-You are receiving a `tul` handoff.
+Use the uploaded `tul-vf-latest.md` as runtime evidence. If code changes are needed, also use `tul-source-latest.zip`. If changed-file context is needed, use `tul-review-latest.zip`.
 
-Treat it as a remote-review request, not as proof that you have already verified the remote repo.
+Treat `tul show`, `tul show handoff`, and `tul show exports` snapshots as runtime facts.
 
-Do these steps:
+Normal user command for applying the next package is:
 
-1. Verify repo, branch, HEAD, and changed files when remote access is available.
-2. If remote access is unavailable, state that explicitly.
-3. Read current relevant files before proposing implementation.
-4. Check invariants:
-   - `tul update` pushes by default.
-   - `--no-push` and `--no-commit` are exceptions.
-   - default staging is explicit only.
-   - no force push.
-   - config/policy are separated from engine code.
-5. Separate:
-   - user-stated goals
-   - terminal-verified facts
-   - assistant interpretation
-   - unresolved uncertainty
-6. Propose the next package boundary and roadmap.
+```bash
+tul run
+```
+
+When producing a package, provide one cross-platform zip with `tul-package.yml`, `README.md`, `files/`, `apply.sh`, and `apply.ps1`.

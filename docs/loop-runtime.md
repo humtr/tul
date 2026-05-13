@@ -1,16 +1,19 @@
-# tul loop runtime
+# loop runtime
 
-`tul update <project>` is the default full-loop command.
+The normal full-loop command is:
 
-The intended loop is:
-
-```text
-LLM creates package
-→ user downloads package
-→ tul update <project>
-→ tul imports, validates, applies, checks, stages explicit files, commits, pushes, verifies remote HEAD
-→ tul prints rollback instructions and an LLM-ready handoff
-→ LLM verifies remote state and proposes the next package
+```bash
+tul run
 ```
 
-Split commands are recovery/debug aids. They must not become the default workflow.
+`run` applies a compatible package when one is available. If no package is available, it refreshes current verification and transport artifacts.
+
+Stepwise diagnostics:
+
+```bash
+tul package
+tul update
+tul export
+tul verify fresh
+tul show
+```

@@ -1,33 +1,21 @@
-# update and run pipeline
+# update pipeline
 
-Stage 7 separates `update` from `run`.
+`update` is the package application and publishing step. It is not the whole user-facing loop.
 
-## Command boundary
-
-`tul update` updates the repository:
+## Canonical split
 
 ```text
-package selection -> import -> manifest validation -> safe apply -> checks -> sweep -> stage listed files -> commit -> push -> remote HEAD check -> report/state/handoff
+update = apply package -> checks -> commit -> push -> remote HEAD check
+run    = update when needed -> export -> verify fresh -> show
 ```
 
-`tul run` performs the full Terminal Update Loop:
-
-```text
-package -> update -> export -> verify fresh -> show
-```
-
-This split prevents `update` from accumulating every post-update responsibility.
-
-## Normal workflow
+## Normal user path
 
 ```bash
-cd ~/prj/tul
-
-tul package
 tul run
 ```
 
-## Stepwise workflow
+## Stepwise path
 
 ```bash
 tul package
@@ -37,39 +25,27 @@ tul verify fresh
 tul show
 ```
 
-## Exact package path
+## Update responsibilities
 
-```bash
-tul update /path/to/package.zip
-```
+`update` should:
 
-## Dry planning
+- select an explicit package or the newest compatible package;
+- validate package target and payload;
+- apply only listed files;
+- run pre-publish checks;
+- stage only listed commit files;
+- commit with package commit metadata;
+- push by default;
+- verify local HEAD equals remote HEAD after push;
+- write update state/report/handoff records.
 
-```bash
-tul update dry
-tul run dry
-```
+`update` should not be the canonical place for source/review export or uploadable fresh verification. `run` orchestrates those steps.
 
-`update dry` plans the update step only. `run dry` shows the whole-loop plan.
+## Safety invariants
 
-## Verification artifacts
-
-`tul verify` is quick/local and does not rewrite latest artifacts by default.
-
-`tul verify fresh` writes the uploadable verification artifacts:
-
-```text
-/sdcard/termux/import/tul/tul-vf-latest.md
-/sdcard/termux/import/tul/tul-vf-latest.json
-```
-
-## Export artifacts
-
-`tul export` creates both explicit transport artifacts:
-
-```text
-/sdcard/termux/import/tul/tul-source-latest.zip
-/sdcard/termux/import/tul/tul-review-latest.zip
-```
-
-`tul show exports` inspects freshness and drift. It does not create files.
+- no `git add -A`;
+- no `git add .`;
+- no force push;
+- no broad cleanup;
+- package policy remains in package manifests and `.tul.yml`;
+- environment paths remain in global config.

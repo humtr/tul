@@ -1,57 +1,52 @@
-# Recovery/debug workflow
+# recovery and debug
 
-Default work goes through `tul update <project>`. Split commands exist to inspect state, produce safe rollback commands, and recover from interrupted or repeated package runs.
-
-## Import without applying
+Normal work goes through:
 
 ```bash
-tul import tul --latest
+tul run
 ```
 
-This command:
-
-1. selects the newest matching package from configured inbox roots,
-2. imports it into the work root,
-3. validates `tul-package.yml`,
-4. builds `apply-plan.json`,
-5. writes `state.json`, and
-6. does not modify repo files.
-
-Use this when a package should be inspected before full update.
-
-## State inspection
+Stepwise work goes through:
 
 ```bash
-tul state tul
-tul state tul --all
-tul state tul --json
+tul package
+tul update
+tul export
+tul verify fresh
+tul show
 ```
 
-The latest state is useful for finding report, handoff, apply log, apply plan, commit, push verification, and failure information.
+Recovery and debug commands live under `recover`.
 
-## Archive state
+## Summary
 
 ```bash
-tul archive tul
-tul archive tul --all
+tul recover
 ```
 
-Archiving moves work state directories to the configured archive root. It does not delete them.
+Shows latest rollbackable commit, resume information, and safe next commands.
 
-## Rollback command
+## Rollback plan
 
 ```bash
-tul rollback tul
-tul rollback tul <commit>
+tul recover rollback
 ```
 
-Rollback prints a safe command sequence using `git revert` and `git push origin <branch>`. It does not execute rollback by default.
+This command does not silently mutate the repo. It prints the safe rollback command.
 
-## Resume/apply stance
+## Resume plan
 
-`tul resume` and `tul apply` remain conservative. They inspect and suggest safe next commands rather than silently running partial updates.
+```bash
+tul recover resume
+```
 
+Shows the latest state and recommended next commands.
 
-## Recovery state selection update
+## Apply/publish debug
 
-`tul import <project> --latest` creates a validated/imported state without a commit. That state may become the newest state, but it is not rollbackable. `tul rollback <project>` now skips non-commit states and selects the newest rollbackable state with a commit. `tul state <project>` shows a latest rollbackable state hint when the newest state has no commit.
+```bash
+tul recover apply
+tul recover publish
+```
+
+These are conservative debug surfaces. They do not replace the normal `run` or `update` path.

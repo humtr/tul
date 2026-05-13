@@ -1,27 +1,29 @@
 # export integrity hardening
 
-Status: implemented and folded into `tul show exports`.
-
-Export integrity is a warning-only inspection surface. It reports source/review artifact states such as current, stale, missing, invalid, and unrecorded.
-
-Canonical command:
+Export integrity is inspected through:
 
 ```bash
 tul show exports
 ```
 
-Machine-readable form:
+It is warning-only. It does not affect release gate unless a later decision promotes specific checks.
 
-```bash
-tul show exports --json
-```
+## Source bundle checks
 
-`export` itself is reserved for file creation:
+- zip exists;
+- zip test passes;
+- `source-manifest.json` exists;
+- manifest HEAD matches current HEAD for current status;
+- root layout is `repo-files-at-zip-root`;
+- state-recorded SHA matches actual SHA when recorded.
 
-```bash
-tul export
-tul export source
-tul export review
-```
+## Review bundle checks
 
-Export freshness warnings do not change release-gate PASS/FAIL. Release-gate judgment remains the responsibility of `tul verify` and especially `tul verify fresh`.
+- zip exists;
+- manifest HEAD matches current HEAD for current status;
+- changed file count is available;
+- latest state records the bundle when expected.
+
+## Docs drift
+
+Docs drift diagnostics are small active-ledger checks. They should not be mistaken for a full documentation audit.

@@ -1,49 +1,33 @@
 # post-run review
 
-Use this workflow after a user applies a tul package.
+After a successful normal loop, the user should upload `tul-vf-latest.md`. For code work, also upload `tul-source-latest.zip` and `tul-review-latest.zip`.
 
-## Required artifact
-
-Primary evidence:
-
-```text
-/sdcard/termux/import/tul/tul-vf-latest.md
-```
-
-It should show release gate status, HEAD/Remote HEAD, fresh clone status, and runtime snapshots.
-
-Optional source/review context:
-
-```text
-/sdcard/termux/import/tul/tul-source-latest.zip
-/sdcard/termux/import/tul/tul-review-latest.zip
-```
-
-## Review order
-
-1. Read `tul-vf-latest.md`.
-2. Confirm HEAD, Remote HEAD, release gate, step count, working tree, and fresh clone.
-3. Confirm latest package and commit from runtime state.
-4. If source/review artifacts are stale or missing, say so explicitly.
-5. Propose the next package only after the new baseline is clear.
-
-## Command grammar
-
-Normal user workflow is:
+## Expected normal command
 
 ```bash
-tul package
 tul run
 ```
 
-Stepwise workflow is:
+`run` should leave uploadable verification and transport artifacts current.
 
-```bash
-tul package
-tul update
-tul export
-tul verify fresh
-tul show
+## Review order
+
+1. Confirm HEAD and Remote HEAD match.
+2. Confirm release gate PASS and fresh clone PASS.
+3. Check `tul show exports` snapshot for current source/review bundles.
+4. Check docs drift warnings.
+5. Decide whether the next step is report-only audit, document cleanup, or a code package.
+
+## Package generation
+
+When generating a package, use:
+
+```text
+tul-package.yml
+README.md
+files/
+apply.sh
+apply.ps1
 ```
 
-Use `tul show exports` for artifact freshness. `export` is reserved for file creation.
+Do not use broad staging or force push. Normal user application is `tul run`.

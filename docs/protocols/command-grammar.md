@@ -1,64 +1,46 @@
-# tul command grammar
+# command grammar
 
-This document defines the canonical terminal command grammar after the Stage 7 command-surface redesign.
-
-## Canonical top-level commands
+Stage 7 canonical top-level commands:
 
 ```text
-tul show
-tul package
-tul update
-tul verify
-tul export
-tul run
-tul clean
-tul recover
-tul setup
+show package update verify export run clean recover setup
 ```
 
-No legacy alias layer is part of the canonical grammar.
+## Default meanings
 
-## Role boundaries
+- `tul show`: read-only state, export, and next-action summary.
+- `tul package`: newest compatible package candidate.
+- `tul update`: apply package, commit, push, remote-HEAD check.
+- `tul verify`: quick/local verification.
+- `tul verify fresh`: fresh clone verification and latest verify artifacts.
+- `tul export`: create source and review transport artifacts.
+- `tul run`: normal full Terminal Update Loop.
+- `tul clean`: cleanup plan.
+- `tul recover`: recovery plan.
+- `tul setup`: setup status.
 
-- `show`: read-only state and diagnostic output.
-- `package`: package discovery, inspection, validation, and authoring helpers.
-- `update`: package application, checks, commit, push, and remote-HEAD check.
-- `verify`: repo verification. No-arg is quick/local; `fresh` writes uploadable verify artifacts.
-- `export`: artifact creation only. Status inspection belongs to `show exports`.
-- `run`: the full Terminal Update Loop.
-- `clean`: cleanup planning by default; guarded moves only with `run` under the clean namespace.
-- `recover`: recovery planning by default.
-- `setup`: setup status by default; setup actions under `init`, `install`, and `use`.
-
-## Normal commands
+## Normal loop
 
 ```bash
-tul package
 tul run
 ```
 
-## Stepwise commands
+`run` handles package-present and package-absent cases.
 
-```bash
-tul package
-tul update
-tul export
-tul verify fresh
-tul show
-```
+## Flag policy
 
-## Option policy
-
-Prefer positional words for modes: `fresh`, `dry`, `run`, `source`, `review`, `exports`.
-
-Keep `--` options for output format, explicit paths, and safety exceptions only:
+Use positional words for common modes. Reserve flags for paths, machine output, and exceptional behavior:
 
 ```text
 --json
 --out
---no-commit
 --no-push
+--no-commit
 --no-export
 --force
 --allow-dirty
 ```
+
+## Removed old grammar
+
+Do not use old top-level command grammar in active instructions. Historical docs may mention it only when clearly marked historical.

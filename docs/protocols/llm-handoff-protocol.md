@@ -1,100 +1,37 @@
 # LLM handoff protocol
 
-A tul handoff is a structured remote-review request.
+A tul handoff is a compact remote-review request. It should contain runtime facts and pointers to repo-resident documents, not a full repo dump.
 
-## Default behavior
-
-`tul handoff <project>` is compact by default. It should contain runtime facts and pointers to repo-resident documents, not the full protocol text.
-
-Use full mode only when needed:
+## Current surfaces
 
 ```bash
-tul handoff <project> --full
+tul show
+tul show handoff
+tul show exports
 ```
 
-Use instructions mode when creating or refreshing a ChatGPT/Codex-style project prompt:
+Runtime facts in `tul-vf-latest.md` and `tul show` snapshots outrank repo prose.
 
-```bash
-tul handoff <project> --instructions
-tul instructions [project]
-```
-
-## Runtime fact boundary
-
-Runtime facts belong in terminal output and verify artifacts:
-
-- commit hash;
-- push verified;
-- remote HEAD after fetch;
-- rollback command;
-- state path;
-- report path;
-- verify artifact path;
-- working tree status;
-- release gate result.
-
-Durable guidance belongs in repo files:
-
-- `README.md`;
-- `docs/llm/entrypoint.md`;
-- `docs/llm/post-update-review.md`;
-- `docs/status/current.md`;
-- `docs/roadmap.md`;
-- `docs/checklists/loop-runtime.md`;
-- `templates/project-instructions.md`.
-
-## Required LLM behavior
+## Receiver obligations
 
 When receiving a tul handoff, the LLM must:
 
-1. Treat the handoff as a structured remote-review request.
-2. Verify remote repo, branch, and expected HEAD when possible.
-3. If remote verification is unavailable, say so explicitly.
-4. Prefer the latest user-provided `tul-vf-latest.md` artifact for release-gate facts.
-5. Read `docs/llm/entrypoint.md`, `docs/llm/post-update-review.md`, `docs/status/current.md`, and `docs/roadmap.md` before proposing implementation.
-6. Preserve tul invariants:
-   - `tul update` pushes by default;
-   - `--no-push` and `--no-commit` are exceptions;
-   - no broad staging;
-   - no force push;
-   - project policy belongs in `.tul.yml`;
-   - environment paths and aliases belong in global config.
-7. Separate user-stated goals, terminal-verified facts, repo-documented guidance, assistant interpretation, and unresolved uncertainty.
-8. If generating files, produce a cross-platform `tul-package.yml + files/ + README.md` package.
+1. verify HEAD/Remote HEAD, branch, working tree, and release-gate facts from the uploaded verify artifact;
+2. read `docs/llm/entrypoint.md`, `docs/status/current.md`, and `docs/roadmap.md` before proposing the next package;
+3. preserve push-by-default, no broad staging, no force push, and config/policy separation;
+4. check bundle overlap and serialize work when files or acceptance gates conflict;
+5. produce one cross-platform package when code or docs changes are requested.
 
-## Package execution guidance
-
-If the package will be downloaded into configured inbox roots, prefer:
+## Normal user command
 
 ```bash
-tul update
+tul run
 ```
 
-The explicit latest form remains valid:
+Do not ask the user to run stepwise commands unless diagnosing or intentionally decomposing the loop.
 
-```bash
-tul update <project> --latest
-```
+## Source and review context
 
-If an exact path is required, use:
+For a successful post-run review, `tul-vf-latest.md` is usually enough. Ask for `tul-source-latest.zip` when producing the next package or diagnosing code-level failures. Ask for `tul-review-latest.zip` when changed-file context is useful.
 
-```bash
-tul update <project> --package /path/to/package.zip
-```
-
-## Evidence economy
-
-For a successful update review, `tul-vf-latest.md` is usually enough. Ask for `tul state` only when state/rollback/cleanup behavior is part of the review. Ask for source context only when producing the next package or diagnosing a code-level failure. Source context may be a GitHub-generated archive, fresh clone, or explicit source export; it is not backup evidence.
-
-
-## Stage 7 package gates
-
-For Stage 7 package generation, read `docs/checklists/stage7-package-gates.md` and declare the package class before writing files. A future source-export implementation must also conform to `docs/workflows/source-export-spec.md`; the source-export implementation is closed; post-update automation remains warning-only and serialized.
-
-## Source export note
-
-Use `tul export source` only when full source context is needed for package generation or code-level diagnosis. It is explicit/manual and separate from `tul export review`, `tul verify`, and `tul update`.
-
-## Export status rule
-
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
+Use `tul show exports` to determine whether source/review artifacts are current.

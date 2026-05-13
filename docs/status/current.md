@@ -1,21 +1,20 @@
 # current status
 
-Status: Stage 7 command-surface redesign closed and verified.
+Status: Stage 7 command surface is closed, verified, and ready for `tul run` finalization.
 
 Current verified baseline:
 
 ```text
-HEAD: c274a27e33dd2e13b91daf42e165042cf69b1d9f
-Remote HEAD: c274a27e33dd2e13b91daf42e165042cf69b1d9f
+HEAD: e36383dcd8a4e427971a675da93eaa744be4db9d
+Remote HEAD: e36383dcd8a4e427971a675da93eaa744be4db9d
 Latest package: tul-stage7-command-surface-status-sync-bundle-v1
-Previous package: tul-stage7-command-surface-redesign-bundle-v1
 Release gate: PASS
 Fresh clone: PASS
 Source bundle: current
 Review bundle: current
+Docs drift: clean
+Warnings: none
 ```
-
-The command-surface redesign package landed at `c274a27e33dd2e13b91daf42e165042cf69b1d9f`. A first verify snapshot failed because the already-running verifier still checked pre-redesign README entrypoint terms. A subsequent `tul verify fresh` using the new verifier passed with 25 pass, 0 fail. This is recorded as a bootstrap gate-drift lesson, not a runtime failure.
 
 ## Closed Stage 7 checkpoints
 
@@ -28,7 +27,7 @@ The command-surface redesign package landed at `c274a27e33dd2e13b91daf42e165042c
 - command-surface redesign around `tul run`
 - command-surface status sync
 
-## Current canonical command surface
+## Canonical command surface
 
 ```text
 tul show
@@ -42,14 +41,29 @@ tul recover
 tul setup
 ```
 
-Normal loop:
+## Normal loop
+
+The default user-facing loop is now one command:
 
 ```bash
-tul package
 tul run
 ```
 
-Stepwise loop:
+Semantics:
+
+```text
+package found:
+  update -> export -> verify fresh -> show
+
+package not found:
+  export -> verify fresh -> show
+```
+
+`package not found` is not an error for `tul run`; it means there is no update to apply, so the command refreshes uploadable verification and transport artifacts for the current HEAD.
+
+## Stepwise loop
+
+Use this only when the user explicitly wants to split the loop:
 
 ```bash
 tul package
@@ -59,19 +73,9 @@ tul verify fresh
 tul show
 ```
 
-## Current warning-only status
-
-`tul show exports` is the advisory export and docs-drift inspection surface. The latest post-redesign verify showed source/review artifacts current and a single docs drift warning because this file did not yet mention `tul-stage7-command-surface-redesign-bundle-v1`. This package closes that ledger drift by recording the redesign closure and this status-sync package name.
-
 ## Next queue
 
-1. Smoke-test the new canonical command surface in normal use:
-   - `tul package`
-   - `tul run dry`
-   - `tul show exports`
-   - `tul verify`
-   - `tul verify fresh`
-
-2. If command smoke tests are clean, consider the command-surface redesign stable enough for Stage 7 continuation.
-
-3. Keep broader cleanup behavior changes, release-gate enforcement on export freshness, and external repository onboarding deferred.
+1. Apply `tul-stage7-run-default-finalization-bundle-v1`.
+2. Confirm that `tul run` works both when a package is present and when no package is present.
+3. Continue cleanup of active docs and templates so new sessions see `tul run` as the normal path.
+4. Defer release-gate expansion until the command surface has passed one normal-use cycle.

@@ -419,3 +419,11 @@ Impact: For command-surface redesigns, distinguish bootstrap gate drift from run
 Reflected in: `docs/status/current.md`, `docs/roadmap.md`, and `docs/manifest.md`.
 
 Follow-up: Keep command grammar changes and verify-gate term changes in the same package. After applying such a package, run `tul verify fresh` once with the installed command surface before judging the baseline.
+
+## 2026-05-13 — `tul run` should be the single normal loop
+
+Observation: After command-surface redesign, asking users to run `tul package` before every normal application still preserves unnecessary bridge work. `tul package` is useful as optional preflight, but normal operation should be `tul run`.
+
+Decision: `tul run` should handle both cases: if a compatible package exists, run update/export/fresh-verify/show; if no compatible package exists, refresh export/fresh-verify/show for the current HEAD.
+
+Impact: User-facing docs and templates must avoid pre-redesign commands and should present `tul run` as the default command.

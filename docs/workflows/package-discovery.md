@@ -1,30 +1,38 @@
-# Package Discovery Workflow
+# package discovery
 
-Package discovery is intentionally explicit and inspectable.
+Package discovery is under `package`.
 
-## Source roots
-
-`tul package list`, `tul package latest`, and `tul update --latest` scan only configured `platform.inbox_roots`. They do not scan work/archive roots.
-
-## Matching rule
-
-A candidate must have a root `tul-package.yml` whose `target.project`, `target.repo`, and `target.branch` match the resolved project.
-
-## Selection rule
-
-The selected candidate is the newest matching archive by filesystem modification time.
-
-## Inspection commands
+## Default
 
 ```bash
-tul package list tul
-tul package latest tul
-tul package inspect /sdcard/Download/package.zip
-tul update tul --latest --dry-run
+tul package
 ```
 
-`--dry-run` imports, validates, and creates an apply plan. It does not modify repo files.
+Shows the newest compatible package from configured inbox roots. It does not apply anything.
 
-## Safety notes
+## List
 
-If duplicate package names appear, remove stale downloads or use `--package PATH` explicitly.
+```bash
+tul package list
+```
+
+Shows matching, incompatible, and invalid candidates.
+
+## Check and inspect
+
+```bash
+tul package inspect <package.zip>
+tul package check <package.zip>
+```
+
+Use these before manual package review or when diagnosing candidate selection.
+
+## Relationship to run
+
+Normal users may skip preflight and run:
+
+```bash
+tul run
+```
+
+If no compatible package exists, `run` refreshes current artifacts instead of treating the absence as a failed update.

@@ -429,28 +429,47 @@ def command_run(args: argparse.Namespace) -> int:
     if target is None:
         print(format_inference_summary(inferred, command="run"))
         print()
+
+    package_available = package_path is not None or has_matching_package(ctx)
+
     if dry:
         print("# tul run dry")
-        print("No repo files will be modified. Update plan only:")
+        print("No repo files will be modified.")
         print()
-        print_update_dry_run(ctx, package_path=package_path)
+        if package_available:
+            print("Would run update phase:")
+            print()
+            print_update_dry_run(ctx, package_path=package_path)
+        else:
+            print("No matching package was found.")
+            print("Would skip update and refresh artifacts for the current HEAD.")
         print()
         if not args.no_export:
             print("Would then run: tul export")
         print("Would then run: tul verify fresh")
         print("Would then run: tul show")
         return 0
-    update = run_update(
-        ctx,
-        package_path=package_path,
-        no_commit=args.no_commit,
-        no_push=args.no_push,
-        allow_dirty=args.allow_dirty,
-        verify_after=False,
-        post_export=False,
-    )
-    print(update.report)
-    if not args.no_commit and not args.no_push:
+
+    update_handoff: str | None = None
+    if package_available:
+        update = run_update(
+            ctx,
+            package_path=package_path,
+            no_commit=args.no_commit,
+            no_push=args.no_push,
+            allow_dirty=args.allow_dirty,
+            verify_after=False,
+            post_export=False,
+        )
+        print(update.report)
+        update_handoff = update.handoff
+        can_refresh_artifacts = not args.no_commit and not args.no_push
+    else:
+        print("# tul run")
+        print("No matching package found. Refreshing verification and transport artifacts for the current HEAD.")
+        can_refresh_artifacts = True
+
+    if can_refresh_artifacts:
         if not args.no_export:
             print("\n--- EXPORT ---\n")
             source = export_source_bundle(ctx, update_state=True)
@@ -466,11 +485,16 @@ def command_run(args: argparse.Namespace) -> int:
     else:
         ok = True
         print("\n--- SKIPPED VERIFY/EXPORT ---\n")
-        print("Commit or push was disabled; run `tul verify fresh` and `tul export` manually when appropriate.")
+        print("Commit or push was disabled; run `tul export` and `tul verify fresh` manually when appropriate.")
+
     print("\n--- SHOW ---\n")
     print_show_state(ctx, as_json=False)
-    print("\n--- LLM HANDOFF ---\n")
-    print(update.handoff)
+    if update_handoff:
+        print("\n--- LLM HANDOFF ---\n")
+        print(update_handoff)
+    else:
+        print("\n--- LLM HANDOFF ---\n")
+        print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="verify-snapshot", expected_repo=ctx.expected_repo))
     return 0 if ok else 1
 
 
@@ -650,6 +674,13 @@ def parse_verify_items(items: list[str]) -> tuple[str | None, bool, bool]:
                 raise TulError("only one project/path target may be specified")
             target = item
     return target, mode_json, fresh
+
+
+def has_matching_package(ctx) -> bool:
+    """Return whether the configured inboxes contain a compatible package for ctx."""
+    inventory = _package_inventory_for_context(ctx)
+    return bool(inventory.get("matching"))
+
 
 
 # ----- display helpers ------------------------------------------------------------

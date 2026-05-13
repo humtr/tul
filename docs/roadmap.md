@@ -2,9 +2,9 @@
 
 ## Current baseline
 
-The latest verified command-surface baseline is `c274a27e33dd2e13b91daf42e165042cf69b1d9f`.
+The latest verified baseline is `e36383dcd8a4e427971a675da93eaa744be4db9d`.
 
-The latest package recorded by the current status ledger is `tul-stage7-command-surface-status-sync-bundle-v1`.
+The latest applied package is `tul-stage7-command-surface-status-sync-bundle-v1`.
 
 ## Closed Stage 7 sequence
 
@@ -19,29 +19,24 @@ The latest package recorded by the current status ledger is `tul-stage7-command-
 
 ## Immediate queue
 
-1. Command-surface smoke test
-   - verify `tul package`
-   - verify `tul run dry`
-   - verify `tul show`
-   - verify `tul show exports`
-   - verify `tul verify`
-   - verify `tul verify fresh`
-   - verify `tul export` only when fresh artifacts are intentionally regenerated
+1. `tul-stage7-run-default-finalization-bundle-v1`
+   - make `tul run` the single normal user loop;
+   - keep `tul package` as optional preflight only;
+   - add `package not found` fallback: `export -> verify fresh -> show`;
+   - update active docs and templates away from pre-redesign commands.
 
-2. Command-surface follow-up only if smoke tests expose issues
-   - fix parser/help mismatches
-   - fix stale docs or handoff wording
-   - keep the canonical top-level set stable unless a concrete conflict appears
+2. `tul-stage7-command-residue-cleanup-bundle-v1`
+   - finish active workflow docs cleanup;
+   - mark historical docs whose command examples intentionally predate Stage 7.
 
-3. Stage 7 continuation candidates
-   - improve clean/recover/setup subcommand ergonomics if normal use shows friction
-   - refine docs drift checker after observing false positives/negatives
-   - keep export freshness warning-only unless an explicit release-gate decision is accepted
+3. `tul-stage7-release-gate-command-surface-bundle-v1`
+   - add warning-first command surface smoke checks;
+   - scan templates for forbidden old command examples;
+   - promote checks to gate conditions only after false positives are understood.
 
 ## Deferred
 
-- release-gate failure on export freshness warnings
-- broader cleanup behavior changes
-- destructive cleanup automation
-- external repository onboarding
-- legacy alias compatibility layer
+- release-gate failure on export freshness warnings;
+- destructive cleanup automation;
+- external repository onboarding;
+- legacy alias compatibility layer.

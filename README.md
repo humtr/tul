@@ -5,109 +5,42 @@
 `tul` is a local, human-controlled runtime for safely moving AI-generated work through this loop:
 
 ```text
-LLM / assistant → user → terminal environment → local repo/runtime → commit + push → remote verification → LLM handoff
+LLM / assistant -> user -> terminal environment -> local repo/runtime -> commit + push -> verification/export -> LLM review
 ```
 
-The current operational target is **`humtr/tul`** itself. Future target repositories such as **`humtr/ai`** remain deferred until this self-hosting loop is stable enough to reduce, rather than multiply, bridge work across Windows, Termux, GitHub, and LLM-assisted sessions.
+The current operational target is **`humtr/tul`** itself. Future target repositories remain deferred until this self-hosting loop is stable enough to reduce bridge work rather than multiply it.
 
-## LLM entrypoint
+## Normal use
 
-If you are an LLM, coding agent, or a new session reviewing this repo, start here:
-
-1. Read [`docs/llm/entrypoint.md`](docs/llm/entrypoint.md).
-2. Read [`docs/llm/post-update-review.md`](docs/llm/post-update-review.md) when reviewing a just-applied package or verify artifact.
-3. Read [`docs/manifest.md`](docs/manifest.md) for vision, invariants, and change rules.
-4. Read [`docs/status/current.md`](docs/status/current.md) for the current checkpoint.
-5. Read [`docs/strategy.md`](docs/strategy.md) for the medium-term capability map.
-6. Read [`docs/roadmap.md`](docs/roadmap.md) for the short-term ready queue and bundle candidates.
-7. Read [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md) before proposing the next bounded bundle.
-8. Read [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md) before planning multiple candidate workstreams.
-9. Read [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) before treating any zip as review evidence, source evidence, or backup.
-10. Read [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md) and [`docs/workflows/source-export-spec.md`](docs/workflows/source-export-spec.md) before proposing source-export work.
-11. Read [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md) before declaring a Green/Yellow/Orange/Red bundle.
-12. Read [`docs/workflows/package-hygiene.md`](docs/workflows/package-hygiene.md) before moving downloaded package archives out of inbox roots.
-13. Read [`docs/learning-log.md`](docs/learning-log.md) for bottom-up lessons.
-14. Read [`docs/decisions.md`](docs/decisions.md) for accepted planning decisions.
-15. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/planning-harness.md`](docs/checklists/planning-harness.md).
-16. Read [`docs/protocols/llm-handoff-protocol.md`](docs/protocols/llm-handoff-protocol.md), [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md), and [`docs/protocols/planning-loop.md`](docs/protocols/planning-loop.md) when relevant.
-
-Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
-
-For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul show` and `tul show handoff` snapshots. When a compact transport bundle is needed, run `tul export review` and upload `/sdcard/termux/import/tul/tul-review-latest.zip`. When full source context is needed, run `tul export source` and use `/sdcard/termux/import/tul/tul-source-latest.zip`; this is explicit source context, not backup, review evidence, or release-gate evidence. A GitHub-generated `tul-main.zip` may still be used as manual source context after its root layout and intended commit are understood. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md), [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md), and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md).
-
-## Project identity
-
-`tul` applies standardized LLM-generated packages, validates them, commits them, pushes them, verifies remote HEAD, prints rollback guidance, and generates an LLM-ready handoff.
-
-The durable project contract lives in repo documents. Runtime facts live in terminal handoff output.
-
-## Planning harness
-
-README is the entrypoint, not the full planning ledger. For Stage 6 and later, tul setup uses a repo-resident planning harness:
-
-```text
-manifest → strategy → roadmap → status → learning log → decisions
-```
-
-- [`docs/manifest.md`](docs/manifest.md) states the vision, invariants, human role, and manifest change rules.
-- [`docs/strategy.md`](docs/strategy.md) tracks medium-term capability areas and maturity.
-- [`docs/roadmap.md`](docs/roadmap.md) holds the short-term ready queue and bundle candidates.
-- [`docs/status/current.md`](docs/status/current.md) records the current checkpoint and next package.
-- [`docs/learning-log.md`](docs/learning-log.md) records bottom-up lessons from updates.
-- [`docs/decisions.md`](docs/decisions.md) records accepted planning decisions.
-
-The same harness should be portable to future target repositories such as `humtr/ai`, but `humtr/ai` onboarding remains **Stage X** until tul's self-host loop is sufficiently stable.
-
-
-## Stage 7 planning mode
-
-Stage 6 is closed as the stabilization baseline at `5086c982ae5d52c586049d4fb21c8e7d4ada006d` when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes.
-
-Stage 7 uses **parallel planning, sequential gated update**:
-
-```text
-many candidate plans may be drafted or compared in parallel
-→ one package is generated from the latest verified runtime baseline plus matching source context
-→ one package is applied through tul update
-→ one release gate closes the new baseline
-```
-
-The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b714dab33a45079e19`, the terminology audit package is closed at `7d7b27a4eb81570482ff4d9eaba1dc7c83429272`, and the source spec/gates checkpoint is closed at `a3585a7441e320f1ce78f924d293c411854f76ef`, the explicit source export implementation is closed at `a5db5d01d96277e83913ec17506c22e3284424eb`, and export integrity hardening is closed at `2bd72e4eedbc6753083d12ea7c4eac73e7691ba3`, when the current `tul-vf-latest.md` release gate is PASS and fresh clone verification passes. The current Red-light implementation adds warning-only post-update source/review export automation after the core commit/push/verify path succeeds. See [`docs/workflows/stage7-bounded-parallel-planning.md`](docs/workflows/stage7-bounded-parallel-planning.md), [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md), [`docs/workflows/source-export-spec.md`](docs/workflows/source-export-spec.md), and [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md).
-
-
-## Non-negotiable invariants
-
-- `tul run <project>` is the default full-loop command.
-- Push is included by default after successful validation and commit.
-- `--no-push` and `--no-commit` are exceptions for debugging or recovery.
-- Remote HEAD verification is part of successful update when push is enabled.
-- Do not use `git add -A` or `git add .` in the normal update path.
-- Do not force push in the normal path.
-- Project policy belongs in `.tul.yml`.
-- Environment paths and aliases belong in global config.
-- LLM packages should use `tul-package.yml + files/ + README.md`.
-
-
-## Native context
-
-Stage 6 introduced native project context in bounded steps. The current model supports an active project, read-only no-arg commands, `tul verify fresh`, and guarded no-arg `tul run` / `tul update dry` / `tul recover rollback` when the project can be inferred safely:
+For ordinary operation, run one command from the repo:
 
 ```bash
-tul setup use tul
-tul show config
-tul show
-tul update
-tul verify fresh
-tul show
+cd ~/prj/tul
+
+tul run
 ```
 
-No-arg mutating commands use explicit context guards. If the active project differs from the current-directory project, `tul` refuses to continue and prints concrete choices such as `tul update tul`, `tul update <cwd-project>`, or `tul setup use <cwd-project>`.
+`tul run` performs the full user-facing loop:
 
-Package-target mismatch guidance is implemented at package discovery/update boundaries; future work may refine duplicate package name/hash guidance if inbox clutter returns.
+```text
+package found:
+  update -> export -> verify fresh -> show
 
-## Default command model
+package not found:
+  export -> verify fresh -> show
+```
 
-Stage 7 uses a compact command surface. The canonical top-level commands are:
+A successful run prepares the normal upload artifacts:
+
+```text
+/sdcard/termux/import/tul/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-source-latest.zip
+/sdcard/termux/import/tul/tul-review-latest.zip
+```
+
+Use `tul package` only when you want to inspect the newest compatible package before running the loop.
+
+## Canonical command surface
 
 ```text
 tul show
@@ -121,18 +54,24 @@ tul recover
 tul setup
 ```
 
-There is no legacy alias layer in the canonical design. Folded names such as `state`, `status`, `handoff`, `current`, `projects`, `archive`, `rollback`, `apply`, `resume`, `publish`, `init`, `install`, and `use` are not user-facing commands. Their roles live under `show`, `clean`, `recover`, or `setup`.
+There is no legacy alias layer in the canonical Stage 7 command surface.
 
-Normal use is:
+Command boundaries:
 
-```bash
-cd ~/prj/tul
+- `tul show` is read-only state and diagnostic output. Use `tul show exports` for source/review freshness.
+- `tul package` discovers, inspects, validates, and authors packages. With no arguments, it shows the newest compatible package candidate.
+- `tul update` applies a package, runs safety checks, commits, pushes, and verifies remote HEAD.
+- `tul verify` is quick/local and stdout-first. It does not rewrite latest verify artifacts by default.
+- `tul verify fresh` performs fresh clone verification and writes `tul-vf-latest.md/json`.
+- `tul export` creates source and review transport artifacts.
+- `tul run` is the full Terminal Update Loop.
+- `tul clean` is plan-only by default; `tul clean ... run` performs guarded moves.
+- `tul recover` prints recovery plans by default and does not silently mutate the repo.
+- `tul setup` reports setup status by default; setup subcommands perform setup tasks.
 
-tul package
-tul run
-```
+## Stepwise loop
 
-Stepwise use is:
+Use this only for diagnostics or when the user explicitly wants to split the loop:
 
 ```bash
 tul package
@@ -142,172 +81,80 @@ tul verify fresh
 tul show
 ```
 
-Command boundaries:
+## LLM entrypoint
 
-- `tul show` is read-only status output. Use `tul show exports` for source/review freshness.
-- `tul package` shows the newest matching package candidate.
-- `tul update` applies the package, runs checks, commits, pushes, and verifies remote HEAD. It does not create the full post-run evidence set.
-- `tul verify` is quick/local and stdout-first. It does not rewrite latest verify artifacts by default.
-- `tul verify fresh` performs fresh clone verification and writes `tul-vf-latest.md/json`.
-- `tul export` creates both source and review artifacts. `tul export source` and `tul export review` are available when only one artifact is needed.
-- `tul run` is the full Terminal Update Loop: package selection, update, export, fresh verify, and final show.
-- `tul clean` is plan-only by default; `tul clean ... run` performs guarded moves.
-- `tul recover` prints recovery plans by default and does not mutate the repo.
-- `tul setup` reports setup status by default; `tul setup init`, `tul setup install`, and `tul setup use` perform setup tasks.
+If you are an LLM, coding agent, or a new session reviewing this repo, start here:
 
-A successful `tul run` prepares the normal upload artifacts:
+1. Read `tul-vf-latest.md` when the user uploads it.
+2. Read [`docs/llm/entrypoint.md`](docs/llm/entrypoint.md).
+3. Read [`docs/status/current.md`](docs/status/current.md).
+4. Read [`docs/roadmap.md`](docs/roadmap.md).
+5. Read [`docs/manifest.md`](docs/manifest.md).
+6. Read [`docs/llm/commands.md`](docs/llm/commands.md).
+7. Read [`docs/protocols/command-grammar.md`](docs/protocols/command-grammar.md).
+8. Read [`docs/checklists/loop-runtime.md`](docs/checklists/loop-runtime.md) and [`docs/checklists/stage7-package-gates.md`](docs/checklists/stage7-package-gates.md) before declaring a bundle safe.
 
-```text
-/sdcard/termux/import/tul/tul-vf-latest.md
-/sdcard/termux/import/tul/tul-source-latest.zip
-/sdcard/termux/import/tul/tul-review-latest.zip
-```
+Do not rely on prior chat context when repo documents and runtime artifacts answer the question. Runtime facts live in `tul-vf-latest.md` and `tul show` snapshots, not in README prose.
 
-## Package inbox hygiene
+## Artifact model
 
-Package discovery scans configured inbox roots, but shared folders such as `/sdcard/Download` are not tul-owned. Start with a dry-run:
+| Artifact | Role |
+|---|---|
+| Git remote + commit hash | canonical source/recovery authority |
+| `tul-vf-latest.md` | runtime verification evidence |
+| `tul-source-latest.zip` | source-context transport artifact |
+| `tul-review-latest.zip` | changed-file review transport artifact |
+| state/report/handoff files | local runtime records |
 
-```bash
-tul clean packages
-```
+Zip artifacts are not backup authority. Recovery authority is Git remote plus commit hashes and recovery state.
 
-Use ingest to move valid matching tul packages from shared roots into the tul project inbox:
+Use `tul show exports` to inspect source/review freshness:
 
 ```bash
-tul clean packages run
-```
-
-Use quarantine only for project-inbox cleanup candidates:
-
-```bash
-tul clean packages run
-```
-
-Unrelated zip files in shared Download roots are report-only even if they do not contain a root `tul-package.yml`. Hygiene moves files; it does not delete them.
-
-## Review bundle export
-
-`tul-vf-latest.md` remains the primary release-gate artifact. When an LLM review needs a compact transport bundle, use the explicit review export command:
-
-```bash
-tul export review
-tul export source
-tul export source --json
-```
-
-The command writes:
-
-```text
-/sdcard/termux/import/tul/tul-review-latest.zip
-```
-
-The review bundle is not a backup and not a full source archive. It contains the latest verify/state/report/handoff artifacts, recent git facts, the latest changed-file list, `diff.patch`, and copies of changed files only. A successful explicit export records review bundle metadata in state/report/handoff and refreshes the latest verify runtime snapshot.
-
-## Runtime facts
-
-Do not treat README text as proof that a package was applied or pushed. Runtime facts belong in `tul show handoff` output:
-
-- commit hash;
-- push verified;
-- remote HEAD after fetch;
-- rollback command;
-- state path;
-- report path;
-- working tree status.
-
-Use compact handoff by default:
-
-```bash
-tul show handoff tul
-```
-
-Use full handoff only when the receiving LLM needs the protocol inline:
-
-```bash
-tul show handoff tul --full
-```
-
-Print copy-ready project instructions with:
-
-```bash
-tul instructions
-# or
-tul show instructions tul
+tul show exports
 ```
 
 ## Package contract
 
-LLM-generated packages should converge on one cross-platform zip:
+LLM-generated packages must converge on one cross-platform zip:
 
 ```text
 <package>.zip
   tul-package.yml
-  files/
-    ... repo-relative files ...
   README.md
+  files/
+  apply.sh
+  apply.ps1
 ```
 
-Bootstrap fallback scripts may be included during transition:
+`tul-package.yml` must declare target project/repo/branch, apply files, commit files, and commit message. Normal operation uses package metadata, not arbitrary script execution.
+
+## Non-negotiable invariants
+
+- User approval remains required before applying generated packages.
+- Normal package application must not use `git add -A` or `git add .`.
+- Force push is forbidden in normal operation.
+- Push is included by default after successful validation and commit.
+- `--no-push` and `--no-commit` are exceptions for recovery/debug.
+- Project policy belongs in `.tul.yml`.
+- Environment paths and aliases belong in global config.
+- LLM packages should use `tul-package.yml + README.md + files/ + apply.sh + apply.ps1`.
+
+## Planning harness
+
+The durable planning ledger is repo-resident:
 
 ```text
-apply.sh
-apply.ps1
+docs/manifest.md
+docs/strategy.md
+docs/roadmap.md
+docs/status/current.md
+docs/learning-log.md
+docs/decisions.md
 ```
 
-Normal operation should use `tul-package.yml`, not arbitrary script execution.
+Stage 7 uses parallel planning and sequential gated update: many candidate plans may be drafted, but only one package is applied against the latest verified baseline at a time.
 
-## Current handoff artifacts
+## Current focus
 
-The normal post-update review artifact is:
-
-- `/sdcard/termux/import/tul/tul-vf-latest.md`
-
-It contains release-gate evidence plus compact runtime snapshots. Zip artifacts are not backups and are not automatically trusted as canonical source evidence. The current artifact model separates:
-
-- verify artifact: release-gate evidence;
-- review bundle: explicit compact diff-oriented upload artifact from `tul export review`;
-- source export: implemented explicit full source context for package generation and code-level diagnosis; run manually with `tul export source`;
-- backup: Git remote, commit hashes, and rollback state.
-
-See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md) and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md). Ask for source context only when package generation or code-level diagnosis actually needs it, and verify its root layout before using it. A GitHub-generated source archive can be source context, but backup and recovery authority remains Git remote plus commit hashes and rollback state. `tul export source` is now an explicit source-context command. In the default update path, source/review exports run as a separate post-update phase after commit, push, and fresh verification; export failures are warning-only and do not change commit/push/rollback facts.
-
-
-## K1 archive execution safety
-
-State cleanup is dry-run first. Actual archive moves are currently limited to reviewed no-op selections:
-
-```bash
-tul clean states
-tul clean states run 3
-```
-
-Latest and latest rollbackable state references are protected.
-
-## Package hygiene note
-
-Package hygiene distinguishes shared external downloads from the tul project inbox. Use `tul clean packages run` to move valid matching tul packages into the project inbox, and reserve `--quarantine` for project-inbox cleanup candidates.
-
-## Export integrity status
-
-Use `tul show exports` to inspect explicit source/review artifacts without changing the repo.
-
-```bash
-tul show exports
-tul show exports --json
-```
-
-The command is warning-only. It checks whether `tul-source-latest.zip` and `tul-review-latest.zip` are present, readable, and aligned with the current HEAD. It also reports small docs drift warnings. These warnings do not fail the release gate.
-
-After the post-update export automation package closes, normal `tul run` refreshes source/review exports automatically after commit, push, and fresh verification. Use these flags only for recovery/debug or constrained environments:
-
-```bash
-tul run --no-export
-tul run --no-export
-tul run --no-export
-```
-
-If an export is intentionally skipped or fails warning-only, refresh source context manually with:
-
-```bash
-tul export source
-```
+Stage 7 has closed command-surface redesign and status sync. The current work finalizes `tul run` as the single normal loop and removes the most consequential active-doc/template residue from the pre-redesign command surface.

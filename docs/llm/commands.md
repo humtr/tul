@@ -1,6 +1,6 @@
-# tul commands
+# tul commands for LLM sessions
 
-Canonical user-facing terminal commands:
+Use the Stage 7 canonical command surface only:
 
 ```text
 tul show
@@ -14,20 +14,19 @@ tul recover
 tul setup
 ```
 
-There is no canonical legacy alias layer. Use these namespaces directly.
+## Default recommendation
 
-## Normal loop
+When the user asks how to apply the next package, recommend:
 
 ```bash
 cd ~/prj/tul
 
-tul package
 tul run
 ```
 
-`run` performs package selection, update, export, fresh verification, and final status output.
+Do not recommend a separate package preflight unless the user asks to inspect candidates first.
 
-## Stepwise loop
+## Stepwise fallback
 
 ```bash
 tul package
@@ -37,47 +36,20 @@ tul verify fresh
 tul show
 ```
 
-## Status and review
+Use this only when diagnosing or explaining the loop.
 
-```bash
-tul show
-tul show exports
-tul show handoff
-tul show report
-tul show history 5
+## Artifact review
+
+Ask the user to upload:
+
+```text
+/sdcard/termux/import/tul/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-source-latest.zip
+/sdcard/termux/import/tul/tul-review-latest.zip
 ```
 
-## Verification
+For a status-only question, `tul-vf-latest.md` is usually enough. For package generation or code-level audit, ask for the source zip too.
 
-```bash
-tul verify        # quick/local, stdout-first
-tul verify fresh  # fresh clone + latest verify artifacts
-```
+## Prohibited old command guidance
 
-## Artifacts
-
-```bash
-tul export         # source + review
-tul export source
-tul export review
-```
-
-## Cleanup and recovery
-
-```bash
-tul clean
-tul clean states
-tul clean states run 3
-tul clean packages
-tul recover
-tul recover rollback
-```
-
-## Setup
-
-```bash
-tul setup
-tul setup init <target>
-tul setup install
-tul setup use <project>
-```
+Do not suggest removed top-level commands such as state, status, handoff, archive, rollback, import, apply, publish, init, install, use, current, projects, or config. Use the canonical namespaces instead.

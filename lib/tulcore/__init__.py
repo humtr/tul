@@ -1,1 +1,1 @@
-__version__ = "0.8.30-stage7-command-surface"
+__version__ = "0.8.31-stage7-run-finalization"

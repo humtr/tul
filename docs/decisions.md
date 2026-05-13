@@ -408,3 +408,21 @@ Context: The Stage 7 command-surface redesign intentionally removed old command 
 Decision: For breaking command-surface packages, closure is based on a post-install `tul verify fresh` run with the newly installed command surface. A first verify failure caused only by old command vocabulary is classified as bootstrap gate drift when the subsequent verify passes.
 
 Consequences: Future command grammar changes must update README terms, verify-gate terms, handoff wording, and status/roadmap ledgers together. The canonical commands remain `show`, `package`, `update`, `verify`, `export`, `run`, `clean`, `recover`, and `setup`; no legacy alias layer is introduced.
+
+## ADR-034 — Make `tul run` the single normal loop
+
+Status: accepted
+
+Date: 2026-05-13
+
+Context: The Stage 7 command-surface redesign separated `update`, `verify`, `export`, and `show`. That made the command grammar cleaner, but normal users still need one command that performs the whole Terminal Update Loop.
+
+Decision: `tul run` is the single normal loop. If a compatible package is available, it runs update, export, fresh verification, and show. If no package is available, it skips update and refreshes export, fresh verification, and show for the current HEAD.
+
+Consequences:
+
+- `tul package` becomes optional preflight.
+- `tul update` remains the package application and publishing step.
+- `tul export` remains file creation only.
+- `tul verify fresh` remains the uploadable verification artifact writer.
+- Active docs and templates must not direct normal users to old top-level commands.
