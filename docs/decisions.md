@@ -426,3 +426,13 @@ Consequences:
 - `tul export` remains file creation only.
 - `tul verify fresh` remains the uploadable verification artifact writer.
 - Active docs and templates must not direct normal users to old top-level commands.
+
+## ADR-035: Verify command-surface smoke should cover the Stage 7 parser contract
+
+Status: accepted
+
+Context: Stage 7 intentionally removed the legacy command surface and made `tul run` the normal user loop. A release gate that only checks compile, docs presence, and README terms can miss parser regressions or accidental reintroduction of old top-level commands.
+
+Decision: `tul verify fresh` should include lightweight command-surface smoke checks that do not require project configuration: canonical help terms, removed top-level command rejection, `export status` rejection, and static `run` fallback markers.
+
+Consequence: The gate now detects command-surface drift closer to the CLI boundary while avoiding mutation and avoiding package-inbox-dependent behavior.

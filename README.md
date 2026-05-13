@@ -157,4 +157,4 @@ Stage 7 uses parallel planning and sequential gated update: many candidate plans
 
 ## Current focus
 
-Stage 7 has closed command-surface redesign and status sync. The current work finalizes `tul run` as the single normal loop and removes the most consequential active-doc/template residue from the pre-redesign command surface.
+Stage 7 has closed command-surface redesign, run default finalization, and the README package-contract gate fix. The current work expands smoke coverage around `tul run` and the canonical command surface.

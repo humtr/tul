@@ -24,3 +24,13 @@
 - [ ] `tul run` handles package-present path.
 - [ ] `tul run` handles package-absent artifact refresh path.
 - [ ] `tul run dry` documents both paths accurately.
+
+## Run smoke gate checks
+
+For command-surface packages, verify the following before claiming closure:
+
+- `tul help` exposes the canonical command surface: show, package, update, verify, export, run, clean, recover, setup.
+- Removed top-level commands remain rejected: status, state, report, handoff, instructions, current, projects, doctor, check, sync, publish, import, apply, resume, rollback, archive, sweep, init, install, use, config.
+- `tul export status` remains rejected; use `tul show exports` for diagnostics.
+- `tul run dry` documents both paths: package found and package not found.
+- `tul run` package-not-found fallback refreshes export and verify artifacts instead of failing only because no package exists.

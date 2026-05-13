@@ -427,3 +427,7 @@ Observation: After command-surface redesign, asking users to run `tul package` b
 Decision: `tul run` should handle both cases: if a compatible package exists, run update/export/fresh-verify/show; if no compatible package exists, refresh export/fresh-verify/show for the current HEAD.
 
 Impact: User-facing docs and templates must avoid pre-redesign commands and should present `tul run` as the default command.
+
+## 2026-05-13 — Stage 7 run smoke gate
+
+The README package-contract hotfix closed the narrow release-gate failure after run default finalization. The next stability gap is command-surface drift: the runtime can compile and still accidentally reintroduce old top-level commands or status-only commands under `export`. The gate should smoke-test parser/help behavior that does not require project configuration.

@@ -1,17 +1,15 @@
 # current status
 
-Status: Stage 7 `tul run` finalization is applied, exports are current, and the remaining release-gate issue is a narrow README package-contract phrase fix.
+Status: Stage 7 `tul run` is the normal user loop. The latest verified baseline after the README package-contract gate fix is stable, and the next package adds command-surface/run smoke checks to the release gate.
 
-Current verified baseline before this hotfix:
+Current verified baseline:
 
 ```text
-HEAD: 3c99639f04ae5cf8d2a5356e26a00b3cc113ebd6
-Remote HEAD: 3c99639f04ae5cf8d2a5356e26a00b3cc113ebd6
-Latest package: tul-stage7-run-default-finalization-bundle-v1
-Release gate: FAIL
-Failure scope: README entrypoint terms only
-Missing term: tul-package.yml + files/ + README.md
-Fresh clone: otherwise PASS
+HEAD: 5984adba54866b5ae55844feade83bd3d4477355
+Remote HEAD: 5984adba54866b5ae55844feade83bd3d4477355
+Latest package: tul-stage7-readme-package-contract-gate-fix-bundle-v1
+Release gate: PASS
+Fresh clone: PASS
 Source bundle: current
 Review bundle: current
 Docs drift: clean
@@ -29,10 +27,11 @@ Warnings: none
 - command-surface redesign around `tul run`
 - command-surface status sync
 - run default finalization
+- README package-contract gate fix
 
-## Current hotfix
+## Current package
 
-Apply `tul-stage7-readme-package-contract-gate-fix-bundle-v1` to restore the exact README package-contract phrase required by the current release gate while preserving the simplified Stage 7 command surface.
+Apply `tul-stage7-run-smoke-gate-bundle-v1` to make the release gate check the Stage 7 command surface more directly.
 
 ## Canonical command surface
 
@@ -68,21 +67,9 @@ package not found:
 
 `package not found` is not an error for `tul run`; it means there is no update to apply, so the command refreshes uploadable verification and transport artifacts for the current HEAD.
 
-## Stepwise loop
-
-Use this only when the user explicitly wants to split the loop:
-
-```bash
-tul package
-tul update
-tul export
-tul verify fresh
-tul show
-```
-
 ## Next queue
 
-1. Apply `tul-stage7-readme-package-contract-gate-fix-bundle-v1`.
-2. Confirm release gate PASS with `tul verify fresh`.
-3. Run `tul run` once with no pending package to confirm artifact-refresh fallback behavior.
-4. Continue command residue cleanup and release-gate expansion only after this narrow gate fix is closed.
+1. Apply `tul-stage7-run-smoke-gate-bundle-v1`.
+2. Confirm release gate PASS with `tul run` or `tul verify fresh`.
+3. Continue command residue cleanup and historical-doc marking.
+4. Add broader warning-first scans for old command examples in active docs/templates.

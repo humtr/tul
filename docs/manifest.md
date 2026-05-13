@@ -59,4 +59,4 @@ Use the stepwise loop only for debugging, review, or user-directed decomposition
 
 ## Current baseline
 
-The command-surface redesign is closed at `e36383dcd8a4e427971a675da93eaa744be4db9d`. The next package finalizes `tul run` as the single normal loop and cleans the most consequential active docs/templates residue.
+The command-surface redesign, run default finalization, and README package-contract gate fix are closed at `5984adba54866b5ae55844feade83bd3d4477355`. The next package adds release-gate smoke checks for the canonical command surface and `tul run` fallback semantics.

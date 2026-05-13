@@ -33,3 +33,12 @@ tul show exports
 Normal users should not need to call `verify fresh` after `tul run`; `run` performs export and fresh verification as part of the loop.
 
 Use explicit `verify fresh` when refreshing artifacts without applying a package, or when diagnosing release-gate behavior.
+
+## Stage 7 command-surface smoke
+
+`verify fresh` includes lightweight parser-surface checks for the canonical Stage 7 commands. These checks avoid project-config-dependent commands and focus on the stable parser contract:
+
+- canonical help terms are present;
+- removed top-level commands are rejected;
+- `export status` is rejected because `export` is file-producing only;
+- `run` fallback markers remain present in the CLI implementation.

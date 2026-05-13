@@ -53,3 +53,7 @@ Use the stepwise loop for diagnostics and review only.
 - `verify` checks the repo; `fresh` writes uploadable verify artifacts.
 - `update` applies and publishes packages.
 - `run` orchestrates the whole loop.
+
+## Smoke coverage
+
+The command surface is now checked by `tul verify fresh` using parser-level smoke checks that do not require project configuration. The smoke checks guard against accidental old top-level command reintroduction and keep `export` file-producing only.
