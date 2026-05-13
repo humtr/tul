@@ -99,8 +99,16 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
     handoff_path = _path_from_state(repo, state_data.get("handoff"))
     verify_path = latest_verify_markdown(ctx)
 
-    commit = str(state_data.get("commit") or "").strip() or head(repo)
-    changed_files = _changed_files_for_review(repo, state_data, commit)
+    current_head = head(repo)
+    state_commit = str(state_data.get("commit") or "").strip()
+    # Review exports are evidence for the current Git HEAD, not merely for the
+    # latest tul package state. Manual commits such as narrow `git rm` cleanup
+    # can advance HEAD without creating a new package state; in that case, using
+    # the latest state's commit/changed_files makes the freshly exported review
+    # bundle stale immediately. Reuse state changed_files only when the latest
+    # state commit is the current HEAD.
+    commit = current_head
+    changed_files = _changed_files_for_review(repo, state_data, commit, allow_state_files=(state_commit == current_head))
     diff_text = _diff_for_review(repo, commit, changed_files)
 
     file_count = 0
@@ -117,6 +125,8 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
                 "project": ctx.project_id,
                 "repo": str(ctx.repo_path),
                 "head": commit,
+                "state_commit": state_commit or None,
+                "basis": "current-head",
                 "created_at": started_at,
                 "target": str(target),
                 "changed_file_count": len(changed_files),
@@ -217,10 +227,11 @@ def _path_from_state(repo: Path, value: object) -> Path | None:
     return repo / path
 
 
-def _changed_files_for_review(repo: Path, state: dict[str, Any], commit: str) -> list[str]:
-    state_files = state.get("changed_files")
-    if isinstance(state_files, list) and state_files:
-        return sorted({str(item).strip() for item in state_files if str(item).strip()})
+def _changed_files_for_review(repo: Path, state: dict[str, Any], commit: str, *, allow_state_files: bool = True) -> list[str]:
+    if allow_state_files:
+        state_files = state.get("changed_files")
+        if isinstance(state_files, list) and state_files:
+            return sorted({str(item).strip() for item in state_files if str(item).strip()})
     if commit:
         proc = git(repo, ["diff-tree", "--no-commit-id", "--name-only", "-r", commit], check=False)
         if proc.returncode == 0:
@@ -249,12 +260,13 @@ def _review_readme(ctx: ProjectContext, commit: str, changed_files: list[str]) -
     return "\n".join([
         "# tul review bundle",
         "",
-        "Purpose: transport the latest runtime facts and changed-file evidence to an LLM review session.",
+        "Purpose: transport the current Git HEAD runtime facts and changed-file evidence to an LLM review session.",
         "This is not a backup and not a canonical source archive.",
         "",
         f"Project: {ctx.project_id}",
         f"Repo: {ctx.repo_path}",
         f"HEAD: {commit}",
+        "Basis: current Git HEAD",
         f"Changed files: {len(changed_files)}",
         "",
         "Contents:",

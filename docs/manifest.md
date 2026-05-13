@@ -85,7 +85,7 @@ tul-package.yml + files/ + README.md
 | Git remote + commit hash | canonical source/recovery authority |
 | `tul-vf-latest.md` | runtime verification evidence |
 | `tul-source-latest.zip` | source-context transport artifact |
-| `tul-review-latest.zip` | changed-file review transport artifact |
+| `tul-review-latest.zip` | current-HEAD changed-file review transport artifact |
 | state/report/handoff files | local runtime records |
 
 ## Stage status
@@ -93,3 +93,8 @@ tul-package.yml + files/ + README.md
 Stage 7 is closed.
 
 Stage 8 document tree compaction is closed after active ownership consolidation, runtime pointer compaction, obsolete-doc deletion, ownership finalization, and environment-note normalization.
+
+
+## Review artifact basis
+
+Review export must use current Git HEAD as its manifest head. The latest tul state may be included as context, but it must not make a freshly exported review bundle stale after a manual commit or narrow `git rm` cleanup.

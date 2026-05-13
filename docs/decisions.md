@@ -489,3 +489,13 @@ docs/package-spec.md
 Compatibility docs are no longer active sources of truth once this package is applied.
 
 Consequences: Obsolete and compatibility docs can be removed in a separate 2B cleanup after `tul verify fresh` passes with the narrowed required-doc set. Deletion remains separate because the current package contract supports `apply.mode: copy`, not safe delete operations.
+
+## ADR-039 — Review exports use current Git HEAD as their evidence basis
+
+Status: accepted
+
+Context: Stage 8 included a narrow manual `git rm` cleanup after package-based pointer compaction. The source bundle and fresh verification could be current, but `tul export review` still used the latest tul package state's commit and changed-file list as the review manifest basis. A newly written review bundle could therefore be stale immediately when current HEAD had advanced outside the package state model.
+
+Decision: `tul export review` uses current Git HEAD as the manifest `head` and changed-file evidence basis. The latest tul state commit may be recorded as `state_commit` context, and state `changed_files` may be reused only when the latest state commit equals current HEAD.
+
+Consequences: Manual commits and narrow cleanup commits can produce current review bundles without requiring a synthetic package state. The latest tul state remains useful runtime context, but review freshness is judged against the current Git HEAD. Future state-model work can separately distinguish package-run state from manual cleanup state.

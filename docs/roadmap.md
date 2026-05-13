@@ -28,8 +28,8 @@ These are candidates, not active work:
 
 ```text
 1. Review/state model improvement
-   - allow manual git rm / delete commits to produce current review evidence;
-   - make latest state distinguish package-run commits from manual cleanup commits.
+   - Stage 9A makes `tul export review` use current Git HEAD as review evidence;
+   - future work may still make latest state distinguish package-run commits from manual cleanup commits.
 
 2. Safe package-level delete support
    - design only if deletion needs to re-enter the package mechanism;

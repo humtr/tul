@@ -1,6 +1,6 @@
 # current status
 
-Status: **Stage 8 document tree compaction and environment-note normalization are closed.**
+Status: **Stage 8 document tree compaction is closed; Stage 9A review artifact freshness hardening is being applied.**
 
 Runtime truth remains `tul-vf-latest.md` and `tul show`. This file records the latest durable status summary and must mention the latest package so docs-drift checks can stay clean.
 
@@ -23,7 +23,7 @@ Review bundle: current, 9 changed files
 ## Latest package marker
 
 ```text
-Latest package: tul-doc-tree-compaction-stage8-env-profile-sync-v1
+Latest package: tul-stage9a-review-current-head-export-v1
 ```
 
 After this package is applied, the exact post-apply commit hash is recorded by `tul-vf-latest.md`, `tul show`, and Git remote state.
@@ -102,4 +102,13 @@ Optional later work belongs outside Stage 8:
 - make manual git rm / delete commits produce current review evidence;
 - add safe package-level delete support, if explicitly approved;
 - split large runtime modules only when a concrete feature requires it.
+```
+
+## Stage 9A focus
+
+```text
+Problem: `tul export review` could create a freshly written but stale review bundle after manual Git commits because it used the latest tul state commit and changed_files as its primary review basis.
+Resolution package: tul-stage9a-review-current-head-export-v1
+Expected behavior: review export manifests use the current Git HEAD as `head`; the latest tul state commit is recorded only as `state_commit` context.
+Acceptance: `tul export review` followed by `tul show exports` reports Review bundle status: current for the current HEAD.
 ```

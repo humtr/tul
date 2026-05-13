@@ -469,3 +469,13 @@ Impact: Delete-first compaction would convert a documentation cleanup into a rel
 Reflected in: `tul-doc-tree-compaction-stage2-pointer-compaction-v1` updates `lib/tulcore/handoff.py`, `lib/tulcore/verify.py`, and active docs before any obsolete file deletion.
 
 Follow-up: Run 2B as a separate narrow deletion step after 2A passes fresh verification.
+
+### 2026-05-14 — Review export must be current-HEAD evidence
+
+Observation: After a narrow manual `git rm` cleanup, `tul export review` could write a new review bundle whose manifest still used the latest tul package state commit. `tul show exports` then correctly reported the freshly written review bundle as stale.
+
+Impact: Source export, verify, and Git remote state could all be current while the review bundle remained tied to an older package state. This made artifact review ambiguous after legitimate manual commits.
+
+Reflected in: `tul-stage9a-review-current-head-export-v1` changes review export to use current Git HEAD as review evidence and records the latest state commit only as context.
+
+Follow-up: Later state-model work may distinguish package-run state from manual cleanup commits more explicitly, but review freshness should no longer depend on the latest package state matching HEAD.
