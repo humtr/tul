@@ -275,3 +275,17 @@ Invariants:
 ## Export integrity checkpoint
 
 `tul show exports` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul run` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
+
+
+## Stage 7 command-surface redesign checkpoint
+
+- [x] Canonical top-level commands are `show`, `package`, `update`, `verify`, `export`, `run`, `clean`, `recover`, and `setup`.
+- [x] `tul run` is the full Terminal Update Loop command.
+- [x] `tul update` is conceptually narrowed to package application, checks, commit, push, and remote HEAD verification.
+- [x] `tul verify` is quick/local by default.
+- [x] `tul verify fresh` writes uploadable verify artifacts.
+- [x] `tul export` creates source and review artifacts.
+- [x] `tul show exports` is the export freshness and docs-drift inspection surface.
+- [x] `tul recover rollback` replaces top-level rollback wording in runtime snapshots.
+- [x] The post-redesign baseline passes `tul verify fresh` after installation.
+- [ ] Canonical command smoke testing has been completed after status-ledger sync.

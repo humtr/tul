@@ -87,3 +87,15 @@ For an Orange `tul export source` implementation package, confirm:
 ## Export integrity hardening gate
 
 `tul show exports` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul run` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
+
+
+## Breaking command-surface package gate
+
+For packages that change top-level command grammar:
+
+- [ ] README entrypoint terms and verify-gate required terms are updated together.
+- [ ] Handoff wording uses only canonical commands.
+- [ ] Runtime snapshots use `tul show`, `tul show handoff`, and `tul show exports` terminology.
+- [ ] `tul verify fresh` is run after installation with the new command surface.
+- [ ] Any first-run bootstrap gate drift is recorded in status and learning log if a subsequent installed verify passes.
+- [ ] No legacy alias layer is introduced unless explicitly approved as a separate design decision.

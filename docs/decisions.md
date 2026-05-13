@@ -397,3 +397,14 @@ Consequences:
 - `verify` is quick/local by default; `verify fresh` writes uploadable verify artifacts.
 - `export` creates files only.
 - `show exports` inspects source/review freshness.
+
+
+## ADR-033 — Command-surface redesign closure requires post-install verify
+
+Status: accepted
+
+Context: The Stage 7 command-surface redesign intentionally removed old command terms and changed the README entrypoint vocabulary. The package that installed the redesign was applied by the previous update/verify implementation, so the first automatically generated verify snapshot could still check old README entrypoint terms.
+
+Decision: For breaking command-surface packages, closure is based on a post-install `tul verify fresh` run with the newly installed command surface. A first verify failure caused only by old command vocabulary is classified as bootstrap gate drift when the subsequent verify passes.
+
+Consequences: Future command grammar changes must update README terms, verify-gate terms, handoff wording, and status/roadmap ledgers together. The canonical commands remain `show`, `package`, `update`, `verify`, `export`, `run`, `clean`, `recover`, and `setup`; no legacy alias layer is introduced.

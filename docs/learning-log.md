@@ -408,3 +408,14 @@ Observation: `tul export status` violated the command grammar because `export` i
 Lesson: CLI namespaces should be action-oriented and user-visible. Internal concepts such as export integrity, source context, handoff, state, and recovery-debug should not appear as scattered top-level commands.
 
 Applied rule: Use `show` for read-only output, `export` for file creation, `update` for repo publishing, and `run` for the full Terminal Update Loop.
+
+
+### Stage 7 — Command-surface redesign can bootstrap-fail old gates
+
+Observation: The package that replaces command grammar may be applied by the previous command implementation and previous verify gate. The first post-update verify snapshot can therefore fail against old README entrypoint terms even when the committed code, fresh clone, and later new verifier are healthy.
+
+Impact: For command-surface redesigns, distinguish bootstrap gate drift from runtime failure. The deciding check is a subsequent `tul verify fresh` executed after the new command surface is installed.
+
+Reflected in: `docs/status/current.md`, `docs/roadmap.md`, and `docs/manifest.md`.
+
+Follow-up: Keep command grammar changes and verify-gate term changes in the same package. After applying such a package, run `tul verify fresh` once with the installed command surface before judging the baseline.

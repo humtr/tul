@@ -69,3 +69,8 @@ Review-oriented uploads after `tul run`:
 /sdcard/termux/import/tul/tul-source-latest.zip
 /sdcard/termux/import/tul/tul-review-latest.zip
 ```
+
+
+## Closure note
+
+The redesign closes at `c274a27e33dd2e13b91daf42e165042cf69b1d9f` after a post-install `tul verify fresh` reports release gate PASS and fresh clone PASS. A first post-update snapshot generated during the installing update can reflect old verify-gate terms; treat that as bootstrap gate drift only when the subsequent installed verify passes.
