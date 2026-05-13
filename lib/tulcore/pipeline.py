@@ -41,8 +41,8 @@ def run_update(
     no_commit: bool = False,
     no_push: bool = False,
     allow_dirty: bool = False,
-    verify_after: bool = True,
-    post_export: bool = True,
+    verify_after: bool = False,
+    post_export: bool = False,
     post_export_source: bool = True,
     post_export_review: bool = True,
 ) -> UpdateResult:

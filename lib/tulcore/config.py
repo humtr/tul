@@ -302,7 +302,7 @@ def resolve_project(target: str) -> ProjectContext:
     else:
         raise ConfigError(
             f"unknown project alias: {target}\n"
-            f"Run 'tul init {target}' or add it to {global_path}."
+            f"Run 'tul setup init {target}' or add it to {global_path}."
         )
     repo_path = repo_path.resolve()
     repo_config = load_repo_config(repo_path)

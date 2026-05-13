@@ -30,7 +30,7 @@ class InitResult:
     warnings: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
-        lines = ["# tul init", f"Project: {self.project_id}", f"Repo: {self.repo_path}"]
+        lines = ["# tul setup init", f"Project: {self.project_id}", f"Repo: {self.repo_path}"]
         if self.expected_repo:
             lines.append(f"Expected repo: {self.expected_repo}")
         lines.append(f"Branch: {self.branch}")
@@ -43,9 +43,9 @@ class InitResult:
             lines.append("\nWarnings:")
             lines.extend(f"- {item}" for item in self.warnings)
         lines.append("\nNext:")
-        lines.append(f"- tul status {self.project_id}")
-        lines.append(f"- tul update {self.project_id} --latest")
-        lines.append(f"- tul handoff {self.project_id}")
+        lines.append(f"- tul show {self.project_id}")
+        lines.append(f"- tul run {self.project_id}")
+        lines.append(f"- tul show handoff {self.project_id}")
         return "\n".join(lines)
 
 

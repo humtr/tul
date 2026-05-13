@@ -1,153 +1,49 @@
-# LLM post-update review guide
+# post-run review
 
-This guide is for a fresh LLM session receiving `tul-vf-latest.md`, source context, or additional terminal output after a package has been applied. Current latest markdown includes the release gate plus compact `tul state` and `tul handoff` snapshots.
+Use this workflow after a user applies a tul package.
 
-## Source hierarchy
+## Required artifact
 
-Use this order when facts differ:
-
-1. User-provided terminal artifacts from the current turn, especially `/sdcard/termux/import/tul/tul-vf-latest.md`.
-2. Runtime snapshots inside `tul-vf-latest.md`, especially `### tul state` and `### tul handoff`.
-3. User-provided standalone `tul state` or `tul handoff` output when newer than the latest artifact.
-4. Source context such as a GitHub-generated source archive, manually created source zip, or fresh clone contents when code-level work is needed.
-5. Durable repo documents such as `docs/status/current.md`, `docs/roadmap.md`, and `docs/checklists/loop-runtime.md`.
-6. `docs/workflows/artifact-semantics.md` for the current artifact vocabulary.
-7. Prior chat summaries, only as context.
-
-Do not treat prior chat claims as repository truth when the artifact or repo contradicts them.
-
-## Fast review path
-
-For a normal successful package application, the user should only need to upload:
+Primary evidence:
 
 ```text
 /sdcard/termux/import/tul/tul-vf-latest.md
 ```
 
-A review can usually be closed if the artifact shows:
+It should show release gate status, HEAD/Remote HEAD, fresh clone status, and runtime snapshots.
 
-- `Release gate: PASS`;
-- local HEAD and remote HEAD match;
-- fresh clone verification passed;
-- working tree is clean;
-- `py_compile` passed;
-- `git diff --check` passed;
-- verify artifacts use the canonical layout.
-
-Ask for standalone `tul state` or `tul handoff` output only when the latest artifact is missing the runtime snapshots, appears stale, or the user has run newer commands after the artifact was created.
-
-Ask for source context only when producing the next package, doing code-level review, or investigating a failure that cannot be resolved from the verify artifact and terminal output. A GitHub-generated `tul-main.zip` can be used as manual source context after checking root layout and intended commit. Do not treat it as a tul runtime backup or a tul-proven explicit source export. Prefer the latest verified HEAD as the source-of-truth identifier.
-
-## Normal next commands
-
-After receiving a generated package saved in the configured inbox roots:
-
-```bash
-tul package latest
-tul update
-```
-
-For evidence upload after update:
+Optional source/review context:
 
 ```text
-/sdcard/termux/import/tul/tul-vf-latest.md
-```
-
-For state-sensitive bundles:
-
-```bash
-tul state
-```
-
-For cleanup inspection:
-
-```bash
-tul archive --noop --dry-run --keep 3
-```
-
-## Bundle proposal checklist
-
-Before proposing or generating the next package:
-
-- identify the latest verified HEAD;
-- name the current completed bundle;
-- state whether the release gate is closed;
-- name the next bounded bundle;
-- list files likely to change;
-- list files intentionally excluded;
-- define acceptance criteria;
-- preserve package shape: `tul-package.yml + files/ + README.md + apply.sh + apply.ps1`;
-- avoid `git add -A`, force push, broad cleanup, and policy hardcoding.
-
-## Next-bundle readiness gate
-
-Before proposing or generating another package, apply `docs/workflows/parallel-readiness.md`. At minimum, state:
-
-- latest verified HEAD;
-- whether local and remote HEAD match;
-- whether the release gate is closed;
-- the completed bundle name;
-- the next bundle name and goal;
-- expected changed files;
-- intentionally excluded files;
-- acceptance criteria;
-- parallel class: Green, Yellow, Orange, or Red.
-
-Generate only one implementation package from verified source context. If two candidate bundles touch the same runtime file or acceptance gate, serialize them.
-
-## Source separation
-
-When summarizing the handoff, separate:
-
-- user-provided terminal facts;
-- repo-documented guidance;
-- assistant interpretation;
-- unresolved or unverified assumptions.
-
-
-## Artifact caution
-
-Current Stage 7 artifact semantics are separated by role. Treat artifacts as follows:
-
-- `tul-vf-latest.md`: release-gate and runtime snapshot evidence.
-- `tul-review-latest.zip`: explicit compact review/diff bundle created by `tul export review`.
-- `tul-source-latest.zip`: implemented explicit source context from `tul export source`, normally refreshed by the post-update export phase after successful updates; not backup.
-- `tul-main.zip`: may be a GitHub-generated manual source archive. It can support code/package generation when its root layout and intended commit are understood, but it is not backup evidence and not a tul-proven explicit source export.
-
-A tul-proven source export should have repo files at zip root, such as `README.md`, `.tul.yml`, `bin/tul`, and `lib/tulcore/__init__.py`. A wrapper such as `tul-main/README.md` is common for GitHub-generated archives, but it is not the canonical tul source-export shape.
-
-
-## Optional review bundle
-
-When the receiving LLM needs changed-file evidence beyond `tul-vf-latest.md`, run:
-
-```bash
-tul export review
-```
-
-Then upload:
-
-```text
+/sdcard/termux/import/tul/tul-source-latest.zip
 /sdcard/termux/import/tul/tul-review-latest.zip
 ```
 
-The review bundle is a transport artifact, not a backup and not a full source archive. After export, `tul-vf-latest.md` should be refreshed so the runtime snapshot shows the review bundle path and evidence.
+## Review order
 
-## Stage 7 planning review
+1. Read `tul-vf-latest.md`.
+2. Confirm HEAD, Remote HEAD, release gate, step count, working tree, and fresh clone.
+3. Confirm latest package and commit from runtime state.
+4. If source/review artifacts are stale or missing, say so explicitly.
+5. Propose the next package only after the new baseline is clear.
 
-When reviewing a Stage 7 planning package, confirm that Stage 6 is closed by the latest runtime facts, Stage 7 is active in the planning docs, artifact roles remain separated, and no runtime behavior change is mixed into a large coordination-doc rewrite.
+## Command grammar
 
+Normal user workflow is:
 
-## Source-export spec review
+```bash
+tul package
+tul run
+```
 
-The source-export specification and implementation are closed. For post-update automation review, confirm that source/review export happens only after successful commit, push, and fresh verification, and that failures remain warning-only.
+Stepwise workflow is:
 
-Use `docs/checklists/stage7-package-gates.md` to classify subsequent Green/Yellow/Orange/Red bundles.
+```bash
+tul package
+tul update
+tul export
+tul verify fresh
+tul show
+```
 
-## Source export note
-
-Use `tul export source` only when full source context is needed for package generation or code-level diagnosis. It is explicit/manual and separate from `tul export review`, `tul verify`, and `tul update`.
-
-## Export integrity review rule
-
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
+Use `tul show exports` for artifact freshness. `export` is reserved for file creation.

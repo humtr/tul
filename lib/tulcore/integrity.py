@@ -75,7 +75,7 @@ def format_export_integrity(ctx: ProjectContext) -> str:
     review = data["review_bundle"]
     docs = data["docs_drift"]
     lines = [
-        "# tul export status",
+        "# tul show exports",
         "",
         "Mode: warning-only",
         "Release gate effect: none",

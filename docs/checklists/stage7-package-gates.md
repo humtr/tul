@@ -86,4 +86,4 @@ For an Orange `tul export source` implementation package, confirm:
 
 ## Export integrity hardening gate
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
+`tul show exports` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul run` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.

@@ -366,9 +366,9 @@ def format_runtime_snapshots(ctx: ProjectContext) -> str:
     lines = [
         "## Runtime snapshots",
         "",
-        "These snapshots are included so `tul-vf-latest.md` can be uploaded as the single post-update review artifact.",
+        "These snapshots are included so `tul-vf-latest.md` can be uploaded as the canonical post-run verification artifact.",
         "",
-        "### tul state",
+        "### tul show",
         "",
         "~~~text",
     ]
@@ -380,12 +380,12 @@ def format_runtime_snapshots(ctx: ProjectContext) -> str:
         else:
             state_text = summarize_compact_state(work_root, project=ctx.project_id)
     except Exception as exc:  # pragma: no cover - defensive artifact path
-        state_text = f"Unable to capture tul state snapshot: {type(exc).__name__}: {exc}"
+        state_text = f"Unable to capture tul show snapshot: {type(exc).__name__}: {exc}"
     lines.append(state_text.rstrip())
     lines.extend([
         "~~~",
         "",
-        "### tul handoff",
+        "### tul show handoff",
         "",
         "~~~text",
     ])
@@ -397,19 +397,19 @@ def format_runtime_snapshots(ctx: ProjectContext) -> str:
             expected_repo=ctx.expected_repo,
         )
     except Exception as exc:  # pragma: no cover - defensive artifact path
-        handoff_text = f"Unable to capture tul handoff snapshot: {type(exc).__name__}: {exc}"
+        handoff_text = f"Unable to capture tul show handoff snapshot: {type(exc).__name__}: {exc}"
     lines.append(handoff_text.rstrip())
     lines.extend([
         "~~~",
         "",
-        "### tul export status",
+        "### tul show exports",
         "",
         "~~~text",
     ])
     try:
         export_text = format_export_integrity(ctx)
     except Exception as exc:  # pragma: no cover - defensive artifact path
-        export_text = f"Unable to capture tul export status snapshot: {type(exc).__name__}: {exc}"
+        export_text = f"Unable to capture tul show exports snapshot: {type(exc).__name__}: {exc}"
     lines.append(export_text.rstrip())
     lines.append("~~~")
     return "\n".join(lines) + "\n"
@@ -504,7 +504,7 @@ def _verify_repo(repo: Path, result: VerifyResult, *, label: str) -> None:
     readme = repo / "README.md"
     if readme.exists():
         text = readme.read_text(encoding="utf-8", errors="replace")
-        required = ["LLM entrypoint", "tul update <project>", "--latest", "git add -A", "tul-package.yml + files/ + README.md"]
+        required = ["LLM entrypoint", "tul run", "tul update", "git add -A", "tul-package.yml + files/ + README.md"]
         missing_terms = [term for term in required if term not in text]
         result.add(f"{label}: README entrypoint terms", not missing_terms, "missing: " + ", ".join(missing_terms) if missing_terms else "all present")
 

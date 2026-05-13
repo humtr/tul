@@ -2,7 +2,7 @@
 
 Default handoff output is intentionally compact. Durable protocol details live in
 repo documents so repeated terminal handoffs do not become large instruction dumps.
-Use ``tul handoff <project> --full`` when an LLM needs the full loop contract in
+Use ``tul show handoff <project> --full`` when an LLM needs the full loop contract in
 one terminal output.
 """
 from __future__ import annotations
@@ -12,8 +12,8 @@ from pathlib import Path
 from .gitops import current_branch, fetch, head, recent_commits, remote_head, remote_url, status_porcelain
 
 INVARIANTS = [
+    "tul run performs the full package/update/verify/export loop; tul update is the narrower apply/commit/push step.",
     "tul update pushes by default; --no-push is an exception.",
-    "tul update is the full-loop command, not a split-command default.",
     "Never use git add -A or git add . in the default update path.",
     "Never force-push in the normal path.",
     "Project-specific policy belongs in .tul.yml, not engine code.",
@@ -139,15 +139,15 @@ def compact_handoff(*, repo: Path, project: str, mode: str, expected_repo: str |
         "",
         "1. Verify remote repo, branch, HEAD, and working tree facts when remote access is available.",
         "2. Read `docs/llm/entrypoint.md`, `docs/llm/post-update-review.md`, and `docs/workflows/parallel-readiness.md` before proposing the next package.",
-        "3. Treat `tul-vf-latest.md`, `tul state`, and handoff output as runtime facts; treat repo docs as durable guidance.",
+        "3. Treat `tul-vf-latest.md`, `tul show`, and handoff output as runtime facts; treat repo docs as durable guidance.",
         "4. Preserve push-by-default, no broad staging, no force push, and config/policy separation.",
         "5. Check bundle overlap and serialize work when files or acceptance gates conflict.",
-        "6. Use `tul export status` and `tul state` to distinguish current, stale, missing, and unrecorded source/review artifacts.",
+        "6. Use `tul show exports` and `tul show` to distinguish current, stale, missing, and unrecorded source/review artifacts.",
         "7. For next work, propose or produce one cross-platform `tul-package.yml + files/ + README.md` package.",
         "",
         "For the full protocol, run:",
         "",
-        f"```bash\ntul handoff {project} --full\n```",
+        f"```bash\ntul show handoff {project} --full\n```",
     ])
     return "\n".join(lines) + "\n"
 
@@ -186,14 +186,14 @@ def full_handoff(*, repo: Path, project: str, mode: str, expected_repo: str | No
         "5. Compare terminal-verified facts against remote state and the latest verify artifact.",
         "6. Identify structural debt, missing automation, and next package boundary.",
         "7. Preserve all tul invariants and do not regress push-by-default semantics.",
-        "8. Use `tul export status` and `tul state` to check source/review artifact freshness without treating warnings as release-gate failures.",
+        "8. Use `tul show exports` and `tul show` to check source/review artifact freshness without treating warnings as release-gate failures.",
         "9. If generating files, produce a cross-platform `tul-package.yml + files/ + README.md` package.",
         "",
         "## Source separation",
         "",
         "사용자가 직접 말한 것:",
         "- tul은 Windows/Termux/LLM 사이의 폐루프 도구여야 한다.",
-        "- tul update는 push, remote verification, rollback 안내, handoff 출력을 포함해야 한다.",
+        "- tul run은 update, verify fresh, export, show를 아우르는 전체 폐루프여야 한다.",
         "",
         "terminal-verified facts:",
         f"- Local HEAD at handoff generation: {head(repo)}",

@@ -107,7 +107,7 @@ def latest_state_with_commit(work_root: Path, *, project: str | None = None) -> 
     """Return newest matching state that contains a commit suitable for rollback.
 
     Import/no-op/validated states can be newer than the latest published update.
-    Rollback should skip those by default so `tul import --latest` does not hide
+    Rollback should skip those by default so `tul update dry` does not hide
     the latest rollbackable commit.
     """
     for path, data in iter_states(work_root, project=project):
@@ -451,13 +451,13 @@ def summarize_compact_state(
     work_root: Path,
     *,
     project: str,
-    rollback_command: str = "tul rollback",
+    rollback_command: str = "tul recover rollback",
 ) -> str:
     latest = latest_state(work_root, project=project)
     rollbackable = latest_state_with_commit(work_root, project=project)
     total_states = len(iter_states(work_root, project=project))
 
-    lines = ["# tul state", "", f"Project: {project}"]
+    lines = ["# tul show", "", f"Project: {project}"]
     if not latest:
         lines.extend(["", "Latest state:", "- none"])
     else:
@@ -504,11 +504,11 @@ def summarize_compact_state(
         "",
         "Cleanup:",
         f"- work states: {total_states}",
-        "- suggestion: tul archive --noop --dry-run --keep 3",
+        "- suggestion: tul clean states",
         "",
         "For full history:",
-        "- tul state --all --limit 5",
-        "- tul state --json",
+        "- tul show history 5",
+        "- tul show --json",
     ])
     return "\n".join(lines)
 

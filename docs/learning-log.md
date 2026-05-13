@@ -40,7 +40,7 @@ Observation: The PATH `tul` launcher can drift from repo `bin/tul`.
 
 Impact: Users may run a stale command even after updating the repo.
 
-Reflected in: `tul install`, `tul doctor`, launcher diagnostics.
+Reflected in: `tul setup install`, `tul doctor`, launcher diagnostics.
 
 Follow-up: Native commands should assume `tul doctor` can identify launcher drift.
 
@@ -56,13 +56,13 @@ Follow-up: State output should remain compact even as no-op states accumulate.
 
 ### Stage 3.1 — Latest state is not latest rollbackable state
 
-Observation: `tul import` can create a latest state without a commit.
+Observation: `tul update dry` can create a latest state without a commit.
 
-Impact: `tul rollback` must select the latest rollbackable state, not blindly the latest state.
+Impact: `tul recover rollback` must select the latest rollbackable state, not blindly the latest state.
 
 Reflected in: recovery state selection.
 
-Follow-up: `tul state` should clearly distinguish latest state, latest published state, and latest rollbackable state.
+Follow-up: `tul show` should clearly distinguish latest state, latest published state, and latest rollbackable state.
 
 ### Stage 0–5 — Package root layout matters
 
@@ -78,7 +78,7 @@ Follow-up: Package check diagnostics should remain explicit.
 
 Observation: Repeated `PKG=/path/to/file.zip` commands preserve too much bridge work.
 
-Impact: Normal use should prefer `tul update tul -l` or later `tul update` once native context is safe.
+Impact: Normal use should prefer `tul update tul -l` or later `tul run` once native context is safe.
 
 Reflected in: package discovery polish, roadmap, command docs.
 
@@ -122,22 +122,22 @@ Impact: native context must be introduced in steps: store active project first, 
 
 Reflected in: `docs/roadmap.md`, `docs/status/current.md`, `docs/checklists/loop-runtime.md`.
 
-Follow-up: implement `tul_native_context_v1b` only after `tul use` and `tul current` are verified.
+Follow-up: implement `tul_native_context_v1b` only after `tul setup use` and `tul show config` are verified.
 
 ## Stage 6 — read-only native defaults should precede mutating defaults
 
-Observation: No-arg commands reduce bridge work, but mutating commands such as `tul update` need stronger context-conflict and package-target guards than read-only commands.
+Observation: No-arg commands reduce bridge work, but mutating commands such as `tul run` need stronger context-conflict and package-target guards than read-only commands.
 
 Impact: Native context is staged: active project storage, read-only inference, mutating inference, then package mismatch guidance.
 
 Reflected in: `docs/roadmap.md`, `docs/commands.md`, and native context v1b.
 
-Follow-up: Implement no-arg `tul update` only with explicit conflict and package selection banners.
+Follow-up: Implement no-arg `tul run` only with explicit conflict and package selection banners.
 
 
 ## Stage 6 — no-arg mutating commands need visible target inference
 
-Observation: Moving from `tul update tul -l` to `tul update` reduces bridge work, but the command must show which project was inferred and why.
+Observation: Moving from `tul update tul -l` to `tul run` reduces bridge work, but the command must show which project was inferred and why.
 
 Impact: Native mutating commands require a target inference banner and must refuse execution when active project and current-directory project conflict.
 
@@ -147,7 +147,7 @@ Follow-up: Add package manifest mismatch guidance so that incompatible downloade
 
 ## Stage 6.1d — Package target mismatch guidance
 
-Observation: Native `tul update` is only safe if package discovery explains why a downloaded zip matches or does not match the inferred project.
+Observation: Native `tul run` is only safe if package discovery explains why a downloaded zip matches or does not match the inferred project.
 
 Impact: Human bridge work shifts from guessing which zip was selected to reading explicit matching/incompatible/invalid package classifications.
 
@@ -157,13 +157,13 @@ Follow-up: Add release-gate and compact-state summaries so the normal loop becom
 
 ## Stage 6.2 — update should produce its own verify artifact
 
-Observation: After `tul update` succeeds, the user still had to run `tul verify fresh` and upload a separate artifact. This preserves bridge work and makes the final commit/push result and verification result feel like two separate rituals.
+Observation: After `tul run` succeeds, the user still had to run `tul verify fresh` and upload a separate artifact. This preserves bridge work and makes the final commit/push result and verification result feel like two separate rituals.
 
 Impact: The normal update loop should produce the LLM-review artifact itself. The terminal output should show commit, push verification, rollback, then a concise fresh verification gate with the markdown artifact path.
 
 Reflected in: `tul_update_verify_gate_v1`, `lib/tulcore/pipeline.py`, `lib/tulcore/verify.py`, `docs/workflows/update-pipeline.md`.
 
-Follow-up: Keep full verify details in files, keep terminal output compact, and let users upload `tul-vf-latest.md` after a single `tul update`.
+Follow-up: Keep full verify details in files, keep terminal output compact, and let users upload `tul-vf-latest.md` after a single `tul run`.
 
 
 ### Stage 6.1e — Update-integrated verify bootstrap boundary
@@ -188,13 +188,13 @@ Follow-up: Implement canonical verify log layout in the first bounded parallel b
 
 ### Stage 6.2 smoke — update-integrated verify gate passed
 
-Observation: The normal `tul update` loop can now apply a package, publish the result, run post-update `verify fresh`, write `tul-vf-latest.md/json`, and produce a handoff in one command.
+Observation: The normal `tul run` loop can now apply a package, publish the result, run post-update `verify fresh`, write `tul-vf-latest.md/json`, and produce a handoff in one command.
 
 Impact: Stage 6 can move from single smoke packages into bounded parallel bundles, as long as each bundle stays small and independently verifiable.
 
 Reflected in: `docs/status/current.md`, `docs/roadmap.md`, `docs/checklists/loop-runtime.md`.
 
-Follow-up: Keep using `tul package latest` and `tul update` as the default loop; reserve split commands for diagnostics and recovery.
+Follow-up: Keep using `tul package` and `tul run` as the default loop; reserve split commands for diagnostics and recovery.
 
 ### Stage 6.3 — verify layout should separate latest from historical runs
 
@@ -210,7 +210,7 @@ Follow-up: After applying a package that modifies `verify.py`, run `tul verify f
 
 Observation: Full state dumps are useful for diagnosis but too long for routine post-update decisions, especially when no-op or imported states accumulate.
 
-Impact: Default `tul state` should show latest state, latest rollbackable commit, artifacts, and cleanup guidance. Full history remains available behind `--all` and JSON remains available behind `--json`.
+Impact: Default `tul show` should show latest state, latest rollbackable commit, artifacts, and cleanup guidance. Full history remains available behind `--all` and JSON remains available behind `--json`.
 
 Reflected in: `lib/tulcore/state.py`, `lib/tulcore/cli.py`, `docs/checklists/loop-runtime.md`.
 
@@ -228,9 +228,9 @@ Follow-up: Use synthetic broken packages when package-check behavior changes. Ke
 
 ### Stage 6.5 — State cleanup should be dry-run first
 
-Observation: Compact `tul state` made work-state accumulation visible, but the previous cleanup suggestion pointed directly at an archive move command. Because state directories are rollback and diagnosis evidence, cleanup needs an inspectable plan before any move.
+Observation: Compact `tul show` made work-state accumulation visible, but the previous cleanup suggestion pointed directly at an archive move command. Because state directories are rollback and diagnosis evidence, cleanup needs an inspectable plan before any move.
 
-Impact: Archive cleanup should start with `tul archive --noop --dry-run --keep N`, showing inventory counts, selected source directories, archive destinations, and protected reference states. Actual moves remain explicit and separate.
+Impact: Archive cleanup should start with `tul clean states --noop --dry-run --keep N`, showing inventory counts, selected source directories, archive destinations, and protected reference states. Actual moves remain explicit and separate.
 
 Reflected in: `lib/tulcore/state.py`, `lib/tulcore/cli.py`, `docs/workflows/state-cleanup.md`, and `docs/checklists/loop-runtime.md`.
 
@@ -238,9 +238,9 @@ Follow-up: After observing dry-run output over repeated bundles, decide whether 
 
 ### Stage 6.6 — Handoff discoverability is a runtime/document boundary problem
 
-Observation: Once update, verify, state, package diagnostics, and archive dry-run were stable, the remaining bridge friction was not another runtime mutation. The fresh LLM session needed a clearer path for deciding whether `tul-vf-latest.md`, `tul state`, or a repo zip was required.
+Observation: Once update, verify, state, package diagnostics, and archive dry-run were stable, the remaining bridge friction was not another runtime mutation. The fresh LLM session needed a clearer path for deciding whether `tul-vf-latest.md`, `tul show`, or a repo zip was required.
 
-Impact: Repo-resident docs should make the evidence economy explicit. A successful update review usually needs only the latest verify artifact. State-sensitive bundles need pasted `tul state` output. New package generation or code-level diagnosis needs the current repo zip.
+Impact: Repo-resident docs should make the evidence economy explicit. A successful update review usually needs only the latest verify artifact. State-sensitive bundles need pasted `tul show` output. New package generation or code-level diagnosis needs the current repo zip.
 
 Reflected in: `docs/llm/post-update-review.md`, `docs/llm/entrypoint.md`, `docs/handoff.md`, `docs/protocols/llm-handoff-protocol.md`, and `lib/tulcore/handoff.py`.
 
@@ -259,20 +259,20 @@ Follow-up: Use the Green/Yellow/Orange/Red classification before producing the n
 
 ### Stage 6.8 — Latest artifact should be the upload bundle
 
-Observation: Keeping `tul-main.zip` at the tul import root while `tul-vf-latest.md` lived under `logs/verify/` forced repeated directory switching during uploads. Requiring separate pasted `tul state` and `tul handoff` output added more bridge work.
+Observation: Keeping `tul-main.zip` at the tul update dry root while `tul-vf-latest.md` lived under `logs/verify/` forced repeated directory switching during uploads. Requiring separate pasted `tul show` and `tul show handoff` output added more bridge work.
 
 Impact: Stable latest artifacts should live beside `tul-main.zip`, while timestamped run artifacts remain under `logs/verify/YYMMDD/`. The latest markdown should include compact state and handoff snapshots so normal post-update review uses one uploaded markdown file.
 
 Reflected in: `lib/tulcore/verify.py`, `lib/tulcore/pipeline.py`, `docs/workflows/verify.md`, `docs/llm/post-update-review.md`, and `docs/checklists/loop-runtime.md`.
 
-Follow-up: After applying this bundle, verify that `/sdcard/termux/import/tul/tul-vf-latest.md` exists, contains `## Runtime snapshots`, and that `tul state` points to the import-root latest file.
+Follow-up: After applying this bundle, verify that `/sdcard/termux/import/tul/tul-vf-latest.md` exists, contains `## Runtime snapshots`, and that `tul show` points to the import-root latest file.
 
 
 ## 2026-05-12 — State verify path alignment
 
-Observation: Bundle G correctly moved the stable latest verify artifacts to the tul import root and embedded runtime snapshots, but the handoff-ready state created during the bootstrap update could still contain the former `logs/verify/tul-vf-latest.md` pointer.
+Observation: Bundle G correctly moved the stable latest verify artifacts to the tul update dry root and embedded runtime snapshots, but the handoff-ready state created during the bootstrap update could still contain the former `logs/verify/tul-vf-latest.md` pointer.
 
-Decision: Treat compact `tul state` as a decision view. When the stored path is recognizably the stale latest pointer under `logs/verify/`, display the canonical import-root latest path instead. Do not rewrite or hide timestamped run artifacts.
+Decision: Treat compact `tul show` as a decision view. When the stored path is recognizably the stale latest pointer under `logs/verify/`, display the canonical import-root latest path instead. Do not rewrite or hide timestamped run artifacts.
 
 Follow-up: Consider a separate export bundle that writes `/sdcard/termux/import/tul/tul-main.zip` after successful updates when the next step requires a repo zip.
 
@@ -316,7 +316,7 @@ Observation: Hidden source zip export blurred review transport, source context, 
 
 Impact: Review bundle export is separated from verify and from the default update loop. The command writes `tul-review-latest.zip` as a transport artifact, not a backup.
 
-Follow-up: Verify the explicit command, then decide whether successful `tul update` should call review export automatically.
+Follow-up: Verify the explicit command, then decide whether successful `tul run` should call review export automatically.
 
 ## 2026-05-12 — Review export evidence must refresh runtime facts
 
@@ -390,13 +390,21 @@ The safe implementation boundary is explicit source export only. The package can
 
 ## Stage 7 export integrity lesson
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
+`tul show exports` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul run` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
 
 
 ## 2026-05-13 — Post-update exports reduce bridge work only if warning-only
 
-Observation: After `tul export status` landed, a normal update could legitimately leave source/review artifacts stale. That made the warning surface useful but still required another manual bridge step.
+Observation: After `tul show exports` landed, a normal update could legitimately leave source/review artifacts stale. That made the warning surface useful but still required another manual bridge step.
 
 Lesson: Automatic artifact refresh is safe only after the core update has already committed, pushed, and passed fresh verification. Export failures must be recorded but not allowed to rewrite release-gate or rollback semantics.
 
 Action: Add a post-update export phase that refreshes source and review bundles, records outcomes in state/report/handoff, refreshes latest verify runtime snapshots, and keeps failures warning-only.
+
+## 2026-05-13 — Command names must describe user-visible action
+
+Observation: `tul export status` violated the command grammar because `export` implies file creation while `status` only prints diagnostics.
+
+Lesson: CLI namespaces should be action-oriented and user-visible. Internal concepts such as export integrity, source context, handoff, state, and recovery-debug should not appear as scattered top-level commands.
+
+Applied rule: Use `show` for read-only output, `export` for file creation, `update` for repo publishing, and `run` for the full Terminal Update Loop.

@@ -45,7 +45,7 @@ def save_context(data: dict[str, Any]) -> Path:
     return path
 
 
-def set_active_project(project_id: str, *, repo_path: Path | None = None, set_by: str = "tul use") -> Path:
+def set_active_project(project_id: str, *, repo_path: Path | None = None, set_by: str = "tul setup use") -> Path:
     data = load_context()
     data["active_project"] = project_id
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -144,9 +144,9 @@ def infer_project(target: str | None = None, *, command: str = "command", read_o
         return InferredProject(resolve_project(project_ids[0]), "only configured project", warnings)
 
     options = [
-        f"tul use <project>",
+        f"tul setup use <project>",
         f"tul {command} <project>",
-        "tul projects",
+        "tul show projects",
     ]
     if project_ids:
         options.append("configured projects: " + ", ".join(project_ids))
@@ -164,7 +164,7 @@ def infer_mutating_project(target: str | None = None, *, command: str = "command
     commands, a current-directory project is allowed only when it does not
     conflict with the stored active project. This prevents `tul update` from
     silently applying to a different repo than the one the user selected with
-    `tul use`.
+    `tul setup use`.
     """
     if target:
         return InferredProject(resolve_project(target), "explicit target", [])
@@ -185,7 +185,7 @@ def infer_mutating_project(target: str | None = None, *, command: str = "command
                 "Choose one of:\n"
                 f"- tul {command} {active}\n"
                 f"- tul {command} {project_id}\n"
-                f"- tul use {project_id}\n"
+                f"- tul setup use {project_id}\n"
                 f"- cd {resolve_project(active).repo_path if active else '<project-repo>'} && tul {command}"
             )
         return InferredProject(resolve_project(project_id), "current directory project", [])
@@ -201,9 +201,9 @@ def infer_mutating_project(target: str | None = None, *, command: str = "command
         return InferredProject(resolve_project(project_ids[0]), "only configured project", [])
 
     options = [
-        "tul use <project>",
+        "tul setup use <project>",
         f"tul {command} <project>",
-        "tul projects",
+        "tul show projects",
     ]
     if project_ids:
         options.append("configured projects: " + ", ".join(project_ids))
@@ -234,7 +234,7 @@ def format_current_context() -> str:
     active = data.get("active_project") or None
     default = config.get("default_project") or None
     cwd_match = project_for_cwd()
-    lines = ["# tul current"]
+    lines = ["# tul show config"]
     lines.append(f"Config: {path}")
     lines.append(f"Context: {context_path()}")
     lines.append(f"Active project: {active or '(none)'}")
@@ -259,10 +259,10 @@ def format_current_context() -> str:
             lines.append(f"- error: {exc}")
     lines.append("Next:")
     if active or cwd_match or default:
-        lines.append("- tul status")
-        lines.append("- tul update")
+        lines.append("- tul show")
+        lines.append("- tul run")
         lines.append("- tul verify fresh")
     else:
-        lines.append("- tul use <project>")
-        lines.append("- tul init <project>")
+        lines.append("- tul setup use <project>")
+        lines.append("- tul setup init <project>")
     return "\n".join(lines)

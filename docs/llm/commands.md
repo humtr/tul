@@ -1,69 +1,83 @@
-# LLM-side tul commands
+# tul commands
 
-These are user-facing command phrases for LLM sessions. They are not necessarily terminal subcommands.
-
-## `/tul next <project>`
-
-Read the repo and propose the next implementation package scope.
-
-Expected output:
-
-- current remote/status summary
-- invariant check
-- structural debt
-- proposed package name
-- files to change
-- acceptance criteria
-
-## `/tul review <project>`
-
-Review the just-pushed commit and handoff.
-
-Expected output:
-
-- remote HEAD verification if available
-- changed files review
-- invariant regression check
-- defects and risks
-- next recommended package boundary
-
-## `/tul package <project>`
-
-Produce the next cross-platform tul package.
-
-Required package shape:
+Canonical user-facing terminal commands:
 
 ```text
-<package>.zip
-  tul-package.yml
-  files/
-  README.md
-  apply.sh       # fallback during transition
-  apply.ps1      # fallback during transition
+tul show
+tul package
+tul update
+tul verify
+tul export
+tul run
+tul clean
+tul recover
+tul setup
 ```
 
-When giving the user the execution command, prefer the explicit latest form if the package will be saved to a configured inbox root:
+There is no canonical legacy alias layer. Use these namespaces directly.
+
+## Normal loop
 
 ```bash
-tul update <project> --latest
-# or
-tul update <project> -l
+cd ~/prj/tul
+
+tul package
+tul run
 ```
 
-Use `--package PATH` only for an exact file.
+`run` performs package selection, update, export, fresh verification, and final status output.
 
-## `/tul roadmap <project>`
+## Stepwise loop
 
-Update or review durable planning surfaces:
+```bash
+tul package
+tul update
+tul export
+tul verify fresh
+tul show
+```
 
-- `docs/status/current.md`
-- `docs/roadmap.md`
-- `docs/checklists/loop-runtime.md`
+## Status and review
 
-## `/tul verify <project>`
+```bash
+tul show
+tul show exports
+tul show handoff
+tul show report
+tul show history 5
+```
 
-Verify that repo state, handoff, protocol, roadmap, and checklist agree.
+## Verification
 
-## `/tul init-review <project>`
+```bash
+tul verify        # quick/local, stdout-first
+tul verify fresh  # fresh clone + latest verify artifacts
+```
 
-Perform an initial review after clone/init, before proposing implementation.
+## Artifacts
+
+```bash
+tul export         # source + review
+tul export source
+tul export review
+```
+
+## Cleanup and recovery
+
+```bash
+tul clean
+tul clean states
+tul clean states run 3
+tul clean packages
+tul recover
+tul recover rollback
+```
+
+## Setup
+
+```bash
+tul setup
+tul setup init <target>
+tul setup install
+tul setup use <project>
+```

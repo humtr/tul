@@ -9,6 +9,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from . import __version__
 from .apply import build_apply_plan, write_apply_plan
@@ -24,10 +25,19 @@ from .authoring import (
 )
 from .checks import run_checks
 from .config import config_path, load_global_config, platform_paths, resolve_project
-from .context import active_project, context_path, format_current_context, format_inference_summary, format_inference_warnings, infer_mutating_project, infer_project, set_active_project, set_default_project
+from .context import (
+    active_project,
+    context_path,
+    format_current_context,
+    format_inference_summary,
+    format_inference_warnings,
+    infer_mutating_project,
+    infer_project,
+    set_active_project,
+    set_default_project,
+)
 from .errors import TulError
 from .gitops import (
-    changed_files,
     current_branch,
     fetch,
     head,
@@ -39,10 +49,18 @@ from .gitops import (
     status_porcelain,
 )
 from .handoff import generate_handoff
-from .integrity import export_integrity_data, format_export_integrity
 from .init import init_project
+from .integrity import export_integrity_data, format_export_integrity
 from .manifest import validate_manifest
-from .package import candidate_record, discover_candidates, discover_package_inventory, import_package, invalid_candidate_record, manifest_data_from_archive, select_package, sha256_file
+from .package import (
+    candidate_record,
+    discover_package_inventory,
+    import_package,
+    invalid_candidate_record,
+    manifest_data_from_archive,
+    select_package,
+    sha256_file,
+)
 from .package_hygiene import format_package_hygiene, run_package_hygiene
 from .pipeline import run_update
 from .report import build_report
@@ -52,7 +70,6 @@ from .state import (
     archive_inventory,
     archive_protected_paths,
     archive_selector_label,
-    archive_latest_state,
     archive_states,
     iter_states,
     latest_state,
@@ -61,10 +78,11 @@ from .state import (
     summarize_compact_state,
     summarize_state,
     set_phase,
-    write_state,
 )
 from .sweep import sweep_repo
 from .verify import run_verify, write_verify_artifacts
+
+CANONICAL_COMMANDS = "show, package, update, verify, export, run, clean, recover, setup"
 
 
 def repo_root_from_module() -> Path:
@@ -87,209 +105,79 @@ def read_project(args, *, command: str):
     return inferred.ctx
 
 
-def parse_verify_target_and_mode(args) -> tuple[str | None, bool]:
-    target = getattr(args, "target", None)
-    mode = getattr(args, "mode", None)
-    fresh = bool(getattr(args, "fresh_clone", False))
-    if target == "fresh" and mode is None:
-        return None, True
-    if mode == "fresh":
-        return target, True
-    if mode:
-        raise TulError(f"unknown verify mode: {mode}. Use: tul verify fresh")
-    return target, fresh
-
-
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="tul", description="Terminal Update Loop")
+    parser = argparse.ArgumentParser(
+        prog="tul",
+        description="Terminal Update Loop",
+        epilog=f"Canonical commands: {CANONICAL_COMMANDS}",
+    )
     parser.add_argument("--version", action="version", version=f"tul {__version__}")
-    sub = parser.add_subparsers(dest="command", required=True)
+    sub = parser.add_subparsers(dest="command")
 
-    p = sub.add_parser("init", help="onboard a repo into the tul loop")
-    p.add_argument("target", help="project alias, GitHub slug, or local repo path")
-    p.add_argument("--branch", help="expected branch for .tul.yml and update guard")
-    p.add_argument("--project", help="project alias to register in global config")
-    p.add_argument("--no-handoff", action="store_true", help="do not print the initial-review handoff")
-    p.add_argument("--copy-handoff", action="store_true", help="copy handoff to clipboard command when configured")
+    p = sub.add_parser("show", help="show project state, exports, handoff, report, config, or history")
+    p.add_argument("items", nargs="*", help="optional: topic, project/path, or history count")
+    p.add_argument("--json", action="store_true", help="print machine-readable data when supported")
+    p.add_argument("--full", action="store_true", help="include full handoff details when topic=handoff")
 
-    p = sub.add_parser("status", help="show repo status")
-    p.add_argument("target", nargs="?")
+    p = sub.add_parser("package", help="show latest package or inspect/check/create package archives")
+    p.add_argument("items", nargs="*", help="optional: list, check, inspect, new, add, zip, show, package path, project/path")
+    p.add_argument("--json", action="store_true", help="print machine-readable output when supported")
+    p.add_argument("--target", help="project/path alias for package authoring commands")
+    p.add_argument("--project", help="target project id when --target is not used")
+    p.add_argument("--repo", help="target repo slug when --target is not used")
+    p.add_argument("--branch", help="target branch when --target is not used")
+    p.add_argument("--message", help="commit message for package new/add")
+    p.add_argument("--out", help="output path for package new/zip")
+    p.add_argument("--force", action="store_true", help="replace or reuse outputs when supported")
 
-    p = sub.add_parser("sync", help="fetch and pull --ff-only when safe")
-    p.add_argument("target")
-
-    p = sub.add_parser("check", help="run repo checks")
-    p.add_argument("target", nargs="?")
-
-    p = sub.add_parser("verify", help="verify repo status, checks, docs, and optional fresh clone")
-    p.add_argument("target", nargs="?", help="optional project/path, or 'fresh' for fresh-clone verification")
-    p.add_argument("mode", nargs="?", help="optional shorthand mode; use 'fresh' for fresh-clone verification")
-    p.add_argument("--fresh-clone", action="store_true", help="clone the remote repo into ~/tmp and verify the clone too")
-    p.add_argument("--clone-root", help="directory for fresh clone verification; defaults to ~/tmp/tul-verify-fresh")
-    p.add_argument("--log-dir", help="directory for verify artifacts; defaults to platform log root")
-    p.add_argument("--no-log", action="store_true", help="do not write verify markdown/json artifacts")
-    p.add_argument("--json", action="store_true", help="print machine-readable verification result")
-
-    p = sub.add_parser("doctor", help="show tul environment diagnostics")
-    p.add_argument("target", nargs="?")
-
-    p = sub.add_parser("install", help="install or resync the user PATH launcher")
-    p.add_argument("target", nargs="?", help="project/path to install; defaults to this tul repo")
-    p.add_argument("--copy", action="store_true", help="copy launcher instead of creating a symlink on POSIX")
-    p.add_argument("--force", action="store_true", help="replace an existing launcher after backing it up")
-
-    p = sub.add_parser("report", help="print a lightweight report")
-    p.add_argument("target", nargs="?")
-
-    p = sub.add_parser("handoff", help="print an LLM handoff")
-    p.add_argument("target", nargs="?")
-    p.add_argument("--mode", default="initial-review")
-    p.add_argument("--full", action="store_true", help="include full loop contract and invariants")
-    p.add_argument("--instructions", action="store_true", help="print project instruction template instead of runtime handoff")
-
-    p = sub.add_parser("instructions", help="print the repo-resident LLM project instructions")
-    p.add_argument("target", nargs="?", help="optional project/path whose repo contains templates/project-instructions.md")
-
-    p = sub.add_parser("use", help="set the active project for later native/default commands")
-    p.add_argument("target", help="configured project alias or repo path to use")
-    p.add_argument("--default", action="store_true", help="also set config.default_project to this project")
-
-    sub.add_parser("current", help="show active/default/current-directory project context")
-
-    p = sub.add_parser("sweep", help="move repo-local tul backups out of the repo")
-    p.add_argument("target")
-
-    p = sub.add_parser("update", help="run the full package update loop")
-    p.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
-    p.add_argument("--package", dest="package_path")
-    p.add_argument("-l", "--latest", action="store_true", help="use the newest matching package from configured inbox roots")
+    p = sub.add_parser("update", help="apply, commit, push, and remote-check a package")
+    p.add_argument("items", nargs="*", help="optional: dry, package.zip, project/path")
     p.add_argument("--no-commit", action="store_true")
     p.add_argument("--no-push", action="store_true")
     p.add_argument("--allow-dirty", action="store_true")
-    p.add_argument("--dry-run", action="store_true", help="select/import/validate/plan the package without applying repo changes")
-    p.add_argument("--no-verify", action="store_true", help="skip automatic post-update fresh verification")
-    p.add_argument("--no-export", action="store_true", help="skip automatic post-update source/review export phase")
-    p.add_argument("--no-source-export", action="store_true", help="skip automatic post-update source bundle export")
-    p.add_argument("--no-review-export", action="store_true", help="skip automatic post-update review bundle export")
 
-    p = sub.add_parser("publish", help="commit and push already-staged changes")
-    p.add_argument("target")
-    p.add_argument("-m", "--message", required=False)
+    p = sub.add_parser("verify", help="verify repo; use 'fresh' to write uploadable verify artifacts")
+    p.add_argument("items", nargs="*", help="optional: fresh, local, json, project/path")
+    p.add_argument("--clone-root", help="directory for fresh clone verification; defaults to ~/tmp/tul-verify-fresh")
+    p.add_argument("--log-dir", help="directory for verify artifacts; defaults to platform log root")
+    p.add_argument("--json", action="store_true", help="print machine-readable verification result")
 
+    p = sub.add_parser("export", help="create source/review transport artifacts")
+    p.add_argument("kind", nargs="?", choices=["source", "review"], help="artifact kind; omitted exports both source and review")
+    p.add_argument("target", nargs="?", help="optional project/path")
+    p.add_argument("--out", help="output zip path; valid only with source or review")
+    p.add_argument("--no-state-update", action="store_true", help="do not record metadata in latest state")
+    p.add_argument("--json", action="store_true", help="print machine-readable source export data")
 
-    p = sub.add_parser("package", help="inspect package discovery candidates")
-    package_sub = p.add_subparsers(dest="package_command", required=True)
+    p = sub.add_parser("run", help="run one full Terminal Update Loop cycle")
+    p.add_argument("items", nargs="*", help="optional: dry, package.zip, project/path")
+    p.add_argument("--no-commit", action="store_true")
+    p.add_argument("--no-push", action="store_true")
+    p.add_argument("--allow-dirty", action="store_true")
+    p.add_argument("--no-export", action="store_true", help="skip source/review export after update")
 
-    p_list = package_sub.add_parser("list", help="list matching packages from configured inbox roots")
-    p_list.add_argument("target", nargs="?")
-    p_list.add_argument("--limit", type=int, default=20, help="maximum candidates to show")
-    p_list.add_argument("--json", action="store_true", help="print machine-readable candidate data")
+    p = sub.add_parser("clean", help="show or run guarded cleanup plans")
+    p.add_argument("scope", nargs="?", choices=["states", "packages", "backups", "run"])
+    p.add_argument("action", nargs="?", choices=["run"])
+    p.add_argument("target", nargs="?", help="optional project/path")
+    p.add_argument("keep", nargs="?", type=int, default=3, help="newest noop states to keep when cleaning states")
+    p.add_argument("--json", action="store_true", help="print machine-readable package cleanup data")
 
-    p_latest = package_sub.add_parser("latest", help="show the newest matching package and selection reason")
-    p_latest.add_argument("target", nargs="?")
-    p_latest.add_argument("--json", action="store_true", help="print machine-readable selected candidate data")
+    p = sub.add_parser("recover", help="show rollback/resume recovery plans")
+    p.add_argument("topic", nargs="?", choices=["rollback", "resume", "apply", "publish"])
+    p.add_argument("target", nargs="?", help="optional project/path")
+    p.add_argument("commit", nargs="?", help="commit to revert when topic=rollback")
 
-    p_hygiene = package_sub.add_parser("hygiene", help="dry-run, ingest valid packages, or quarantine stale project-inbox archives")
-    p_hygiene.add_argument("target", nargs="?")
-    p_hygiene.add_argument("--json", action="store_true", help="print machine-readable hygiene data")
-    p_hygiene.add_argument("--limit", type=int, default=50, help="maximum planned actions to print")
-    p_hygiene.add_argument("--keep-duplicates", type=int, default=1, help="keep newest N matching archives per duplicate package name")
-    p_hygiene.add_argument("--ingest", action="store_true", help="move valid matching packages from external roots into the project inbox")
-    p_hygiene.add_argument("--quarantine", action="store_true", help="move project-inbox cleanup candidates to package-quarantine")
-    p_hygiene.add_argument("--no-invalid", action="store_true", help="do not select invalid archives")
-    p_hygiene.add_argument("--no-duplicates", action="store_true", help="do not select older duplicate matching packages")
+    p = sub.add_parser("setup", help="show setup status or run setup tasks")
+    p.add_argument("topic", nargs="?", choices=["init", "install", "use"])
+    p.add_argument("target", nargs="?", help="project alias, GitHub slug, or local repo path")
+    p.add_argument("--branch", help="expected branch for setup init")
+    p.add_argument("--project", help="project alias for setup init")
+    p.add_argument("--default", action="store_true", help="also set config.default_project when topic=use")
+    p.add_argument("--copy", action="store_true", help="copy launcher instead of symlink when topic=install")
+    p.add_argument("--force", action="store_true", help="replace an existing launcher after backup when topic=install")
+    p.add_argument("--no-handoff", action="store_true", help="do not print initial-review handoff when topic=init")
 
-    p_inspect = package_sub.add_parser("inspect", help="inspect a package archive manifest without applying it")
-    p_inspect.add_argument("package_path")
-    p_inspect.add_argument("--json", action="store_true", help="print machine-readable package data")
-
-    p_check = package_sub.add_parser("check", help="validate package root layout, manifest, and optional target apply plan")
-    p_check.add_argument("package_path")
-    p_check.add_argument("--target", help="optional project/path alias to validate target and build apply plan")
-    p_check.add_argument("--json", action="store_true", help="print machine-readable check result")
-
-    p_scaffold = package_sub.add_parser("scaffold", help="create a package source directory skeleton")
-    p_scaffold.add_argument("name")
-    p_scaffold.add_argument("--target", help="project/path alias to infer project/repo/branch")
-    p_scaffold.add_argument("--project", help="target project id when --target is not used")
-    p_scaffold.add_argument("--repo", help="target repo slug when --target is not used")
-    p_scaffold.add_argument("--branch", help="target branch when --target is not used")
-    p_scaffold.add_argument("--message", required=True, help="commit message for the package manifest")
-    p_scaffold.add_argument("--out", help="output parent directory or package directory; default: current directory")
-    p_scaffold.add_argument("--force", action="store_true", help="allow writing into a non-empty package directory")
-
-    p_zip = package_sub.add_parser("zip", help="zip a package source directory with tul-package.yml at archive root")
-    p_zip.add_argument("package_dir")
-    p_zip.add_argument("--out", help="output zip path; default: <package_dir>.zip")
-    p_zip.add_argument("--force", action="store_true", help="replace an existing output zip")
-
-    p_add = package_sub.add_parser("add", help="copy repo files into a package and update its manifest")
-    p_add.add_argument("package_dir")
-    p_add.add_argument("repo_files", nargs="+", help="repo-relative files to copy into package files/")
-    p_add.add_argument("--target", help="project/path alias used as the repo source; defaults to current git repo")
-    p_add.add_argument("--message", help="also update commit.message")
-
-    p_summary = package_sub.add_parser("summary", help="summarize a package source directory")
-    p_summary.add_argument("package_dir")
-    p_summary.add_argument("--json", action="store_true", help="print machine-readable summary")
-
-    p = sub.add_parser("rollback", help="print a safe rollback command")
-    p.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
-    p.add_argument("commit", nargs="?", help="commit to revert; defaults to latest state commit when available")
-
-    p = sub.add_parser("state", help="show local tul work state")
-    p.add_argument("target", nargs="?")
-    p.add_argument("--all", action="store_true", help="show all matching state files, newest first")
-    p.add_argument("--limit", type=int, help="limit displayed states when using --all")
-    p.add_argument("--json", action="store_true", help="print state data as JSON")
-
-    p = sub.add_parser("config", help="config helpers")
-    config_sub = p.add_subparsers(dest="config_command", required=True)
-    config_sub.add_parser("path")
-
-    sub.add_parser("projects", help="list configured projects")
-
-    # Split commands are recovery/debug tools; default workflow remains update.
-    p = sub.add_parser("import", help="import, validate, and plan a package without applying it")
-    p.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
-    p.add_argument("--package", dest="package_path")
-    p.add_argument("-l", "--latest", action="store_true", help="use newest matching package from configured inbox roots")
-
-    p = sub.add_parser("apply", help="recovery/debug: show how to apply; default workflow remains update")
-    p.add_argument("target")
-    p.add_argument("--state", help="state.json or work dir to inspect before applying manually")
-
-    p = sub.add_parser("resume", help="recovery/debug: inspect latest state and suggest a safe next command")
-    p.add_argument("target")
-
-    p = sub.add_parser("export", help="create explicit review or source transport artifacts")
-    export_sub = p.add_subparsers(dest="export_command", required=True)
-
-    p_review = export_sub.add_parser("review", help="create the latest LLM review bundle")
-    p_review.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
-    p_review.add_argument("--out", help="output zip path; default: <import-root>/<project>-review-latest.zip")
-    p_review.add_argument("--no-state-update", action="store_true", help="do not record review bundle metadata in the latest state")
-
-    p_source = export_sub.add_parser("source", help="create the latest explicit full source-context bundle")
-    p_source.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
-    p_source.add_argument("--out", help="output zip path; default: <import-root>/<project>-source-latest.zip")
-    p_source.add_argument("--no-state-update", action="store_true", help="do not record source bundle metadata in the latest state")
-    p_source.add_argument("--json", action="store_true", help="print machine-readable source export data")
-
-    p_export_status = export_sub.add_parser("status", help="inspect source/review export freshness and docs drift warnings")
-    p_export_status.add_argument("target", nargs="?", help="optional project/path; omitted target uses native context")
-    p_export_status.add_argument("--json", action="store_true", help="print machine-readable export integrity data")
-
-    p = sub.add_parser("archive", help="archive local tul work state")
-    p.add_argument("target", nargs="?", help="optional project/path; omitted target uses guarded native context")
-    p.add_argument("--all", action="store_true", help="archive all matching states, not just the latest")
-    p.add_argument("--noop", action="store_true", help="archive no-op states")
-    p.add_argument("--imported", action="store_true", help="archive import/validated states without commits")
-    p.add_argument("--failed", action="store_true", help="archive failed states")
-    p.add_argument("--keep", type=int, default=0, help="keep the newest N selected states and archive the rest")
-    p.add_argument("--dry-run", action="store_true", help="show what would be archived without moving files")
-
-    # Friendly alias for users who type `tul help`.
     sub.add_parser("help", help="show this help message")
     return parser
 
@@ -297,6 +185,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command is None:
+        args.command = "show"
+        args.topic = None
+        args.target = None
+        args.count = None
+        args.json = False
+        args.full = False
     try:
         return dispatch(args, parser)
     except TulError as exc:
@@ -309,616 +204,694 @@ def main(argv: list[str] | None = None) -> int:
 
 def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser | None = None) -> int:
     command = args.command
-
     if command == "help":
         if parser is not None:
             parser.print_help()
         return 0
+    if command == "show":
+        return command_show(args)
+    if command == "package":
+        return command_package(args)
+    if command == "update":
+        return command_update(args)
+    if command == "verify":
+        return command_verify(args)
+    if command == "export":
+        return command_export(args)
+    if command == "run":
+        return command_run(args)
+    if command == "clean":
+        return command_clean(args)
+    if command == "recover":
+        return command_recover(args)
+    if command == "setup":
+        return command_setup(args)
+    raise TulError(f"unknown command: {command}. Canonical commands: {CANONICAL_COMMANDS}")
 
-    if command == "init":
+
+# ----- canonical command handlers -------------------------------------------------
+
+
+def command_show(args: argparse.Namespace) -> int:
+    topic, target, count = parse_show_items(args.items)
+    args.target = target
+    if topic == "state":
+        ctx = read_project(args, command="show")
+        print_show_state(ctx, as_json=getattr(args, "json", False))
+        return 0
+    if topic == "exports":
+        ctx = read_project(args, command="show exports")
+        if getattr(args, "json", False):
+            print(json.dumps(export_integrity_data(ctx), indent=2, ensure_ascii=False))
+        else:
+            print(format_export_integrity(ctx))
+        return 0
+    if topic == "handoff":
+        ctx = read_project(args, command="show handoff")
+        print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="initial-review", expected_repo=ctx.expected_repo, full=args.full))
+        return 0
+    if topic == "report":
+        ctx = read_project(args, command="show report")
+        print(build_report(repo=ctx.repo_path, project=ctx.project_id))
+        return 0
+    if topic == "projects":
+        print_projects()
+        return 0
+    if topic == "config":
+        print(format_current_context())
+        print(f"config path: {config_path()}")
+        return 0
+    if topic == "history":
+        ctx = read_project(args, command="show history")
+        print_state_history(ctx, limit=count or 5, as_json=args.json)
+        return 0
+    if topic == "instructions":
+        repo = resolve_project(target).repo_path if target else None
+        print(read_repo_text("templates/project-instructions.md", repo=repo))
+        return 0
+    raise TulError(f"unknown show topic: {topic}")
+
+
+def command_package(args: argparse.Namespace) -> int:
+    sub, rest = parse_package_items(args.items)
+    if sub is None:
+        target = rest[0] if rest else None
+        args.target = target
+        ctx = read_project(args, command="package")
+        print_package_candidates(ctx, limit=1, as_json=args.json, latest_only=True)
+        return 0
+    if sub == "list":
+        target = rest[0] if rest else None
+        limit = int(rest[1]) if len(rest) > 1 and str(rest[1]).isdigit() else 20
+        args.target = target
+        ctx = read_project(args, command="package list")
+        print_package_candidates(ctx, limit=limit, as_json=args.json, latest_only=False)
+        return 0
+    if sub == "inspect":
+        if not rest:
+            raise TulError("package inspect requires <package.zip>")
+        print_package_inspect(Path(rest[0]), as_json=args.json)
+        return 0
+    if sub == "check":
+        if not rest:
+            raise TulError("package check requires <package.zip>")
+        target = args.target or (rest[1] if len(rest) > 1 else None)
+        ctx = resolve_project(target) if target else None
+        result = check_package_archive(Path(rest[0]), ctx=ctx)
+        print(json.dumps(result.as_dict(), indent=2, ensure_ascii=False) if args.json else format_package_check(result))
+        return 0 if result.ok else 2
+    if sub == "new":
+        if not rest:
+            raise TulError("package new requires <name>")
+        if not args.message:
+            raise TulError("package new requires --message")
+        ctx = resolve_project(args.target) if args.target else None
+        path = scaffold_package_dir(
+            rest[0],
+            out=Path(args.out).expanduser() if args.out else Path.cwd(),
+            project=args.project or (ctx.project_id if ctx else None),
+            repo=args.repo or (ctx.expected_repo if ctx else None),
+            branch=args.branch or (ctx.expected_branch if ctx else None),
+            message=args.message,
+            force=args.force,
+        )
+        print(f"Created package skeleton: {path}")
+        return 0
+    if sub == "add":
+        if len(rest) < 2:
+            raise TulError("package add requires <package-dir> <repo-file>...")
+        ctx = resolve_project(args.target) if args.target else None
+        result = add_repo_files_to_package(Path(rest[0]), rest[1:], repo_path=ctx.repo_path if ctx else None, message=args.message)
+        print(format_package_add(result))
+        return 0
+    if sub == "zip":
+        if not rest:
+            raise TulError("package zip requires <package-dir>")
+        archive = zip_package_dir(Path(rest[0]), out=Path(args.out).expanduser() if args.out else None, force=args.force)
+        print(f"Created package zip: {archive}")
+        return 0
+    if sub == "show":
+        if not rest:
+            raise TulError("package show requires <package-dir>")
+        summary = summarize_package_dir(Path(rest[0]))
+        print(json.dumps(summary, indent=2, ensure_ascii=False) if args.json else format_package_summary(summary))
+        return 0
+    raise TulError(f"unknown package command: {sub}")
+
+
+def command_update(args: argparse.Namespace) -> int:
+    target, package_path, dry = parse_target_package_dry(args.items)
+    inferred = infer_mutating_project(target, command="update")
+    ctx = inferred.ctx
+    if target is None:
+        print(format_inference_summary(inferred, command="update"))
+        print()
+    if dry:
+        print_update_dry_run(ctx, package_path=package_path)
+        return 0
+    result = run_update(
+        ctx,
+        package_path=package_path,
+        no_commit=args.no_commit,
+        no_push=args.no_push,
+        allow_dirty=args.allow_dirty,
+        verify_after=False,
+        post_export=False,
+    )
+    print(result.report)
+    print("\n--- NEXT ---\n")
+    print("Run `tul verify fresh`, `tul export`, and `tul show`, or use `tul run` for the full loop.")
+    print("\n--- LLM HANDOFF ---\n")
+    print(result.handoff)
+    return 0
+
+
+def command_verify(args: argparse.Namespace) -> int:
+    target, mode_json, fresh = parse_verify_items(args.items)
+    args.target = target
+    ctx = read_project(args, command="verify")
+    result = run_verify(
+        ctx,
+        fresh_clone=fresh,
+        clone_root=Path(args.clone_root).expanduser() if args.clone_root else None,
+    )
+    write_artifacts = fresh
+    artifacts = None
+    if write_artifacts:
+        artifacts = write_verify_artifacts(
+            ctx,
+            result,
+            fresh_clone=True,
+            log_dir=Path(args.log_dir).expanduser() if args.log_dir else None,
+        )
+    if args.json or mode_json:
+        payload = result.to_dict()
+        if artifacts:
+            payload["artifacts"] = artifacts
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    else:
+        print(result.to_text(artifacts))
+    return 0 if result.ok else 1
+
+
+def command_export(args: argparse.Namespace) -> int:
+    if args.kind is None:
+        if args.out:
+            raise TulError("--out is only valid with `tul export source` or `tul export review`")
+        ctx = read_project(args, command="export")
+        source = export_source_bundle(ctx, update_state=not args.no_state_update)
+        review = export_review_bundle(ctx, update_state=not args.no_state_update)
+        print("# tul export")
+        print()
+        print(format_source_export(source))
+        print()
+        print(format_review_export(review))
+        return 0
+    ctx = read_project(args, command=f"export {args.kind}")
+    out_path = Path(args.out).expanduser() if args.out else None
+    if args.kind == "source":
+        result = export_source_bundle(ctx, out_path=out_path, update_state=not args.no_state_update)
+        print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False) if args.json else format_source_export(result))
+        return 0
+    if args.kind == "review":
+        if args.json:
+            raise TulError("--json is only supported for `tul export source` in this version")
+        result = export_review_bundle(ctx, out_path=out_path, update_state=not args.no_state_update)
+        print(format_review_export(result))
+        return 0
+    raise TulError(f"unknown export kind: {args.kind}")
+
+
+def command_run(args: argparse.Namespace) -> int:
+    target, package_path, dry = parse_target_package_dry(args.items)
+    inferred = infer_mutating_project(target, command="run")
+    ctx = inferred.ctx
+    if target is None:
+        print(format_inference_summary(inferred, command="run"))
+        print()
+    if dry:
+        print("# tul run dry")
+        print("No repo files will be modified. Update plan only:")
+        print()
+        print_update_dry_run(ctx, package_path=package_path)
+        print()
+        if not args.no_export:
+            print("Would then run: tul export")
+        print("Would then run: tul verify fresh")
+        print("Would then run: tul show")
+        return 0
+    update = run_update(
+        ctx,
+        package_path=package_path,
+        no_commit=args.no_commit,
+        no_push=args.no_push,
+        allow_dirty=args.allow_dirty,
+        verify_after=False,
+        post_export=False,
+    )
+    print(update.report)
+    if not args.no_commit and not args.no_push:
+        if not args.no_export:
+            print("\n--- EXPORT ---\n")
+            source = export_source_bundle(ctx, update_state=True)
+            review = export_review_bundle(ctx, update_state=True)
+            print(format_source_export(source))
+            print()
+            print(format_review_export(review))
+        print("\n--- VERIFY FRESH ---\n")
+        verify = run_verify(ctx, fresh_clone=True)
+        artifacts = write_verify_artifacts(ctx, verify, fresh_clone=True)
+        print(verify.to_text(artifacts))
+        ok = verify.ok
+    else:
+        ok = True
+        print("\n--- SKIPPED VERIFY/EXPORT ---\n")
+        print("Commit or push was disabled; run `tul verify fresh` and `tul export` manually when appropriate.")
+    print("\n--- SHOW ---\n")
+    print_show_state(ctx, as_json=False)
+    print("\n--- LLM HANDOFF ---\n")
+    print(update.handoff)
+    return 0 if ok else 1
+
+
+def command_clean(args: argparse.Namespace) -> int:
+    scope = args.scope or "summary"
+    run = args.scope == "run" or args.action == "run"
+    target = args.target
+    if scope == "summary":
+        ctx = read_project(args, command="clean")
+        print("# tul clean")
+        print("Default mode: plan only. No files were moved.")
+        print()
+        print_clean_states(ctx, keep=args.keep, dry_run=True)
+        print()
+        print_clean_packages(ctx, as_json=args.json, run=False)
+        print()
+        print("To move guarded cleanup candidates, use: tul clean states run 3 or tul clean packages run")
+        return 0
+    ctx = infer_mutating_project(target, command="clean").ctx if run else read_project(args, command=f"clean {scope}")
+    if scope == "states" or scope == "run":
+        print_clean_states(ctx, keep=args.keep, dry_run=not run)
+        return 0
+    if scope == "packages":
+        print_clean_packages(ctx, as_json=args.json, run=run)
+        return 0
+    if scope == "backups":
+        if not run:
+            print("# tul clean backups")
+            print("Default mode: plan only. Backup sweep has no detailed dry-run yet.")
+            print("Run `tul clean backups run` to move repo-local tul backups out of the repo.")
+            return 0
+        moved = sweep_repo(ctx.repo_path, ctx.global_config)
+        print("# tul clean backups")
+        print("Moved:")
+        print("\n".join(moved) if moved else "nothing")
+        return 0
+    raise TulError(f"unknown clean scope: {scope}")
+
+
+def command_recover(args: argparse.Namespace) -> int:
+    topic = args.topic or "summary"
+    ctx = read_project(args, command="recover") if topic == "summary" else infer_mutating_project(args.target, command=f"recover {topic}").ctx
+    if topic == "summary":
+        print_recover_summary(ctx)
+        return 0
+    if topic == "rollback":
+        print_rollback_plan(ctx, commit_id=args.commit)
+        return 0
+    if topic == "resume":
+        print_resume_plan(ctx)
+        return 0
+    if topic == "apply":
+        print("# tul recover apply")
+        print("This command does not modify the repo. Use `tul update` for the normal update path.")
+        print(f"Repo: {ctx.repo_path}")
+        print("Suggested:")
+        print("  tul update dry")
+        print("  tul update")
+        return 0
+    if topic == "publish":
+        print("# tul recover publish")
+        print("This command does not commit or push. Use `tul update` for normal publishing.")
+        print("Staged files:")
+        print("\n".join(changed_staged(ctx.repo_path)) or "none")
+        return 0
+    raise TulError(f"unknown recover topic: {topic}")
+
+
+def command_setup(args: argparse.Namespace) -> int:
+    topic = args.topic or "summary"
+    if topic == "summary":
+        print_setup_summary(getattr(args, "target", None))
+        return 0
+    if topic == "init":
+        if not args.target:
+            raise TulError("setup init requires a project alias, GitHub slug, or local repo path")
         result = init_project(args.target, branch=args.branch, project=args.project)
         print(result.summary())
         if not args.no_handoff:
             ctx = resolve_project(result.project_id)
-            handoff = generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="initial-review", expected_repo=ctx.expected_repo)
             print("\n--- INITIAL REVIEW HANDOFF ---\n")
-            print(handoff)
-            if args.copy_handoff:
-                copied = copy_to_clipboard(handoff, ctx.global_config)
-                print(f"\nClipboard: {copied}")
+            print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="initial-review", expected_repo=ctx.expected_repo))
         return 0
-
-    if command == "install":
-        repo = resolve_project(args.target).repo_path if getattr(args, "target", None) else repo_root_from_module()
-        print(install_launcher(repo, copy=getattr(args, "copy", False), force=getattr(args, "force", False)))
+    if topic == "install":
+        repo = resolve_project(args.target).repo_path if args.target else repo_root_from_module()
+        print(install_launcher(repo, copy=args.copy, force=args.force))
         return 0
-
-    if command == "status":
-        ctx = read_project(args, command="status")
-        print_status(ctx)
-        return 0
-
-    if command == "sync":
+    if topic == "use":
+        if not args.target:
+            raise TulError("setup use requires a configured project alias or repo path")
         ctx = resolve_project(args.target)
-        branch = current_branch(ctx.repo_path)
-        if is_dirty(ctx.repo_path):
-            print("Working tree dirty; fetch only, no pull.")
-            fetch(ctx.repo_path, branch)
-        else:
-            fetch(ctx.repo_path, branch)
-            pull_ff_only(ctx.repo_path)
-        print_status(ctx)
-        return 0
-
-    if command == "check":
-        ctx = read_project(args, command="check")
-        outputs = run_checks(ctx.repo_path, ctx.repo_config)
-        for item in outputs:
-            print(item)
-            print()
-        print("Checks passed.")
-        return 0
-
-    if command == "verify":
-        target, fresh_clone = parse_verify_target_and_mode(args)
-        args.target = target
-        ctx = read_project(args, command="verify")
-        result = run_verify(
-            ctx,
-            fresh_clone=fresh_clone,
-            clone_root=Path(args.clone_root).expanduser() if args.clone_root else None,
-        )
-        artifacts = None
-        if not getattr(args, "no_log", False):
-            artifacts = write_verify_artifacts(
-                ctx,
-                result,
-                fresh_clone=fresh_clone,
-                log_dir=Path(args.log_dir).expanduser() if args.log_dir else None,
-            )
-        if args.json:
-            payload = result.to_dict()
-            if artifacts:
-                payload["artifacts"] = artifacts
-            print(json.dumps(payload, indent=2, ensure_ascii=False))
-        else:
-            print(result.to_text(artifacts))
-        return 0 if result.ok else 1
-
-    if command == "doctor":
-        print_doctor(getattr(args, "target", None))
-        return 0
-
-    if command == "report":
-        ctx = read_project(args, command="report")
-        print(build_report(repo=ctx.repo_path, project=ctx.project_id))
-        return 0
-
-    if command == "handoff":
-        ctx = read_project(args, command="handoff")
-        if args.instructions:
-            print(read_repo_text("templates/project-instructions.md", repo=ctx.repo_path))
-            return 0
-        print(
-            generate_handoff(
-                repo=ctx.repo_path,
-                project=ctx.project_id,
-                mode=args.mode,
-                expected_repo=ctx.expected_repo,
-                full=args.full,
-            )
-        )
-        return 0
-
-    if command == "instructions":
-        repo = None
-        if getattr(args, "target", None):
-            repo = resolve_project(args.target).repo_path
-        print(read_repo_text("templates/project-instructions.md", repo=repo))
-        return 0
-
-    if command == "use":
-        ctx = resolve_project(args.target)
-        context_file = set_active_project(ctx.project_id, repo_path=ctx.repo_path, set_by=f"tul use {args.target}")
+        context_file = set_active_project(ctx.project_id, repo_path=ctx.repo_path, set_by=f"tul setup use {args.target}")
         default_note = "unchanged"
-        if getattr(args, "default", False):
+        if args.default:
             set_default_project(ctx.project_id)
             default_note = ctx.project_id
-        print("# tul use")
+        print("# tul setup use")
         print(f"Active project: {ctx.project_id}")
         print(f"Repo: {ctx.repo_path}")
         print(f"Branch: {current_branch(ctx.repo_path)}")
         print(f"Context: {context_file}")
         print(f"Default project: {default_note}")
-        print("Next:")
-        print("- tul current")
-        print("- tul status")
-        print("- tul update")
-        print("- tul verify fresh")
+        print("Next: tul show, tul package, tul run")
         return 0
-
-    if command == "current":
-        print(format_current_context())
-        return 0
-
-    if command == "sweep":
-        ctx = resolve_project(args.target)
-        moved = sweep_repo(ctx.repo_path, ctx.global_config)
-        print("Sweep moved:")
-        print("\n".join(moved) if moved else "nothing")
-        return 0
-
-    if command == "export":
-        if args.export_command == "review":
-            ctx = read_project(args, command="export review")
-            out_path = Path(args.out).expanduser() if args.out else None
-            result = export_review_bundle(ctx, out_path=out_path, update_state=not args.no_state_update)
-            print(format_review_export(result))
-            return 0
-        if args.export_command == "source":
-            ctx = read_project(args, command="export source")
-            out_path = Path(args.out).expanduser() if args.out else None
-            result = export_source_bundle(ctx, out_path=out_path, update_state=not args.no_state_update)
-            if args.json:
-                print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False))
-            else:
-                print(format_source_export(result))
-            return 0
-        if args.export_command == "status":
-            ctx = read_project(args, command="export status")
-            if args.json:
-                print(json.dumps(export_integrity_data(ctx), indent=2, ensure_ascii=False))
-            else:
-                print(format_export_integrity(ctx))
-            return 0
-        raise TulError(f"unknown export command: {args.export_command}")
-
-    if command == "update":
-        inferred = infer_mutating_project(getattr(args, "target", None), command="update")
-        ctx = inferred.ctx
-        if not getattr(args, "target", None):
-            print(format_inference_summary(inferred, command="update"))
-            print()
-        if args.latest and args.package_path:
-            raise TulError("use either --package PATH or --latest, not both")
-        # Omitting --package already selects the newest matching package from
-        # configured inbox roots. --latest/-l is an explicit, readable alias for
-        # that behavior. It does not scan work/archive roots, which may contain
-        # stale or already-applied package copies.
-        package_path = None if args.latest else args.package_path
-        if args.dry_run:
-            print_update_dry_run(ctx, package_path=package_path)
-            return 0
-        result = run_update(
-            ctx,
-            package_path=package_path,
-            no_commit=args.no_commit,
-            no_push=args.no_push,
-            allow_dirty=args.allow_dirty,
-            verify_after=not args.no_verify,
-            post_export=not args.no_export,
-            post_export_source=not args.no_source_export,
-            post_export_review=not args.no_review_export,
-        )
-        print(result.report)
-        if result.verify_text:
-            print("\n--- VERIFY FRESH ---\n")
-            print(result.verify_text)
-        if result.export_text:
-            print("\n--- POST-UPDATE EXPORTS ---\n")
-            print(result.export_text)
-        print("\n--- LLM HANDOFF ---\n")
-        print(result.handoff)
-        return 0 if result.verify_ok is not False else 1
-
-    if command == "publish":
-        ctx = resolve_project(args.target)
-        print("publish is recovery/debug only. Use 'tul update' for the default loop.")
-        print("Staged files:")
-        print("\n".join(changed_files(ctx.repo_path, staged=True)) or "none")
-        return 0
+    raise TulError(f"unknown setup topic: {topic}")
 
 
-    if command == "package":
-        if args.package_command == "inspect":
-            print_package_inspect(Path(args.package_path), as_json=args.json)
-            return 0
-        if args.package_command == "check":
-            ctx = resolve_project(args.target) if args.target else None
-            result = check_package_archive(Path(args.package_path), ctx=ctx)
-            if args.json:
-                print(json.dumps(result.as_dict(), indent=2, ensure_ascii=False))
-            else:
-                print(format_package_check(result))
-            return 0 if result.ok else 2
-        if args.package_command == "scaffold":
-            ctx = resolve_project(args.target) if args.target else None
-            project = args.project or (ctx.project_id if ctx else None)
-            repo = args.repo or (ctx.expected_repo if ctx else None)
-            branch = args.branch or (ctx.expected_branch if ctx else None)
-            if not project or not repo or not branch:
-                raise TulError("package scaffold needs --target or explicit --project --repo --branch")
-            out_dir = Path(args.out).expanduser() if args.out else Path.cwd()
-            created = scaffold_package_dir(
-                args.name,
-                out_dir=out_dir,
-                project=project,
-                repo=repo,
-                branch=branch,
-                message=args.message,
-                force=args.force,
-            )
-            print("# tul package scaffold")
-            print(f"Created: {created}")
-            print("Next:")
-            print(f"- edit {created / 'tul-package.yml'}")
-            print(f"- add files under {created / 'files'}")
-            print(f"- tul package zip {created}")
-            return 0
-        if args.package_command == "zip":
-            out = Path(args.out).expanduser() if args.out else None
-            archive = zip_package_dir(Path(args.package_dir), out_path=out, force=args.force)
-            result = check_package_archive(archive)
-            print("# tul package zip")
-            print(f"Archive: {archive}")
-            print(f"Sha256: {result.sha256}")
-            print("Package root: ok")
-            print("Next:")
-            print(f"- tul package check {archive}")
-            return 0
-        if args.package_command == "add":
-            ctx = resolve_project(args.target) if args.target else None
-            result = add_repo_files_to_package(Path(args.package_dir), args.repo_files, repo_path=ctx.repo_path if ctx else None, message=args.message)
-            print(format_package_add(result))
-            return 0
-        if args.package_command == "summary":
-            summary = summarize_package_dir(Path(args.package_dir))
-            if args.json:
-                print(json.dumps(summary, indent=2, ensure_ascii=False))
-            else:
-                print(format_package_summary(summary))
-            return 0
-        ctx = read_project(args, command=f"package {args.package_command}")
-        if args.package_command == "list":
-            print_package_candidates(ctx, limit=args.limit, as_json=args.json, latest_only=False)
-            return 0
-        if args.package_command == "latest":
-            print_package_candidates(ctx, limit=1, as_json=args.json, latest_only=True)
-            return 0
-        if args.package_command == "hygiene":
-            result = run_package_hygiene(
-                ctx,
-                ingest=args.ingest,
-                quarantine=args.quarantine,
-                keep_duplicates=args.keep_duplicates,
-                include_invalid=not args.no_invalid,
-                include_duplicates=not args.no_duplicates,
-            )
-            if args.json:
-                print(json.dumps(result.as_dict(), indent=2, ensure_ascii=False))
-            else:
-                print(format_package_hygiene(result, limit=args.limit))
-            return 0
+# ----- parsing helpers ------------------------------------------------------------
 
-    if command == "rollback":
-        inferred = infer_mutating_project(getattr(args, "target", None), command="rollback")
-        ctx = inferred.ctx
-        if not getattr(args, "target", None):
-            print(format_inference_summary(inferred, command="rollback"))
-            print()
-        commit_id = args.commit
-        paths = platform_paths(ctx.global_config)
-        work_root = paths.get("work_root")
-        source = "argument"
-        if not commit_id and work_root:
-            found = latest_state_with_commit(work_root, project=ctx.project_id)
-            if found:
-                state_path, data = found
-                commit_id = state_commit(data)
-                source = f"latest rollbackable state: {state_path}"
-        if not commit_id:
-            raise TulError("rollback needs a commit argument or at least one rollbackable state with a commit")
-        branch = current_branch(ctx.repo_path)
-        print("# safe rollback command")
-        print(f"# source: {source}")
-        print(f"cd {ctx.repo_path}")
-        print(f"git revert {commit_id}")
-        print(f"git push origin {branch}")
-        return 0
 
-    if command == "state":
-        ctx = read_project(args, command="state")
-        paths = platform_paths(ctx.global_config)
-        work_root = paths.get("work_root")
-        if not work_root:
-            print("No platform.work_root configured.")
-            return 0
-        if args.all:
-            states = iter_states(work_root, project=ctx.project_id)
-            total_states = len(states)
-            if args.limit is not None:
-                states = states[: max(args.limit, 0)]
+def parse_show_items(items: list[str]) -> tuple[str, str | None, int | None]:
+    topics = {"state", "exports", "handoff", "report", "projects", "config", "history", "instructions"}
+    if not items:
+        return "state", None, None
+    if items[0] in topics:
+        topic = items[0]
+        rest = items[1:]
+    else:
+        topic = "state"
+        rest = items
+    target: str | None = None
+    count: int | None = None
+    for item in rest:
+        if topic == "history" and str(item).isdigit():
+            count = int(item)
+        elif target is None:
+            target = item
         else:
-            found = latest_state(work_root, project=ctx.project_id)
-            states = [found] if found else []
-            total_states = len(states)
-        if not states:
-            print(f"No tul state found for project {ctx.project_id} under {work_root}")
-            return 0
-        if args.json:
-            payload = [{"state_file": str(path), **data} for path, data in states if path is not None]
-            print(json.dumps(payload[0] if not args.all else payload, indent=2, ensure_ascii=False))
-            return 0
-        if not args.all:
-            print(summarize_compact_state(work_root, project=ctx.project_id))
-            print()
-            print(format_export_integrity(ctx))
-            latest_item = states[0]
-            if latest_item is not None:
-                _, data = latest_item
-                if data.get("phase") == "failed":
-                    print()
-                    print("Repo status at inspection:")
-                    branch = current_branch(ctx.repo_path)
-                    try:
-                        fetch(ctx.repo_path, branch)
-                    except Exception:
-                        pass
-                    print(f"- HEAD: {head(ctx.repo_path)}")
-                    print(f"- Remote HEAD: {remote_head(ctx.repo_path, branch) or 'unavailable'}")
-                    clean = not is_dirty(ctx.repo_path)
-                    print(f"- Working tree: {'clean' if clean else 'dirty'}")
-                    if clean:
-                        print("- Note: the latest failed state may be stale or from a repeated/no-op update attempt.")
-            return 0
-        if args.all and args.limit is not None:
-            print(f"Showing {len(states)}/{total_states} state(s) for {ctx.project_id}.")
-            print()
-        for index, item in enumerate(states):
-            if item is None:
-                continue
-            path, data = item
-            if index:
-                print("\n---\n")
-            print(summarize_state(path, data))
-            if data.get("phase") == "failed":
-                print()
-                print("Repo status at inspection:")
-                branch = current_branch(ctx.repo_path)
-                try:
-                    fetch(ctx.repo_path, branch)
-                except Exception:
-                    pass
-                print(f"- HEAD: {head(ctx.repo_path)}")
-                print(f"- Remote HEAD: {remote_head(ctx.repo_path, branch) or 'unavailable'}")
-                clean = not is_dirty(ctx.repo_path)
-                print(f"- Working tree: {'clean' if clean else 'dirty'}")
-                if clean:
-                    print("- Note: the latest failed state may be stale or from a repeated/no-op update attempt.")
-        return 0
+            raise TulError(f"too many arguments for show {topic}: {' '.join(items)}")
+    return topic, target, count
 
-    if command == "archive":
-        inferred = infer_mutating_project(getattr(args, "target", None), command="archive")
-        ctx = inferred.ctx
-        if not getattr(args, "target", None):
-            print(format_inference_summary(inferred, command="archive"))
-            print()
-        paths = platform_paths(ctx.global_config)
-        work_root = paths.get("work_root")
-        archive_root = paths.get("archive_root") or paths.get("backup_root")
-        if not work_root:
-            print("No platform.work_root configured.")
-            return 0
-        if not archive_root:
-            print("No platform.archive_root or platform.backup_root configured.")
-            return 0
-        keep = max(args.keep or 0, 0)
-        explicit_selector = bool(args.all or args.noop or args.imported or args.failed)
-        if not args.dry_run and not explicit_selector:
-            print("# tul archive")
-            print(f"Project: {ctx.project_id}")
-            print("Refusing to move state directories without an explicit selector.")
-            print("Use dry-run first, then choose a bounded selector such as --noop --keep 3.")
-            print("Examples:")
-            print(f"  tul archive {ctx.project_id} --noop --dry-run --keep 3")
-            print(f"  tul archive {ctx.project_id} --noop --keep 3")
-            return 2
-        if not args.dry_run and not args.noop:
-            print("# tul archive")
-            print(f"Project: {ctx.project_id}")
-            print("Refusing to move non-noop states in this safety phase.")
-            print("K1 only allows actual moves for --noop selections. Use --dry-run for imported/failed/all review.")
-            return 2
-        if not args.dry_run and (args.all or args.imported or args.failed):
-            print("# tul archive")
-            print(f"Project: {ctx.project_id}")
-            print("Refusing mixed actual archive selectors in this safety phase.")
-            print("Use only --noop for actual moves; inspect other selectors with --dry-run.")
-            return 2
-        selector = archive_selector_label(
-            all_states=args.all,
-            noop=args.noop,
-            imported=args.imported,
-            failed=args.failed,
-        )
-        inventory = archive_inventory(work_root, project=ctx.project_id)
-        protected = archive_protected_paths(work_root, project=ctx.project_id)
-        archived = archive_states(
-            work_root,
-            archive_root,
-            project=ctx.project_id,
-            all_states=args.all,
-            noop=args.noop,
-            imported=args.imported,
-            failed=args.failed,
-            keep=keep,
-            dry_run=args.dry_run,
-        )
-        print("# tul archive")
-        print(f"Project: {ctx.project_id}")
-        print(f"Work root: {work_root}")
-        print(f"Archive root: {archive_root}")
-        print(f"Mode: {'dry-run' if args.dry_run else 'move'}")
-        print(f"Selector: {selector}")
-        print(f"Keep newest selected: {keep}")
-        print("Inventory:")
-        print(f"- total states: {inventory['total']}")
-        print(f"- noop: {inventory['noop']}")
-        print(f"- imported: {inventory['imported']}")
-        print(f"- failed: {inventory['failed']}")
-        print(f"- rollbackable: {inventory['rollbackable']}")
-        if protected:
-            print("Protected reference states:")
-            if protected.get("latest"):
-                print(f"- latest: {protected['latest']}")
-            if protected.get("latest_rollbackable"):
-                print(f"- latest rollbackable: {protected['latest_rollbackable']}")
-        if not archived:
-            print()
-            print(f"No matching tul state found for project {ctx.project_id} under {work_root}")
-            print("Examples:")
-            print(f"  tul archive {ctx.project_id} --noop --dry-run --keep 3")
-            print(f"  tul archive {ctx.project_id} --noop --keep 3")
-            print(f"  tul archive {ctx.project_id} --imported --dry-run")
-            return 0
-        action = "Would archive" if args.dry_run else "Archived"
+
+def parse_package_items(items: list[str]) -> tuple[str | None, list[str]]:
+    commands = {"list", "check", "inspect", "new", "add", "zip", "show"}
+    if not items:
+        return None, []
+    if items[0] in commands:
+        return items[0], items[1:]
+    return None, items
+
+
+def _looks_like_zip(value: str) -> bool:
+    return value.endswith(".zip") or Path(value).expanduser().suffix == ".zip"
+
+
+def parse_target_package_dry(items: list[str]) -> tuple[str | None, str | None, bool]:
+    target: str | None = None
+    package_path: str | None = None
+    dry = False
+    for item in items:
+        if item == "dry":
+            dry = True
+        elif _looks_like_zip(item):
+            if package_path is not None:
+                raise TulError("only one package zip may be specified")
+            package_path = item
+        else:
+            if target is not None:
+                raise TulError("only one project/path target may be specified")
+            target = item
+    return target, package_path, dry
+
+
+def parse_verify_items(items: list[str]) -> tuple[str | None, bool, bool]:
+    target: str | None = None
+    fresh = False
+    mode_json = False
+    for item in items:
+        if item == "fresh":
+            fresh = True
+        elif item in {"local", "quick"}:
+            fresh = False
+        elif item == "json":
+            mode_json = True
+        else:
+            if target is not None:
+                raise TulError("only one project/path target may be specified")
+            target = item
+    return target, mode_json, fresh
+
+
+# ----- display helpers ------------------------------------------------------------
+
+
+def print_show_state(ctx, *, as_json: bool = False) -> None:
+    paths = platform_paths(ctx.global_config)
+    work_root = paths.get("work_root")
+    branch = current_branch(ctx.repo_path)
+    try:
+        fetch(ctx.repo_path, branch)
+    except Exception:
+        pass
+    found = latest_state(work_root, project=ctx.project_id) if work_root else None
+    payload = {
+        "project": ctx.project_id,
+        "repo": str(ctx.repo_path),
+        "branch": branch,
+        "head": head(ctx.repo_path),
+        "remote_head": remote_head(ctx.repo_path, branch),
+        "working_tree": "dirty" if is_dirty(ctx.repo_path) else "clean",
+        "latest_state": str(found[0]) if found else None,
+        "latest_state_data": found[1] if found else None,
+        "exports": export_integrity_data(ctx),
+    }
+    if as_json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+    print("# tul show")
+    print()
+    print(f"Project: {payload['project']}")
+    print(f"Repo: {payload['repo']}")
+    print(f"Branch: {payload['branch']}")
+    print(f"HEAD: {payload['head']}")
+    print(f"Remote HEAD: {payload['remote_head'] or 'unavailable'}")
+    print(f"Working tree: {payload['working_tree']}")
+    if work_root:
         print()
-        print(f"{action} {len(archived)} state(s) for {ctx.project_id}:")
-        protected_values = set(protected.values())
-        for state_path, dest, data in archived:
-            source_dir = state_path.parent
-            markers = []
-            if state_path in protected_values:
-                markers.append("protected-reference")
-            print(f"- state: {state_path}")
-            print(f"  source dir: {source_dir}")
-            print(f"  archive dir: {dest}")
-            print(f"  phase: {data.get('phase')}")
-            if data.get("outcome"):
-                print(f"  outcome: {data.get('outcome')}")
-            if data.get("package_name") or data.get("package"):
-                print(f"  package: {data.get('package_name') or data.get('package')}")
-            if data.get("commit"):
-                print(f"  commit: {data.get('commit')}")
-            if markers:
-                print(f"  warning: {', '.join(markers)}")
-        if args.dry_run:
+        print(summarize_compact_state(work_root, project=ctx.project_id))
+    print()
+    print(format_export_integrity(ctx))
+    print()
+    print("Next:")
+    print("- full loop: tul run")
+    print("- stepwise: tul package; tul update; tul verify fresh; tul export")
+    print("- recovery: tul recover")
+
+
+def print_state_history(ctx, *, limit: int = 5, as_json: bool = False) -> None:
+    paths = platform_paths(ctx.global_config)
+    work_root = paths.get("work_root")
+    if not work_root:
+        print("No platform.work_root configured.")
+        return
+    states = iter_states(work_root, project=ctx.project_id)[: max(limit, 0)]
+    if as_json:
+        print(json.dumps([{"state_file": str(path), **data} for path, data in states], indent=2, ensure_ascii=False))
+        return
+    print(f"# tul show history {limit}")
+    if not states:
+        print(f"No tul state found for project {ctx.project_id} under {work_root}")
+        return
+    for index, (path, data) in enumerate(states):
+        if index:
+            print("\n---\n")
+        print(summarize_state(path, data))
+
+
+def print_projects() -> None:
+    config, path = load_global_config()
+    active = active_project()
+    default = config.get("default_project")
+    print(f"Config: {path}")
+    print(f"Context: {context_path()}")
+    print(f"active_project: {active or '(none)'}")
+    print(f"default_project: {default or '(none)'}")
+    for key, value in (config.get("projects") or {}).items():
+        markers = []
+        if key == active:
+            markers.append("active")
+        if key == default:
+            markers.append("default")
+        marker = (" [" + ", ".join(markers) + "]") if markers else ""
+        print(f"{key}{marker}: {value.get('path') if isinstance(value, dict) else value}")
+
+
+def print_clean_states(ctx, *, keep: int = 3, dry_run: bool = True) -> None:
+    paths = platform_paths(ctx.global_config)
+    work_root = paths.get("work_root")
+    archive_root = paths.get("archive_root") or paths.get("backup_root")
+    print("# tul clean states")
+    print(f"Project: {ctx.project_id}")
+    print(f"Mode: {'plan' if dry_run else 'move'}")
+    if not work_root or not archive_root:
+        print("No platform.work_root and archive_root/backup_root configured.")
+        return
+    inventory = archive_inventory(work_root, project=ctx.project_id)
+    protected = archive_protected_paths(work_root, project=ctx.project_id)
+    archived = archive_states(work_root, archive_root, project=ctx.project_id, noop=True, keep=max(keep, 0), dry_run=dry_run)
+    print(f"Work root: {work_root}")
+    print(f"Archive root: {archive_root}")
+    print(f"Selector: noop")
+    print(f"Keep newest selected: {keep}")
+    print("Inventory:")
+    for key in ("total", "noop", "imported", "failed", "rollbackable"):
+        print(f"- {key}: {inventory.get(key)}")
+    if protected:
+        print("Protected reference states:")
+        for key, value in protected.items():
+            print(f"- {key}: {value}")
+    if not archived:
+        print("No matching state directories to move.")
+        return
+    print()
+    print(f"{'Would move' if dry_run else 'Moved'} {len(archived)} state directorie(s):")
+    for state_path, dest, data in archived:
+        print(f"- {state_path.parent} -> {dest} ({data.get('phase')})")
+    if dry_run:
+        print("No files were moved. Run `tul clean states run 3` to execute this bounded cleanup.")
+
+
+def print_clean_packages(ctx, *, as_json: bool = False, run: bool = False) -> None:
+    result = run_package_hygiene(ctx, ingest=run, quarantine=run)
+    if as_json:
+        print(json.dumps(result.as_dict(), indent=2, ensure_ascii=False))
+    else:
+        print(format_package_hygiene(result, limit=50))
+        if not run:
             print()
-            print("No files were moved. Review the list, then re-run without --dry-run only if it is correct.")
-        else:
-            latest_after = latest_state(work_root, project=ctx.project_id)
-            if latest_after:
-                latest_path, _latest_data = latest_after
-                write_state(
-                    latest_path,
-                    archive_last_run={
-                        "selector": selector,
-                        "keep": keep,
-                        "moved_count": len(archived),
-                        "archive_root": str(archive_root),
-                        "mode": "move",
-                        "scope": "noop-only",
-                        "moved_states": [str(state_path) for state_path, _dest, _data in archived],
-                    },
-                )
+            print("No package files were moved unless the report says mode is executing. Run `tul clean packages run` to ingest/quarantine guarded candidates.")
+
+
+def print_recover_summary(ctx) -> None:
+    print("# tul recover")
+    print("This command does not modify the repo. It prints recovery options.")
+    print(f"Project: {ctx.project_id}")
+    paths = platform_paths(ctx.global_config)
+    work_root = paths.get("work_root")
+    if work_root:
+        latest = latest_state(work_root, project=ctx.project_id)
+        if latest:
             print()
-            print("Archived state directories were moved out of work_root.")
-            print(f"Moved count: {len(archived)}")
-            print("Safety scope: noop-only actual archive")
-            print("Verify with: tul state --all --limit 5")
-        return 0
-
-    if command == "config":
-        if args.config_command == "path":
-            print(config_path())
-            return 0
-
-    if command == "projects":
-        config, path = load_global_config()
-        active = active_project()
-        default = config.get("default_project")
-        print(f"Config: {path}")
-        print(f"Context: {context_path()}")
-        print(f"active_project: {active or '(none)'}")
-        print(f"default_project: {default or '(none)'}")
-        for key, value in (config.get("projects") or {}).items():
-            markers = []
-            if key == active:
-                markers.append("active")
-            if key == default:
-                markers.append("default")
-            marker = (" [" + ", ".join(markers) + "]") if markers else ""
-            print(f"{key}{marker}: {value.get('path') if isinstance(value, dict) else value}")
-        return 0
-
-    if command == "import":
-        inferred = infer_mutating_project(getattr(args, "target", None), command="import")
-        ctx = inferred.ctx
-        if not getattr(args, "target", None):
-            print(format_inference_summary(inferred, command="import"))
+            print("Latest state:")
+            print(summarize_state(latest[0], latest[1]))
+        rollbackable = latest_state_with_commit(work_root, project=ctx.project_id)
+        if rollbackable:
             print()
-        if args.latest and args.package_path:
-            raise TulError("use either --package PATH or --latest, not both")
-        package_path = None if args.latest else args.package_path
-        print_import_plan(ctx, package_path=package_path)
-        return 0
+            print("Rollback plan:")
+            print_rollback_plan(ctx, commit_id=state_commit(rollbackable[1]), source=f"latest rollbackable state: {rollbackable[0]}")
+    print()
+    print("Subcommands:")
+    print("- tul recover rollback")
+    print("- tul recover resume")
+    print("- tul recover apply")
+    print("- tul recover publish")
 
-    if command == "apply":
-        ctx = resolve_project(args.target)
-        print("'tul apply' is recovery/debug only. The default workflow is 'tul update <project>'.")
-        if args.state:
-            print(f"State hint: {args.state}")
-        print("Recommended safe command:")
-        print(f"  tul update {ctx.project_id} -l")
-        return 0
 
-    if command == "resume":
-        ctx = resolve_project(args.target)
-        paths = platform_paths(ctx.global_config)
-        work_root = paths.get("work_root")
-        found = latest_state(work_root, project=ctx.project_id) if work_root else None
-        print("'tul resume' is not automatic yet. Inspect latest state first.")
+def print_rollback_plan(ctx, *, commit_id: str | None = None, source: str | None = None) -> None:
+    paths = platform_paths(ctx.global_config)
+    work_root = paths.get("work_root")
+    if not commit_id and work_root:
+        found = latest_state_with_commit(work_root, project=ctx.project_id)
         if found:
-            path, data = found
-            print(summarize_state(path, data))
-        if work_root:
-            rollbackable = latest_state_with_commit(work_root, project=ctx.project_id)
-            if rollbackable:
-                rollback_path, rollback_data = rollbackable
-                print("Latest rollbackable state:")
-                print(f"- commit: {rollback_data.get('commit')}")
-                print(f"- state: {rollback_path}")
-        print("Recommended safe commands:")
-        print(f"  tul state {ctx.project_id}")
-        print(f"  tul rollback {ctx.project_id}")
-        print(f"  tul update {ctx.project_id} -l")
-        return 0
-
-    raise TulError(f"unknown command: {command}")
+            state_path, data = found
+            commit_id = state_commit(data)
+            source = f"latest rollbackable state: {state_path}"
+    if not commit_id:
+        raise TulError("rollback needs a commit argument or at least one rollbackable state with a commit")
+    branch = current_branch(ctx.repo_path)
+    print("# tul recover rollback")
+    print("This command does not modify the repo. It prints a safe rollback command.")
+    print(f"# source: {source or 'argument'}")
+    print(f"cd {ctx.repo_path}")
+    print(f"git revert {commit_id}")
+    print(f"git push origin {branch}")
 
 
+def print_resume_plan(ctx) -> None:
+    print("# tul recover resume")
+    print("This command does not modify the repo. It prints the latest state and safe next commands.")
+    paths = platform_paths(ctx.global_config)
+    work_root = paths.get("work_root")
+    found = latest_state(work_root, project=ctx.project_id) if work_root else None
+    if found:
+        print(summarize_state(found[0], found[1]))
+    print("Recommended safe commands:")
+    print("  tul show")
+    print("  tul recover rollback")
+    print("  tul update dry")
+    print("  tul run")
 
+
+def print_setup_summary(target: str | None = None) -> None:
+    config, path = load_global_config()
+    paths = platform_paths(config)
+    print("# tul setup")
+    print(f"tul version: {__version__}")
+    print(f"python: {sys.executable}")
+    print(f"git: {shutil.which('git') or 'not found'}")
+    print(f"config path: {path}")
+    print(f"config exists: {path.exists()}")
+    print(f"context path: {context_path()}")
+    print(f"active_project: {active_project() or '(none)'}")
+    print(f"default_project: {config.get('default_project') or '(none)'}")
+    print("platform paths:")
+    for key in ("work_root", "archive_root", "log_root", "backup_root"):
+        print(f"- {key}: {paths.get(key) or '(not configured)'}")
+    print("inbox roots:")
+    for root in paths.get("inbox_roots") or []:
+        print(f"- {root} exists={root.exists()} dir={root.is_dir()}")
+    ctx = resolve_project(target) if target else None
+    if ctx:
+        print("target:")
+        print(f"- project: {ctx.project_id}")
+        print(f"- repo: {ctx.repo_path}")
+        print(f"- branch: {current_branch(ctx.repo_path)}")
+        print(f"- dirty: {is_dirty(ctx.repo_path)}")
+    print("launcher diagnostics:")
+    for line in path_launcher_info(ctx.repo_path if ctx else None):
+        print(line)
+
+
+def changed_staged(repo: Path) -> list[str]:
+    proc = subprocess.run(["git", "diff", "--cached", "--name-only"], cwd=repo, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        return []
+    return [line for line in proc.stdout.splitlines() if line.strip()]
+
+
+# ----- package/update helpers copied from prior CLI ------------------------------
 
 
 def _package_inventory_for_context(ctx) -> dict:
     branch = current_branch(ctx.repo_path)
     expected_branch = ctx.expected_branch or branch
-    inventory = discover_package_inventory(
-        ctx.global_config,
-        project=ctx.project_id,
-        repo=ctx.expected_repo,
-        branch=expected_branch,
-    )
+    inventory = discover_package_inventory(ctx.global_config, project=ctx.project_id, repo=ctx.expected_repo, branch=expected_branch)
     return {
         "branch": expected_branch,
         "matching": [candidate_record(item) for item in inventory.matching],
         "incompatible": [candidate_record(item) for item in inventory.incompatible],
         "invalid": [invalid_candidate_record(item) for item in inventory.invalid],
     }
-
-
-def _candidate_records_for_context(ctx) -> list[dict]:
-    return _package_inventory_for_context(ctx)["matching"]
 
 
 def _duplicate_package_names(records: list[dict]) -> dict[str, list[str]]:
@@ -952,8 +925,7 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
     if as_json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         return
-
-    title = "# tul package latest" if latest_only else "# tul package list"
+    title = "# tul package" if latest_only else "# tul package list"
     print(title)
     print(f"Project: {ctx.project_id}")
     print(f"Repo: {ctx.expected_repo or '(not configured)'}")
@@ -966,8 +938,7 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
     if not records:
         print("No matching packages found.")
         if incompatible:
-            print()
-            print("Incompatible package(s) were found:")
+            print("\nIncompatible package(s) were found:")
             for item in incompatible[: max(limit, 0)]:
                 target = item.get("target") or {}
                 print(f"- {item.get('path')}")
@@ -975,17 +946,13 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
                 print(f"  target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
                 print(f"  reason: {item.get('reason')}")
         if invalid:
-            print()
-            print("Invalid archive(s) ignored:")
+            print("\nInvalid archive(s) ignored:")
             for item in invalid[: max(limit, 0)]:
                 print(f"- {item.get('path')}")
                 print(f"  reason: {item.get('reason')}")
-        print()
-        print("Options:")
-        print(f"- download a package targeting project={ctx.project_id} repo={ctx.expected_repo} branch={payload['branch']}")
-        print(f"- inspect a package: tul package inspect <package.zip>")
-        print(f"- validate a package: tul package check <package.zip> --target {ctx.project_id}")
-        print(f"- use an explicit compatible package: tul update {ctx.project_id} --package <package.zip>")
+        print("\nNext:")
+        print(f"- validate a package: tul package check <package.zip> {ctx.project_id}")
+        print(f"- use an explicit compatible package: tul update <package.zip>")
         return
     print(f"Selected: {selected['path']}")
     print(f"Reason: newest matching candidate; mtime={selected['mtime']}; {selected.get('reason') or 'target match'}")
@@ -997,33 +964,17 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
     if incompatible:
         selected_mtime = float(selected.get("mtime_epoch") or 0)
         newer_incompatible = [item for item in incompatible if float(item.get("mtime_epoch") or 0) > selected_mtime]
-        if newer_incompatible:
-            warnings.append(f"{len(newer_incompatible)} newer incompatible package(s) exist")
-        else:
-            warnings.append(f"{len(incompatible)} incompatible package(s) ignored")
+        warnings.append(f"{len(newer_incompatible) or len(incompatible)} incompatible package(s) ignored")
     if invalid:
         warnings.append(f"{len(invalid)} invalid archive(s) ignored")
     if warnings:
-        print()
-        print("Warnings:")
+        print("\nWarnings:")
         for item in warnings:
             print(f"- {item}")
-        if duplicates or invalid:
-            print("Hygiene:")
-            print("  - dry-run: tul package hygiene")
-            print("  - ingest valid packages from Download/import roots: tul package hygiene --ingest")
-            print("  - quarantine project-inbox duplicates after review: tul package hygiene --quarantine")
-        if incompatible:
-            print("Incompatible examples:")
-            for item in incompatible[:3]:
-                target = item.get("target") or {}
-                print(f"  - {item.get('path')}")
-                print(f"    target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
-                print(f"    reason: {item.get('reason')}")
+        print("Cleanup: tul clean packages")
     if latest_only:
         return
-    print()
-    print(f"Matching candidates shown: {min(limit, len(records))}/{len(records)}")
+    print(f"\nMatching candidates shown: {min(limit, len(records))}/{len(records)}")
     for index, item in enumerate(records[: max(limit, 0)], start=1):
         marker = " selected" if index == 1 else ""
         target = item.get("target") or {}
@@ -1033,22 +984,6 @@ def print_package_candidates(ctx, *, limit: int = 20, as_json: bool = False, lat
         print(f"  target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
         if commit.get("message"):
             print(f"  commit: {commit.get('message')}")
-    if incompatible:
-        print()
-        print(f"Incompatible packages shown: {min(limit, len(incompatible))}/{len(incompatible)}")
-        for index, item in enumerate(incompatible[: max(limit, 0)], start=1):
-            target = item.get("target") or {}
-            print(f"[{index}] {item.get('name')}  {item.get('mtime')}")
-            print(f"  path: {item.get('path')}")
-            print(f"  target: {target.get('project')} {target.get('repo')} {target.get('branch')}")
-            print(f"  reason: {item.get('reason')}")
-    if invalid:
-        print()
-        print(f"Invalid archives shown: {min(limit, len(invalid))}/{len(invalid)}")
-        for index, item in enumerate(invalid[: max(limit, 0)], start=1):
-            print(f"[{index}] {item.get('name')}  {item.get('mtime')}")
-            print(f"  path: {item.get('path')}")
-            print(f"  reason: {item.get('reason')}")
 
 
 def print_package_inspect(package_path: Path, *, as_json: bool = False) -> None:
@@ -1085,7 +1020,7 @@ def print_package_inspect(package_path: Path, *, as_json: bool = False) -> None:
 
 
 def print_update_dry_run(ctx, *, package_path: str | None = None) -> None:
-    print("# tul update dry-run")
+    print("# tul update dry")
     print("No repo files will be modified. This command imports, validates, and builds an apply plan only.")
     print()
     if package_path is None:
@@ -1093,43 +1028,16 @@ def print_update_dry_run(ctx, *, package_path: str | None = None) -> None:
         print()
     print_import_plan(ctx, package_path=package_path)
 
-def copy_to_clipboard(text: str, config: dict) -> str:
-    command = ((config.get("platform") or {}).get("clipboard_command") or "").strip()
-    if not command:
-        return "not configured"
-    try:
-        if command == "termux-clipboard-set":
-            proc = subprocess.run([command], input=text, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        elif command == "Set-Clipboard":
-            proc = subprocess.run(["powershell.exe", "-NoProfile", "-Command", "Set-Clipboard"], input=text, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        else:
-            proc = subprocess.run(command, input=text, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        if proc.returncode == 0:
-            return "copied"
-        return f"failed: {proc.stderr.strip() or proc.stdout.strip()}"
-    except Exception as exc:
-        return f"failed: {exc}"
 
 def print_import_plan(ctx, *, package_path: str | None = None) -> None:
     branch = current_branch(ctx.repo_path)
     expected_branch = ctx.expected_branch or branch
-    source = select_package(
-        ctx.global_config,
-        explicit=package_path,
-        project=ctx.project_id,
-        repo=ctx.expected_repo,
-        branch=expected_branch,
-    )
+    source = select_package(ctx.global_config, explicit=package_path, project=ctx.project_id, repo=ctx.expected_repo, branch=expected_branch)
     imported = import_package(source, ctx.global_config)
     state_file = imported.work_dir / "state.json"
     validate_manifest(imported.manifest, project=ctx.project_id, repo=ctx.expected_repo, branch=expected_branch)
     apply_plan = imported.work_dir / "apply-plan.json"
-    planned = build_apply_plan(
-        imported.manifest,
-        extracted_dir=imported.extracted_dir,
-        repo_path=ctx.repo_path,
-        allowed_files=imported.manifest.commit_files,
-    )
+    planned = build_apply_plan(imported.manifest, extracted_dir=imported.extracted_dir, repo_path=ctx.repo_path, allowed_files=imported.manifest.commit_files)
     write_apply_plan(apply_plan, planned)
     set_phase(
         state_file,
@@ -1144,7 +1052,7 @@ def print_import_plan(ctx, *, package_path: str | None = None) -> None:
         apply_plan=str(apply_plan),
         planned_operations=len(planned),
     )
-    print("# tul import")
+    print("# tul package import plan")
     print(f"Project: {ctx.project_id}")
     print(f"Package: {source}")
     print(f"Work dir: {imported.work_dir}")
@@ -1152,51 +1060,15 @@ def print_import_plan(ctx, *, package_path: str | None = None) -> None:
     print(f"Apply plan: {apply_plan}")
     print(f"Planned operations: {len(planned)}")
     print("No repo files were modified.")
-    print("To run the full safe loop, use:")
-    print(f"  tul update {ctx.project_id} --package {source}")
-
-def print_status(ctx) -> None:
-    repo = ctx.repo_path
-    branch = current_branch(repo)
-    try:
-        fetch(repo, branch)
-    except Exception:
-        pass
-    print(f"Project: {ctx.project_id}")
-    print(f"Repo: {repo}")
-    print(f"Remote: {remote_url(repo) or 'unknown'}")
-    print(f"Branch: {branch}")
-    print(f"HEAD: {head(repo)}")
-    print(f"Remote HEAD: {remote_head(repo, branch) or 'unavailable'}")
-    status = status_porcelain(repo)
-    print("Working tree: clean" if not status else "Working tree:\n" + status)
-    print("Recent commits:")
-    for item in recent_commits(repo):
-        print(f"- {item}")
+    print("To update, use: tul update")
 
 
-
-def short_path(path: Path | None) -> str:
-    return str(path) if path else "not found"
+# ----- launcher/setup helpers copied from prior CLI ------------------------------
 
 
 def backup_path(path: Path) -> Path:
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     return path.with_name(f"{path.name}.bak-{stamp}")
-
-
-def launcher_version_label(path: Path, *, repo_bin: Path | None = None) -> str:
-    """Return a safe launcher version label without spawning nested tul.
-
-    `tul doctor` should not execute `tul --version` recursively. On some
-    mobile/Termux environments nested launcher execution can produce confusing
-    shell-level abort messages even after diagnostics are printed. If the PATH
-    launcher resolves to the target repo launcher, the current module version is
-    authoritative. If it does not, report the drift and ask the user to resync.
-    """
-    if repo_bin is not None and same_resolved(path, repo_bin):
-        return f"tul {__version__}"
-    return "not checked (launcher is stale, copied, or outside target repo)"
 
 
 def same_resolved(a: Path | None, b: Path | None) -> bool:
@@ -1206,6 +1078,12 @@ def same_resolved(a: Path | None, b: Path | None) -> bool:
         return a.resolve() == b.resolve()
     except Exception:
         return False
+
+
+def launcher_version_label(path: Path, *, repo_bin: Path | None = None) -> str:
+    if repo_bin is not None and same_resolved(path, repo_bin):
+        return f"tul {__version__}"
+    return "not checked (launcher is stale, copied, or outside target repo)"
 
 
 def path_launcher_info(repo: Path | None = None) -> list[str]:
@@ -1227,10 +1105,10 @@ def path_launcher_info(repo: Path | None = None) -> list[str]:
             status = "synced" if same_resolved(Path(found), repo_bin) else "stale-or-copy"
             lines.append(f"- launcher status: {status}")
             if status != "synced":
-                lines.append("- suggested fix: tul install " + str(repo))
+                lines.append("- suggested fix: tul setup install " + str(repo))
         else:
             lines.append("- launcher status: missing")
-            lines.append("- suggested fix: tul install " + str(repo))
+            lines.append("- suggested fix: tul setup install " + str(repo))
     return lines
 
 
@@ -1239,13 +1117,9 @@ def install_launcher(repo: Path, *, copy: bool = False, force: bool = False) -> 
     repo_launcher = repo / "bin" / "tul"
     if not repo_launcher.exists():
         raise TulError(f"missing repo launcher: {repo_launcher}")
-
     home_bin = Path.home() / "bin"
     home_bin.mkdir(parents=True, exist_ok=True)
-    lines = ["# tul install"]
-    lines.append(f"Repo: {repo}")
-    lines.append(f"Repo launcher: {repo_launcher}")
-
+    lines = ["# tul setup install", f"Repo: {repo}", f"Repo launcher: {repo_launcher}"]
     if os.name == "nt":
         cmd = home_bin / "tul.cmd"
         content = f'@echo off\r\n"{sys.executable}" "{repo_launcher}" %*\r\n'
@@ -1259,12 +1133,8 @@ def install_launcher(repo: Path, *, copy: bool = False, force: bool = False) -> 
             lines.append(f"Backed up existing launcher: {backup}")
         cmd.write_text(content, encoding="utf-8")
         lines.append(f"Installed Windows launcher: {cmd}")
-        path_entries = os.environ.get("PATH", "").split(os.pathsep)
-        if str(home_bin) not in path_entries:
-            lines.append(f"NOTE: add this directory to PATH if needed: {home_bin}")
         lines.extend(path_launcher_info(repo))
         return "\n".join(lines)
-
     launcher = home_bin / "tul"
     if launcher.exists() or launcher.is_symlink():
         if launcher.is_symlink() and same_resolved(launcher, repo_launcher):
@@ -1295,46 +1165,3 @@ def install_launcher(repo: Path, *, copy: bool = False, force: bool = False) -> 
         lines.append('For Termux/bash: export PATH="$HOME/bin:$PATH"')
     lines.extend(path_launcher_info(repo))
     return "\n".join(lines)
-
-
-def print_doctor(target: str | None = None) -> None:
-    config, path = load_global_config()
-    paths = platform_paths(config)
-    print(f"tul version: {__version__}")
-    print(f"python: {sys.executable}")
-    print(f"git: {shutil.which('git') or 'not found'}")
-    print(f"config path: {path}")
-    print(f"config exists: {path.exists()}")
-    print("platform paths:")
-    for key in ("work_root", "archive_root", "log_root", "backup_root"):
-        value = paths.get(key)
-        print(f"- {key}: {value or '(not configured)'}")
-    print("inbox roots:")
-    roots = paths.get("inbox_roots") or []
-    if roots:
-        for root in roots:
-            print(f"- {root} exists={root.exists()} dir={root.is_dir()}")
-    else:
-        print("- (none)")
-    print("projects:")
-    for key, value in (config.get("projects") or {}).items():
-        print(f"- {key}: {value.get('path') if isinstance(value, dict) else value}")
-    ctx = None
-    print("runtime context:")
-    print(f"- context path: {context_path()}")
-    print(f"- active_project: {active_project() or '(none)'}")
-    print(f"- default_project: {config.get('default_project') or '(none)'}")
-    if target:
-        ctx = resolve_project(target)
-        print("target:")
-        print(f"- project: {ctx.project_id}")
-        print(f"- repo: {ctx.repo_path}")
-        print(f"- branch: {current_branch(ctx.repo_path)}")
-        print(f"- dirty: {is_dirty(ctx.repo_path)}")
-        print("export integrity:")
-        for line in format_export_integrity(ctx).splitlines():
-            print(f"  {line}" if line else "")
-    print("launcher diagnostics:")
-    repo = ctx.repo_path if ctx else None
-    for line in path_launcher_info(repo):
-        print(line)

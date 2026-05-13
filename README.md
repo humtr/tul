@@ -33,7 +33,7 @@ If you are an LLM, coding agent, or a new session reviewing this repo, start her
 
 Do not rely on prior chat context when the repo documents answer the question. Do not treat web raw-view oddities as proof that files are broken; inspect GitHub file/blob view or use fresh clone checks for line counts and syntax.
 
-For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul state` and `tul handoff` snapshots. When a compact transport bundle is needed, run `tul export review` and upload `/sdcard/termux/import/tul/tul-review-latest.zip`. When full source context is needed, run `tul export source` and use `/sdcard/termux/import/tul/tul-source-latest.zip`; this is explicit source context, not backup, review evidence, or release-gate evidence. A GitHub-generated `tul-main.zip` may still be used as manual source context after its root layout and intended commit are understood. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md), [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md), and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md).
+For normal post-update review, the single upload artifact is `/sdcard/termux/import/tul/tul-vf-latest.md`. It includes the release gate plus compact `tul show` and `tul show handoff` snapshots. When a compact transport bundle is needed, run `tul export review` and upload `/sdcard/termux/import/tul/tul-review-latest.zip`. When full source context is needed, run `tul export source` and use `/sdcard/termux/import/tul/tul-source-latest.zip`; this is explicit source context, not backup, review evidence, or release-gate evidence. A GitHub-generated `tul-main.zip` may still be used as manual source context after its root layout and intended commit are understood. See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.md), [`docs/workflows/parallel-readiness.md`](docs/workflows/parallel-readiness.md), and [`docs/workflows/source-context-and-export.md`](docs/workflows/source-context-and-export.md).
 
 ## Project identity
 
@@ -43,7 +43,7 @@ The durable project contract lives in repo documents. Runtime facts live in term
 
 ## Planning harness
 
-README is the entrypoint, not the full planning ledger. For Stage 6 and later, tul uses a repo-resident planning harness:
+README is the entrypoint, not the full planning ledger. For Stage 6 and later, tul setup uses a repo-resident planning harness:
 
 ```text
 manifest → strategy → roadmap → status → learning log → decisions
@@ -77,7 +77,7 @@ The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b
 
 ## Non-negotiable invariants
 
-- `tul update <project>` is the default full-loop command.
+- `tul run <project>` is the default full-loop command.
 - Push is included by default after successful validation and commit.
 - `--no-push` and `--no-commit` are exceptions for debugging or recovery.
 - Remote HEAD verification is part of successful update when push is enabled.
@@ -90,112 +90,97 @@ The Stage 7 planning consolidation package is closed at `79d27fb07ce52666acb603b
 
 ## Native context
 
-Stage 6 introduced native project context in bounded steps. The current model supports an active project, read-only no-arg commands, `tul verify fresh`, and guarded no-arg `tul update` / `tul import` / `tul rollback` when the project can be inferred safely:
+Stage 6 introduced native project context in bounded steps. The current model supports an active project, read-only no-arg commands, `tul verify fresh`, and guarded no-arg `tul run` / `tul update dry` / `tul recover rollback` when the project can be inferred safely:
 
 ```bash
-tul use tul
-tul current
-tul status
+tul setup use tul
+tul show config
+tul show
 tul update
 tul verify fresh
-tul state
+tul show
 ```
 
-No-arg mutating commands use explicit context guards. If the active project differs from the current-directory project, `tul` refuses to continue and prints concrete choices such as `tul update tul`, `tul update <cwd-project>`, or `tul use <cwd-project>`.
+No-arg mutating commands use explicit context guards. If the active project differs from the current-directory project, `tul` refuses to continue and prints concrete choices such as `tul update tul`, `tul update <cwd-project>`, or `tul setup use <cwd-project>`.
 
 Package-target mismatch guidance is implemented at package discovery/update boundaries; future work may refine duplicate package name/hash guidance if inbox clutter returns.
 
 ## Default command model
 
-## Launcher / install sync
-
-Operational commands should be runnable from any directory once native context is set:
-
-```bash
-tul use tul
-tul status
-tul update
-tul verify fresh
-tul state
-tul handoff
-```
-
-Explicit project arguments remain supported for clarity, recovery, and ambiguous contexts.
-
-If `tul` on PATH behaves differently from `python ~/prj/tul/bin/tul`, the user launcher is stale. Resync it with:
-
-```bash
-tul install tul
-# or, if the PATH launcher is too old to know install:
-python ~/prj/tul/bin/tul install tul
-```
-
-Use `tul doctor tul` to compare the PATH launcher with the repo launcher.
-
-Use the full-loop command:
-
-```bash
-tul update
-```
-
-`update` infers the project from explicit target, current directory, active project, default project, or the only configured project. It then selects the newest matching package from configured inbox roots. The explicit forms remain valid:
-
-```bash
-tul update <project>
-tul update <project> --latest
-tul update <project> -l
-```
-
-`--latest` scans configured `platform.inbox_roots` and selects the newest package whose manifest matches the target project/repo/branch. It does **not** scan work/archive roots, because those can contain stale or already-applied copies.
-
-For an exact file path, use:
-
-```bash
-tul update <project> --package /path/to/package.zip
-```
-
-The update loop is expected to:
+Stage 7 uses a compact command surface. The canonical top-level commands are:
 
 ```text
-sync precheck
-→ import package
-→ validate manifest
-→ safe apply
-→ check
-→ sweep repo-local backups
-→ verify changed files
-→ stage intended files only
-→ staged check
-→ commit
-→ push
-→ verify remote HEAD
-→ print rollback instructions
-→ write report/state/handoff
-→ print compact LLM handoff
+tul show
+tul package
+tul update
+tul verify
+tul export
+tul run
+tul clean
+tul recover
+tul setup
 ```
 
-Split commands exist for debugging, recovery, and manual intervention. They must not replace the default full loop.
+There is no legacy alias layer in the canonical design. Folded names such as `state`, `status`, `handoff`, `current`, `projects`, `archive`, `rollback`, `apply`, `resume`, `publish`, `init`, `install`, and `use` are not user-facing commands. Their roles live under `show`, `clean`, `recover`, or `setup`.
 
+Normal use is:
 
+```bash
+cd ~/prj/tul
+
+tul package
+tul run
+```
+
+Stepwise use is:
+
+```bash
+tul package
+tul update
+tul export
+tul verify fresh
+tul show
+```
+
+Command boundaries:
+
+- `tul show` is read-only status output. Use `tul show exports` for source/review freshness.
+- `tul package` shows the newest matching package candidate.
+- `tul update` applies the package, runs checks, commits, pushes, and verifies remote HEAD. It does not create the full post-run evidence set.
+- `tul verify` is quick/local and stdout-first. It does not rewrite latest verify artifacts by default.
+- `tul verify fresh` performs fresh clone verification and writes `tul-vf-latest.md/json`.
+- `tul export` creates both source and review artifacts. `tul export source` and `tul export review` are available when only one artifact is needed.
+- `tul run` is the full Terminal Update Loop: package selection, update, export, fresh verify, and final show.
+- `tul clean` is plan-only by default; `tul clean ... run` performs guarded moves.
+- `tul recover` prints recovery plans by default and does not mutate the repo.
+- `tul setup` reports setup status by default; `tul setup init`, `tul setup install`, and `tul setup use` perform setup tasks.
+
+A successful `tul run` prepares the normal upload artifacts:
+
+```text
+/sdcard/termux/import/tul/tul-vf-latest.md
+/sdcard/termux/import/tul/tul-source-latest.zip
+/sdcard/termux/import/tul/tul-review-latest.zip
+```
 
 ## Package inbox hygiene
 
 Package discovery scans configured inbox roots, but shared folders such as `/sdcard/Download` are not tul-owned. Start with a dry-run:
 
 ```bash
-tul package hygiene
+tul clean packages
 ```
 
 Use ingest to move valid matching tul packages from shared roots into the tul project inbox:
 
 ```bash
-tul package hygiene --ingest
+tul clean packages run
 ```
 
 Use quarantine only for project-inbox cleanup candidates:
 
 ```bash
-tul package hygiene --quarantine
+tul clean packages run
 ```
 
 Unrelated zip files in shared Download roots are report-only even if they do not contain a root `tul-package.yml`. Hygiene moves files; it does not delete them.
@@ -220,7 +205,7 @@ The review bundle is not a backup and not a full source archive. It contains the
 
 ## Runtime facts
 
-Do not treat README text as proof that a package was applied or pushed. Runtime facts belong in `tul handoff` output:
+Do not treat README text as proof that a package was applied or pushed. Runtime facts belong in `tul show handoff` output:
 
 - commit hash;
 - push verified;
@@ -233,13 +218,13 @@ Do not treat README text as proof that a package was applied or pushed. Runtime 
 Use compact handoff by default:
 
 ```bash
-tul handoff tul
+tul show handoff tul
 ```
 
 Use full handoff only when the receiving LLM needs the protocol inline:
 
 ```bash
-tul handoff tul --full
+tul show handoff tul --full
 ```
 
 Print copy-ready project instructions with:
@@ -247,7 +232,7 @@ Print copy-ready project instructions with:
 ```bash
 tul instructions
 # or
-tul handoff tul --instructions
+tul show instructions tul
 ```
 
 ## Package contract
@@ -292,33 +277,33 @@ See [`docs/workflows/artifact-semantics.md`](docs/workflows/artifact-semantics.m
 State cleanup is dry-run first. Actual archive moves are currently limited to reviewed no-op selections:
 
 ```bash
-tul archive --noop --dry-run --keep 3
-tul archive --noop --keep 3
+tul clean states
+tul clean states run 3
 ```
 
 Latest and latest rollbackable state references are protected.
 
 ## Package hygiene note
 
-Package hygiene distinguishes shared external downloads from the tul project inbox. Use `tul package hygiene --ingest` to move valid matching tul packages into the project inbox, and reserve `--quarantine` for project-inbox cleanup candidates.
+Package hygiene distinguishes shared external downloads from the tul project inbox. Use `tul clean packages run` to move valid matching tul packages into the project inbox, and reserve `--quarantine` for project-inbox cleanup candidates.
 
 ## Export integrity status
 
-Use `tul export status` to inspect explicit source/review artifacts without changing the repo.
+Use `tul show exports` to inspect explicit source/review artifacts without changing the repo.
 
 ```bash
-tul export status
-tul export status --json
+tul show exports
+tul show exports --json
 ```
 
 The command is warning-only. It checks whether `tul-source-latest.zip` and `tul-review-latest.zip` are present, readable, and aligned with the current HEAD. It also reports small docs drift warnings. These warnings do not fail the release gate.
 
-After the post-update export automation package closes, normal `tul update` refreshes source/review exports automatically after commit, push, and fresh verification. Use these flags only for recovery/debug or constrained environments:
+After the post-update export automation package closes, normal `tul run` refreshes source/review exports automatically after commit, push, and fresh verification. Use these flags only for recovery/debug or constrained environments:
 
 ```bash
-tul update --no-export
-tul update --no-source-export
-tul update --no-review-export
+tul run --no-export
+tul run --no-export
+tul run --no-export
 ```
 
 If an export is intentionally skipped or fails warning-only, refresh source context manually with:

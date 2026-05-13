@@ -38,7 +38,7 @@ Status: accepted
 
 Context: Repeated package path variables and long absolute paths keep the user in bridge-work mode.
 
-Decision: Normal package application should use configured inbox roots and `tul update <project> -l`.
+Decision: Normal package application should use configured inbox roots and `tul run <project> -l`.
 
 Consequences: `--package PATH` remains for exact targeting and recovery, but docs should prefer `-l` until native no-arg update is safe.
 
@@ -60,7 +60,7 @@ Consequences: New packages should update the appropriate planning layer, not bli
 
 Status: accepted
 
-Context: The desired UX is moving from `tul update tul -l` to `tul update`, but active project and current directory can conflict.
+Context: The desired UX is moving from `tul update tul -l` to `tul run`, but active project and current directory can conflict.
 
 Decision: Native context must infer target only when safe. Mutating commands must stop on conflict and present choices. Read-only commands may warn and prefer current-directory context.
 
@@ -100,7 +100,7 @@ Consequences: The user can upload one short, unique markdown artifact without lo
 
 Status: accepted
 
-Context: Repeating project names and long flags preserves bridge work. However, changing commands such as `tul update` can damage the wrong repo if active project, current directory, and package manifest disagree.
+Context: Repeating project names and long flags preserves bridge work. However, changing commands such as `tul run` can damage the wrong repo if active project, current directory, and package manifest disagree.
 
 Decision: Implement native context in stages. First store active context. Then allow no-arg read-only commands and `tul verify fresh`. Only later allow no-arg mutating commands with conflict guards and package-target mismatch guidance.
 
@@ -111,19 +111,19 @@ Consequences: Users get shorter safe commands early, while update/import/rollbac
 
 Status: accepted
 
-Context: The project is reducing repeated target and package flags. `tul update` is the desired native command, but silent inference would make it harder to audit which project is being changed.
+Context: The project is reducing repeated target and package flags. `tul run` is the desired native command, but silent inference would make it harder to audit which project is being changed.
 
 Decision: No-arg mutating commands may infer the project only when context is unambiguous. They must print a target inference banner and must abort when active project and current-directory project conflict.
 
-Consequences: `tul update`, `tul import`, and `tul rollback` can be short in the common case while preserving inspectability and user authority. Package-target mismatch guidance remains the next safety layer.
+Consequences: `tul run`, `tul update dry`, and `tul recover rollback` can be short in the common case while preserving inspectability and user authority. Package-target mismatch guidance remains the next safety layer.
 
 ## ADR-008 — Package mismatch guidance belongs in discovery, not only update failure
 
 Status: accepted
 
-Context: With native `tul update`, users should not manually infer whether a downloaded package targets the active project.
+Context: With native `tul run`, users should not manually infer whether a downloaded package targets the active project.
 
-Decision: Package discovery classifies matching, incompatible, and invalid archives. `tul package latest/list` expose the classification, and update failure messages include concrete next commands.
+Decision: Package discovery classifies matching, incompatible, and invalid archives. `tul package/list` expose the classification, and update failure messages include concrete next commands.
 
 Consequences: Normal package selection remains safe and manifest-driven while reducing user-side file inspection.
 
@@ -131,9 +131,9 @@ Consequences: Normal package selection remains safe and manifest-driven while re
 
 Status: accepted
 
-Context: `tul update` already applies, checks, commits, pushes, verifies remote HEAD, reports rollback, and prints handoff. Requiring a separate `tul verify fresh` command after every successful update keeps the user as a log-transport bridge.
+Context: `tul run` already applies, checks, commits, pushes, verifies remote HEAD, reports rollback, and prints handoff. Requiring a separate `tul verify fresh` command after every successful update keeps the user as a log-transport bridge.
 
-Decision: In the normal full-loop path, `tul update` runs a post-update fresh verification gate after publish/no-op handling. It writes the same markdown/json verify artifacts as `tul verify fresh`, prints a compact PASS/FAIL summary, and records artifact paths in report, state, and handoff. Debug paths such as `--no-commit` or `--no-push` do not run the automatic fresh gate because the remote may intentionally not reflect local changes. `--no-verify` remains available as an exception.
+Decision: In the normal full-loop path, `tul run` runs a post-update fresh verification gate after publish/no-op handling. It writes the same markdown/json verify artifacts as `tul verify fresh`, prints a compact PASS/FAIL summary, and records artifact paths in report, state, and handoff. Debug paths such as `--no-commit` or `--no-push` do not run the automatic fresh gate because the remote may intentionally not reflect local changes. `--no-verify` remains available as an exception.
 
 Consequences: The default self-host loop becomes one command shorter. The output order preserves user authority: update report first, commit/push/rollback visibility, fresh verification gate second, LLM handoff last.
 
@@ -154,7 +154,7 @@ Status: accepted
 
 Context: The update-integrated verify gate modifies the update pipeline itself. Its installation required one manual post-install verification because the old process could not use the new pipeline code while still running.
 
-Decision: Before starting larger parallel bundles, run one docs-only smoke package with normal `tul update`. The smoke passes only if commit, push, post-update fresh verify, latest artifact update, and handoff generation all succeed in one command.
+Decision: Before starting larger parallel bundles, run one docs-only smoke package with normal `tul run`. The smoke passes only if commit, push, post-update fresh verify, latest artifact update, and handoff generation all succeed in one command.
 
 Consequences: Parallel work starts from a proven one-command loop rather than from an assumed loop. The smoke package is intentionally docs-only to isolate runtime behavior from unrelated code changes.
 
@@ -164,7 +164,7 @@ Status: accepted
 
 Context: Update state files are essential for rollback, diagnosis, and handoff review, but the default state output became too verbose for the normal self-host loop. No-op and imported states can also be newer than the latest rollbackable commit.
 
-Decision: `tul state` defaults to a compact decision view showing the latest state, latest rollbackable commit, key artifacts, cleanup suggestion, and explicit commands for full history. `tul state --all` preserves the long state summaries, and `tul state --json` preserves machine-readable state output.
+Decision: `tul show` defaults to a compact decision view showing the latest state, latest rollbackable commit, key artifacts, cleanup suggestion, and explicit commands for full history. `tul show --all` preserves the long state summaries, and `tul show --json` preserves machine-readable state output.
 
 Consequences: Routine inspection becomes shorter without losing diagnostic depth. Rollbackability remains visible even when the newest state is a no-op, imported, failed, or otherwise non-rollbackable state.
 
@@ -184,7 +184,7 @@ Status: accepted
 
 Context: Work state directories accumulate during self-host testing. They are clutter, but they also contain reports, handoffs, state files, and rollback evidence. A compact state view can suggest cleanup, but it should not encourage an unreviewed move as the first action.
 
-Decision: State cleanup guidance starts with `tul archive --noop --dry-run --keep N`. Archive output should show inventory, selected cleanup class, keep count, source and destination directories, and latest/latest-rollbackable reference states. Omitted project targets may use guarded native context, matching other mutating commands. Actual moves require an explicit rerun without `--dry-run`.
+Decision: State cleanup guidance starts with `tul clean states --noop --dry-run --keep N`. Archive output should show inventory, selected cleanup class, keep count, source and destination directories, and latest/latest-rollbackable reference states. Omitted project targets may use guarded native context, matching other mutating commands. Actual moves require an explicit rerun without `--dry-run`.
 
 Consequences: Users can reduce work-state clutter without losing inspection authority. Cleanup remains reversible in the sense that state directories are moved to the configured archive root rather than deleted. Automatic deletion and archive pruning are deferred.
 
@@ -194,7 +194,7 @@ Status: accepted
 
 Context: Compact handoff and verify artifacts reduce bridge work, but a fresh LLM session can still ask for too much evidence or start from the wrong document. Expanding terminal handoff into a large prompt would reintroduce clutter and make every update harder to read.
 
-Decision: Keep handoff compact and add a repo-resident post-update review guide. Compact handoff, README, the LLM entrypoint, and the handoff protocol should all point to the same review path. `tul-vf-latest.md` is the normal release-gate evidence; `tul state` is requested only for state-sensitive behavior; a current repo zip is requested when producing the next package or diagnosing code-level failures.
+Decision: Keep handoff compact and add a repo-resident post-update review guide. Compact handoff, README, the LLM entrypoint, and the handoff protocol should all point to the same review path. `tul-vf-latest.md` is the normal release-gate evidence; `tul show` is requested only for state-sensitive behavior; a current repo zip is requested when producing the next package or diagnosing code-level failures.
 
 Consequences: Fresh LLM sessions can review successful updates with less user bridge work while still finding the correct repo documents when implementation is needed. Future discoverability improvements should add or refine repo pointers before increasing terminal output size.
 
@@ -209,7 +209,7 @@ Accepted rule:
 - Generate packages from the latest verified HEAD and current repo zip.
 - Declare expected changed files, excluded files, acceptance criteria, and a Green/Yellow/Orange/Red class.
 - Serialize whenever candidate bundles share runtime files or change verify/update/pipeline/rollback/archive move/push behavior.
-- Apply packages one at a time through `tul update` and close each with `tul-vf-latest.md`.
+- Apply packages one at a time through `tul run` and close each with `tul-vf-latest.md`.
 
 Reflected in: `docs/workflows/parallel-readiness.md`, `docs/llm/post-update-review.md`, `docs/checklists/loop-runtime.md`, and compact handoff read-next pointers.
 
@@ -218,9 +218,9 @@ Reflected in: `docs/workflows/parallel-readiness.md`, `docs/llm/post-update-revi
 
 Status: accepted
 
-Context: Timestamped verify artifacts already preserve historical runs by date and commit hash. The stable latest artifact is operationally a current pointer for review and upload, not the archival record. Keeping it under `logs/verify/` made the user select files from different directories than `tul-main.zip`, and separate `tul state` / `tul handoff` pastes kept bridge work high.
+Context: Timestamped verify artifacts already preserve historical runs by date and commit hash. The stable latest artifact is operationally a current pointer for review and upload, not the archival record. Keeping it under `logs/verify/` made the user select files from different directories than `tul-main.zip`, and separate `tul show` / `tul show handoff` pastes kept bridge work high.
 
-Decision: Write stable `tul-vf-latest.md/json` directly under the tul import root beside `tul-main.zip`. Keep timestamped run artifacts under `logs/verify/YYMMDD/`. Include compact `tul state` and `tul handoff` snapshots in the latest markdown. During `tul update`, rewrite the verify markdown after final handoff-ready state is recorded so snapshots reflect the just-published package.
+Decision: Write stable `tul-vf-latest.md/json` directly under the tul update dry root beside `tul-main.zip`. Keep timestamped run artifacts under `logs/verify/YYMMDD/`. Include compact `tul show` and `tul show handoff` snapshots in the latest markdown. During `tul run`, rewrite the verify markdown after final handoff-ready state is recorded so snapshots reflect the just-published package.
 
 Consequences: A normal successful post-update review can use one uploaded markdown file. Historical verify runs remain available by date/hash. Legacy `tul-verify-latest.*` aliases remain forbidden.
 
@@ -229,9 +229,9 @@ Consequences: A normal successful post-update review can use one uploaded markdo
 
 Status: accepted
 
-Context: The canonical latest verify markdown/json pair now lives under the tul import root. During the bootstrap update that introduced this layout, the handoff-ready state may still record the former `logs/verify/<project>-vf-latest.md` location. That stale pointer is confusing because the latest upload artifact itself is already correct.
+Context: The canonical latest verify markdown/json pair now lives under the tul update dry root. During the bootstrap update that introduced this layout, the handoff-ready state may still record the former `logs/verify/<project>-vf-latest.md` location. That stale pointer is confusing because the latest upload artifact itself is already correct.
 
-Decision: Compact `tul state` should display the current import-root latest verify path when a stored state value is recognizably the stale `logs/verify/<project>-vf-latest.md` pointer. Timestamped run artifacts remain unchanged and are still shown by verify artifact metadata.
+Decision: Compact `tul show` should display the current import-root latest verify path when a stored state value is recognizably the stale `logs/verify/<project>-vf-latest.md` pointer. Timestamped run artifacts remain unchanged and are still shown by verify artifact metadata.
 
 Consequences: The user can rely on `tul-vf-latest.md` and `tul-main.zip` living side by side in the import root, while historical run artifacts remain under `logs/verify/YYMMDD/`. This is a display alignment rule, not a history rewrite.
 
@@ -242,7 +242,7 @@ Status: superseded by ADR-022 and ADR-023
 
 Context: The latest verify markdown now lives beside `tul-main.zip` and includes compact state/handoff snapshots. Package generation still needs a current repo zip, and asking the user to manually recreate it after every successful update keeps one avoidable human bridge step in the loop.
 
-Decision: After a successful full `tul update` with commit, push, and fresh verify passing, tul writes a stable repo zip export to `/sdcard/termux/import/tul/tul-main.zip`. The export is a latest pointer, not history. It excludes Git metadata, caches, build outputs, dependency directories, existing zip files, backup files, and transient roots. Export status is recorded in the handoff-ready state.
+Decision: After a successful full `tul run` with commit, push, and fresh verify passing, tul writes a stable repo zip export to `/sdcard/termux/import/tul/tul-main.zip`. The export is a latest pointer, not history. It excludes Git metadata, caches, build outputs, dependency directories, existing zip files, backup files, and transient roots. Export status is recorded in the handoff-ready state.
 
 Consequences: The next package-generation session normally needs only the side-by-side pair `tul-vf-latest.md` and `tul-main.zip`. If repo zip export fails after the release gate passed, the failure is visible in state/runtime snapshots but does not retroactively make the release gate fail.
 
@@ -293,13 +293,13 @@ Status: accepted
 
 Context: Archive dry-run output can safely inspect no-op, imported, failed, latest, and broad selections. Actual movement is different: state directories are runtime evidence for rollback, debugging, and handoff. The first execution-safety bundle should reduce clutter without weakening rollback or diagnosis authority.
 
-Decision: Actual `tul archive` move mode requires an explicit selector and is limited to `--noop` selections. Default/latest archive without a selector is refused in move mode. Imported, failed, mixed, and `--all` archive selectors remain dry-run-only until separate policy bundles authorize them. The archive engine skips latest and latest rollbackable reference states even when selected. Successful moves record an `archive_last_run` summary in the latest remaining state.
+Decision: Actual `tul clean states` move mode requires an explicit selector and is limited to `--noop` selections. Default/latest archive without a selector is refused in move mode. Imported, failed, mixed, and `--all` archive selectors remain dry-run-only until separate policy bundles authorize them. The archive engine skips latest and latest rollbackable reference states even when selected. Successful moves record an `archive_last_run` summary in the latest remaining state.
 
-Consequences: Users can safely run `tul archive --noop --keep 3` after reviewing `tul archive --noop --dry-run --keep 3`. Broader cleanup remains possible to inspect, but cannot silently move important state evidence.
+Consequences: Users can safely run `tul clean states run 3` after reviewing `tul clean states`. Broader cleanup remains possible to inspect, but cannot silently move important state evidence.
 
 ## Decision: package inbox hygiene uses quarantine, not deletion
 
-Accepted for K2. `tul package hygiene` defaults to dry-run and selects only invalid archives plus older duplicate matching package archives. `--quarantine` moves selected files under a package-quarantine root. It does not delete files and does not quarantine incompatible packages by default.
+Accepted for K2. `tul clean packages` defaults to dry-run and selects only invalid archives plus older duplicate matching package archives. `--quarantine` moves selected files under a package-quarantine root. It does not delete files and does not quarantine incompatible packages by default.
 
 ## Decision: shared Download is not tul-owned storage
 
@@ -326,7 +326,7 @@ Status: accepted
 
 Context: Stage 6 closed with a verified stabilization checkpoint, explicit review bundle export, cleanup safety, and package inbox hygiene. The next pressure is not another immediate runtime change but coordination: manifest, strategy, roadmap, status, checklists, learning log, decisions, artifact semantics, and parallel-readiness must agree before several candidate workstreams are planned.
 
-Decision: Open Stage 7 with one large planning consolidation package. The package may touch many coordination documents in one commit, but it must exclude runtime behavior changes. Stage 7 permits parallel planning and comparison of candidate bundles, while actual package application remains sequential through `tul update` and closes with `tul-vf-latest.md`.
+Decision: Open Stage 7 with one large planning consolidation package. The package may touch many coordination documents in one commit, but it must exclude runtime behavior changes. Stage 7 permits parallel planning and comparison of candidate bundles, while actual package application remains sequential through `tul run` and closes with `tul-vf-latest.md`.
 
 Consequences: The first Stage 7 package is Yellow because it owns coordination docs. Subsequent packages must classify themselves as Green, Yellow, Orange, or Red and serialize whenever they share coordination files, runtime files, artifact semantics, or acceptance gates.
 
@@ -377,8 +377,23 @@ Consequences: `tul export source` is now a runnable explicit command after this 
 
 Status: accepted
 
-Context: After explicit source export and export integrity checks closed, `tul export status` could correctly detect stale source/review bundles after an update. That proved the artifact model but still required the user to manually refresh source/review transport artifacts after each successful update.
+Context: After explicit source export and export integrity checks closed, `tul show exports` could correctly detect stale source/review bundles after an update. That proved the artifact model but still required the user to manually refresh source/review transport artifacts after each successful update.
 
 Decision: Run source and review export as a post-update phase after successful commit, push, and fresh verification. The phase records `source_bundle_export`, `review_bundle_export`, and `post_update_exports` metadata, appends export outcome sections to report/handoff artifacts, and refreshes latest verify runtime snapshots. Export failures remain warning-only and must not alter release-gate, commit, push, or rollback facts.
 
 Consequences: The normal self-host loop should leave `tul-source-latest.zip` and `tul-review-latest.zip` current after successful updates. Recovery/debug runs can use `--no-export`, `--no-source-export`, or `--no-review-export`. Zip artifacts remain transport artifacts, not backup or recovery authority.
+
+## ADR-032 — Canonical command surface without legacy aliases
+
+Status: accepted
+
+Decision: Stage 7 uses a compact canonical CLI surface: `show`, `package`, `update`, `verify`, `export`, `run`, `clean`, `recover`, and `setup`. Legacy top-level names are not preserved as canonical aliases in this design phase.
+
+Rationale: The prior command surface leaked internal concepts into user commands. In particular, `export status` was a status reader placed under an artifact-producing namespace. The new design separates read-only status (`show`), artifact creation (`export`), package publishing (`update`), and full orchestration (`run`).
+
+Consequences:
+- `update` is narrowed to package application, commit, push, and remote-HEAD check.
+- `run` becomes the default full-loop command.
+- `verify` is quick/local by default; `verify fresh` writes uploadable verify artifacts.
+- `export` creates files only.
+- `show exports` inspects source/review freshness.

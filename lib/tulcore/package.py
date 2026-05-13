@@ -248,8 +248,8 @@ def _format_no_match_error(global_config: dict, *, project: str, repo: str | Non
     lines.append("- download a package whose tul-package.yml target matches this project/repo/branch")
     lines.append("- run: tul package list <project>")
     lines.append("- run: tul package inspect <package.zip>")
-    lines.append("- run: tul package check <package.zip> --target <project>")
-    lines.append("- use an explicit compatible package: tul update <project> --package <package.zip>")
+    lines.append("- run: tul package check <package.zip> <project>")
+    lines.append("- use an explicit compatible package: tul update <package.zip>")
     return "\n".join(lines)
 
 

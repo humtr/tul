@@ -3,7 +3,7 @@
 Before accepting a package:
 
 ```bash
-tul package latest
+tul package
 tul package check /sdcard/Download/<package>.zip --target tul
 tul update
 # If the package modifies verify.py and the immediate post-update artifact still uses the old bootstrap layout:
@@ -22,9 +22,9 @@ tul verify tul --fresh-clone
 For package authoring:
 
 ```bash
-tul package scaffold NAME --target tul --message "Commit message"
+tul package new NAME --target tul --message "Commit message"
 tul package add NAME --target tul FILE [FILE...]
-tul package summary NAME
+tul package show NAME
 tul package zip NAME --out /sdcard/Download/NAME.zip --force
 tul package check /sdcard/Download/NAME.zip --target tul
 ```
@@ -41,8 +41,8 @@ Before update, package check should catch:
 
 Invariants:
 
-- `tul update` pushes by default.
-- `-l` / `--latest` selects from configured inbox roots only.
+- `tul run` pushes by default.
+- No-argument `tul package`, `tul update`, and `tul run` select from configured inbox roots only.
 - No `git add -A` or `git add .` in the normal path.
 - No force push.
 - Repo policy belongs in `.tul.yml`.
@@ -82,26 +82,26 @@ Invariants:
 
 ## Native context checkpoint
 
-- [x] `tul use tul` writes an active project context file.
-- [x] `tul current` reports active/default/current-directory context.
-- [x] `tul projects` marks active/default projects.
+- [x] `tul setup use tul` writes an active project context file.
+- [x] `tul show config` reports active/default/current-directory context.
+- [x] `tul show projects` marks active/default projects.
 - [x] `tul doctor tul` reports runtime context.
-- [x] `tul use tul --default` safely updates global `default_project`.
-- [x] No-arg `tul update` is available with guarded mutating-command inference.
+- [x] `tul setup use tul --default` safely updates global `default_project`.
+- [x] No-arg `tul run` is available with guarded mutating-command inference.
 
 ## Native context checks
 
-- [x] `tul use <project>` stores an active project.
-- [x] `tul current` shows active/default/current-directory context.
+- [x] `tul setup use <project>` stores an active project.
+- [x] `tul show config` shows active/default/current-directory context.
 - [x] Read-only commands can infer the project target when safe.
 - [x] `tul verify fresh` is accepted as shorthand for `--fresh-clone`.
 - [x] Mutating commands stop on active/cwd context conflict.
-- [x] `tul update` can safely infer project and latest package.
+- [x] `tul run` can safely infer project and latest package.
 - [x] Package manifest mismatch guidance explains incompatible zip targets.
 
 ## Package guidance checkpoint
 
-- [x] `tul package latest` displays selected matching package and selection reason.
+- [x] `tul package` displays selected matching package and selection reason.
 - [x] Incompatible package targets are shown when present.
 - [x] Invalid archives without readable root `tul-package.yml` are ignored with a reason.
 - [x] No-match errors provide next command options.
@@ -110,19 +110,19 @@ Invariants:
 
 - [x] Update-integrated verify gate is installed.
 - [x] Handoff compatibility hotfix is installed.
-- [x] A normal docs-only smoke package proves `tul update` can apply, commit, push, run post-update `verify fresh`, write `tul-vf-latest.md`, and generate handoff in one command.
-- [x] Normal `tul update` prints update report before verify/handoff.
-- [x] Normal `tul update` shows commit, push verification, and rollback before the verify gate.
-- [x] Normal `tul update` runs post-update `verify fresh` unless `--no-verify`, `--no-commit`, or `--no-push` applies.
+- [x] A normal docs-only smoke package proves `tul run` can apply, commit, push, run post-update `verify fresh`, write `tul-vf-latest.md`, and generate handoff in one command.
+- [x] Normal `tul run` prints update report before verify/handoff.
+- [x] Normal `tul run` shows commit, push verification, and rollback before the verify gate.
+- [x] Normal `tul run` runs post-update `verify fresh` unless `--no-verify`, `--no-commit`, or `--no-push` applies.
 - [x] Report, state, and handoff include verify gate result and artifact paths.
 - [x] If the post-update verify gate fails, terminal output is still printed and the command exits non-zero.
 
 ## State output checkpoint
 
-- [x] Default `tul state` is compact decision output.
-- [x] Default `tul state` shows latest state and latest rollbackable commit separately.
-- [x] `tul state --all --limit 5` preserves full state summaries.
-- [x] `tul state --json` preserves machine-readable output.
+- [x] Default `tul show` is compact decision output.
+- [x] Default `tul show` shows latest state and latest rollbackable commit separately.
+- [x] `tul show history 5` preserves full state summaries.
+- [x] `tul show --json` preserves machine-readable output.
 - [x] Compact state output includes cleanup guidance for no-op/imported state clutter.
 
 ## Package authoring diagnostics checkpoint
@@ -136,9 +136,9 @@ Invariants:
 
 ## Archive cleanup dry-run checkpoint
 
-- [x] `tul state` cleanup guidance points to dry-run before moving files.
-- [x] `tul archive` accepts omitted target through guarded native context.
-- [x] `tul archive --noop --dry-run --keep 3` prints inventory counts.
+- [x] `tul show` cleanup guidance points to dry-run before moving files.
+- [x] `tul clean states` accepts omitted target through guarded native context.
+- [x] `tul clean states` prints inventory counts.
 - [x] Archive dry-run output shows source and archive destination directories.
 - [x] Archive dry-run output identifies latest and latest rollbackable reference states.
 - [x] Actual state moves require re-running without `--dry-run`.
@@ -154,7 +154,7 @@ Invariants:
 - [x] Compact handoff includes `docs/llm/post-update-review.md` in read-next pointers.
 - [x] Handoff protocol separates runtime facts from durable repo guidance.
 - [x] Post-update review guidance states when `tul-vf-latest.md` is sufficient.
-- [x] Post-update review guidance states when `tul state` is needed.
+- [x] Post-update review guidance states when `tul show` is needed.
 - [x] Post-update review guidance states when source context is needed.
 
 ## Parallel readiness checkpoint
@@ -166,24 +166,24 @@ Invariants:
 - [x] Verify/update/pipeline/rollback/archive move/push behavior changes force serialization.
 - [x] Post-update review guidance requires next-bundle readiness classification.
 - [x] Compact handoff points fresh sessions to the parallel-readiness guide.
-- [x] Packages are still applied one at a time through `tul update` and closed with `tul-vf-latest.md`.
+- [x] Packages are still applied one at a time through `tul run` and closed with `tul-vf-latest.md`.
 
 
 ## Import-root latest snapshot checkpoint
 
-- [x] Stable latest verify markdown/json live in the tul import root, possibly beside manually supplied source-context archives.
+- [x] Stable latest verify markdown/json live in the tul update dry root, possibly beside manually supplied source-context archives.
 - [x] Timestamped run artifacts remain under `logs/verify/YYMMDD/`.
 - [x] Latest markdown includes `## Runtime snapshots`.
-- [x] Latest markdown includes compact `tul state`.
-- [x] Latest markdown includes compact `tul handoff`.
-- [x] `tul update` rewrites the markdown artifact after final handoff-ready state is recorded.
+- [x] Latest markdown includes compact `tul show`.
+- [x] Latest markdown includes compact `tul show handoff`.
+- [x] `tul run` rewrites the markdown artifact after final handoff-ready state is recorded.
 - [x] Legacy `tul-verify-latest.*` aliases remain absent.
 
 
 ## State verify path alignment
 
-- [x] `tul state` shows `/sdcard/termux/import/tul/tul-vf-latest.md` as the verify artifact when a latest verify artifact is available.
-- [x] `tul-vf-latest.md` runtime snapshot `### tul state` shows the same import-root latest path.
+- [x] `tul show` shows `/sdcard/termux/import/tul/tul-vf-latest.md` as the verify artifact when a latest verify artifact is available.
+- [x] `tul-vf-latest.md` runtime snapshot `### tul show` shows the same import-root latest path.
 - [x] Timestamped run artifacts remain under `/sdcard/termux/import/tul/logs/verify/YYMMDD/`.
 - [x] No legacy `tul-verify-latest.*` artifacts are generated.
 
@@ -198,7 +198,7 @@ Invariants:
 ## Artifact semantics checkpoint
 
 - [x] `tul-vf-latest.md` is the canonical post-update release-gate artifact.
-- [x] Runtime snapshots in latest verify markdown reduce the need to paste `tul state` and `tul handoff`.
+- [x] Runtime snapshots in latest verify markdown reduce the need to paste `tul show` and `tul show handoff`.
 - [x] Timestamped verify runs remain under `logs/verify/YYMMDD/`.
 - [x] Zip artifacts are transport artifacts, not backups.
 - [x] Automatic `tul-main.zip` export is not considered closed.
@@ -215,22 +215,22 @@ Invariants:
 - [x] Review bundle includes copies of changed files only under `files/`.
 - [x] Review bundle is documented as a transport artifact, not a backup.
 - [x] Review export remains separate from verify and update until explicit command behavior is verified.
-- [x] Review export metadata is visible in `tul state` after `tul export review`.
+- [x] Review export metadata is visible in `tul show` after `tul export review`.
 - [x] Review export refreshes `tul-vf-latest.md` runtime snapshots after explicit export.
 
 ## Package inbox hygiene checkpoint
 
-- [x] `tul package hygiene` exists as a dry-run command.
+- [x] `tul clean packages` exists as a dry-run command.
 - [x] Invalid archives are identified with reasons.
 - [x] Older duplicate matching packages are selected while the newest matching archive per package name is kept.
-- [x] `tul package hygiene --quarantine` moves selected archives instead of deleting them.
+- [x] `tul clean packages run` moves selected archives instead of deleting them.
 - [x] Incompatible package quarantine remains deferred.
 
 ## Package hygiene checklist
 
-- Run `tul package hygiene` before moving package archives.
-- Use `tul package hygiene --ingest` only for valid matching tul packages outside the project inbox.
-- Use `tul package hygiene --quarantine` only after confirming project-inbox cleanup candidates.
+- Run `tul clean packages` before moving package archives.
+- Use `tul clean packages run` only for valid matching tul packages outside the project inbox.
+- Use `tul clean packages run` only after confirming project-inbox cleanup candidates.
 - Do not quarantine unrelated shared Download files.
 
 ## Stage 6 stabilization checkpoint
@@ -274,4 +274,4 @@ Invariants:
 
 ## Export integrity checkpoint
 
-`tul export status` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul update` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
+`tul show exports` is the warning-only inspection surface for source/review export freshness and small docs drift checks. It may be run manually or captured in verify snapshots. After the post-update export automation package closes, normal `tul run` should leave source/review artifacts current; stale/missing/invalid artifacts remain warnings, not release-gate failures.
