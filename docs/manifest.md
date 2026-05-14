@@ -68,6 +68,16 @@ Ownership:
 
 A command name may appear in multiple files for orientation, but the ownership table decides which file carries the authoritative explanation.
 
+## Launcher/bootstrap model
+
+Launcher installation belongs to the canonical `setup` command namespace. Fresh devices should bootstrap with:
+
+```bash
+python3 bin/tul setup install
+```
+
+There is no legacy top-level `install` command. Platform install scripts must call `setup install`, and launcher diagnostics belong to `lib/tulcore/launcher.py`, not ad-hoc script logic.
+
 ## Package contract
 
 The package contract is owned by `docs/package-spec.md`.

@@ -1,13 +1,13 @@
 # current status
 
-Status: Macro Stage A v7 is in progress via `tul-macro-stage-a-head-tag-canonical-v7`.
+Status: Macro Stage A v8 is in progress via `tul-macro-stage-a-launcher-setup-hygiene-v8`.
 
 Baseline before this package:
 
 ```text
-HEAD: ddb0cdde0bebf435b6402c29b41c672a0aefeb5b
-Remote HEAD: ddb0cdde0bebf435b6402c29b41c672a0aefeb5b
-Latest package: tul-macro-stage-a-head-only-upload-root-v6
+HEAD: 5c622640acc3458b946f4e1f09e976807b06d40b
+Remote HEAD: 5c622640acc3458b946f4e1f09e976807b06d40b
+Latest package: tul-macro-stage-a-head-tag-canonical-v7
 Release gate: PASS
 CLI runtime smoke: PASS
 Regression tests: PASS
@@ -19,23 +19,29 @@ Warnings: none
 
 ## Objective
 
-Make head-tagged artifacts the only current upload artifacts. The canonical upload set is:
+Close the launcher/setup hygiene debt exposed by a fresh Termux tablet clone where `tul` was not available on `PATH` after `git pull --ff-only`.
+
+This package makes `tul setup install` the canonical launcher installation path and removes the stale top-level `install` call from platform scripts.
+
+## Launcher policy
 
 ```text
-tul-source-<head7>.zip
-tul-review-<head7>.zip
-tul-vf-<head7>.md
+Canonical setup command: python3 bin/tul setup install [target]
+Installed launcher: ~/bin/tul on POSIX/Termux, ~/bin/tul.cmd on Windows
+No legacy top-level install command exists.
 ```
 
-No root-level `latest` transport or verify files should be produced or displayed as current evidence. Verify JSON remains a dated run-log artifact only.
+On POSIX/Termux, `setup install` may idempotently add this line to `~/.profile` so future shells can find `tul`:
 
-## Upload inbox policy
+```bash
+export PATH="$HOME/bin:$PATH"
+```
 
-The import root is a head-tagged human upload inbox. It should show only the current commit-named upload artifacts at the root. Dated archival copies remain under `logs/source/YYMMDD`, `logs/review/YYMMDD`, and `logs/verify/YYMMDD`.
+The current shell may still require:
 
-## Package intake policy
-
-Shared Download roots are intake-only. If a valid selected package is found in a shared external inbox such as `/sdcard/Download`, `tul run` copies it to the work directory and then moves the original archive into the project-owned inbox under the import root. Packages already under the project import root are not moved again.
+```bash
+. ~/.profile && hash -r
+```
 
 ## Active read-next set
 
@@ -55,4 +61,4 @@ tul package
 tul run
 ```
 
-Expected result: the final screen says `Decision: PASS`, source/review/vf head-tagged upload files are shown, root `latest` files are absent, release gate PASS, source/review current, docs drift clean, and warnings none.
+Expected result: the final screen says `Decision: PASS`, release gate PASS, CLI runtime smoke PASS, regression tests PASS, source/review current, docs drift clean, warnings none, and head-tagged upload files are printed.

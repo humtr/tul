@@ -6,7 +6,7 @@ Stage 8 document compaction is closed. Stage 9A review/current-HEAD export harde
 
 ## Macro Stage A — one-run verified upload loop
 
-Active package: `tul-macro-stage-a-head-tag-canonical-v7`.
+Active package: `tul-macro-stage-a-launcher-setup-hygiene-v8`.
 
 Goal: make one `tul run` invocation enough for normal package application, export, release verification, regression testing, and upload selection. The last screen should be sufficient for user decision-making.
 
@@ -46,6 +46,14 @@ Artifacts: source=current; review=current; docs=clean; warnings=none; upload=rea
 
 The import root should contain the three head-tagged upload files for the current HEAD. Dated archives remain under `logs/source`, `logs/review`, and `logs/verify`.
 
+### Macro Stage A launcher/setup hygiene
+
+- extract launcher installation and diagnostics from `cli.py` into `lib/tulcore/launcher.py`;
+- make `tul setup install` the only launcher installation command;
+- update platform install scripts to call `setup install`;
+- make POSIX/Termux launcher setup idempotently prepare `~/bin` and future-shell PATH wiring;
+- add regression coverage so install scripts cannot drift back to legacy top-level `install`.
+
 ## Next macro candidates
 
 ### Macro Stage B — pipeline and artifact schema consolidation
@@ -70,3 +78,4 @@ The import root should contain the three head-tagged upload files for the curren
 - v5: shared Download roots are intake-only; selected packages move into the project-owned inbox.
 - v6: root upload aliases are head-tagged and old head aliases are pruned.
 - v7: head-tagged artifacts become canonical; latest-named root artifacts are not current evidence.
+- v8: launcher/setup hygiene removes the stale top-level install path and makes `setup install` the canonical bootstrap command.

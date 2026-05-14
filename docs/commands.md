@@ -131,3 +131,15 @@ tul setup use
 ```
 
 `setup` without arguments is status-only. Setup subcommands are explicit setup actions.
+
+On a fresh Termux/Unix device where `tul` is not yet on `PATH`, bootstrap from the repo with:
+
+```bash
+cd ~/prj/tul
+python3 bin/tul setup install
+. ~/.profile 2>/dev/null || true
+hash -r
+tul show exports
+```
+
+There is no top-level `tul install` command. Platform install scripts must call `setup install`.

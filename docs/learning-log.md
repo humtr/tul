@@ -514,3 +514,11 @@ Observation: Keeping both head-tagged artifacts and latest-named artifacts prese
 Lesson: During active development, head-tagged artifacts should be the artifact authority. `latest` names are not needed for manual upload and should not remain as compatibility surface in the import root.
 
 Action: Macro Stage A v7 makes source, review, and verify upload artifacts head-tag canonical and keeps verify JSON in dated logs only.
+
+## Macro Stage A v8 — Launcher setup must be part of the canonical command surface
+
+Observation: A repo can be fully synced while the device shell cannot find `tul`; this is not a Git state problem but a launcher/PATH bootstrap problem.
+
+Lesson: Platform install scripts must call the canonical command surface. Leaving old top-level commands in scripts is structural debt because it fails exactly on fresh devices.
+
+Action: Move launcher installation helpers out of `cli.py`, update platform scripts to use `tul setup install`, and test the scripts so they cannot drift back to a removed command.

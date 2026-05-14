@@ -542,3 +542,11 @@ Context: Macro Stage A made commit-tagged upload artifacts available, but earlie
 Decision: The canonical upload artifacts are `tul-source-<head7>.zip`, `tul-review-<head7>.zip`, and `tul-vf-<head7>.md`. Root-level latest-named source, review, verify markdown, and verify JSON artifacts are not produced or displayed as current evidence. Verify JSON remains available only as a dated run-log artifact unless explicitly requested.
 
 Consequences: The user uploads exactly three head-tagged files from the import root. Review bundles include head-tagged verify markdown evidence, not a latest-named verify entry. Any future automation should consume state metadata or dated JSON logs instead of root latest files.
+
+## ADR-MacroA-v8 — Launcher setup uses only the canonical setup command
+
+Context: A fresh Termux tablet clone could have a correct repo and synced `main` branch while the shell still reported `No command tul found`. The repo already had `tul setup install`, but platform install scripts still called a removed top-level `install` command and launcher helpers lived inside `cli.py`, making the setup surface easy to drift.
+
+Decision: Extract launcher installation and diagnostics to `lib/tulcore/launcher.py`. Keep `tul setup install [target]` as the only launcher installation command. Update platform scripts to call `setup install`, and let POSIX/Termux setup idempotently prepare `~/bin` plus future-shell PATH wiring through `~/.profile`. Do not add a legacy top-level `install` alias.
+
+Consequences: Fresh devices can bootstrap with `python3 bin/tul setup install` and then use `tul` normally. The canonical command surface remains unchanged, and launcher drift is tested as part of the regression harness.

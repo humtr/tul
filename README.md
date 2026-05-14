@@ -17,6 +17,15 @@ cd ~/prj/tul
 tul run
 ```
 
+On a fresh Termux/Unix device where the repo is present but `tul` is not on `PATH`, install the launcher once:
+
+```bash
+cd ~/prj/tul
+python3 bin/tul setup install
+. ~/.profile 2>/dev/null || true
+hash -r
+```
+
 `tul run` is the normal user loop. It applies a compatible package when one is available; otherwise it refreshes current artifacts for the current HEAD.
 
 Use `tul package` only when you want to inspect the newest compatible package before running the loop. Use `tul update` only when intentionally splitting the loop.
