@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import hashlib
 import shutil
-import tarfile
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
@@ -65,9 +64,6 @@ def _archive_names(path: Path) -> list[str] | None:
         if zipfile.is_zipfile(path):
             with zipfile.ZipFile(path) as zf:
                 return zf.namelist()
-        if tarfile.is_tarfile(path):
-            with tarfile.open(path) as tf:
-                return [member.name for member in tf.getmembers()]
     except Exception:
         return None
     return None
@@ -76,7 +72,7 @@ def _archive_names(path: Path) -> list[str] | None:
 def _root_manifest_diagnostic(path: Path) -> str:
     names = _archive_names(path)
     if names is None:
-        return "unsupported or unreadable archive; expected .zip or .tar.gz"
+        return "unsupported or unreadable archive; expected .zip"
     normalized = [name.replace("\\", "/").lstrip("./") for name in names]
     nested = [name for name in normalized if name.endswith("/tul-package.yml")]
     if nested:
@@ -93,16 +89,6 @@ def _manifest_from_archive(path: Path) -> dict | None:
                     raw = zf.read("tul-package.yml").decode("utf-8")
                 except KeyError:
                     return None
-        elif tarfile.is_tarfile(path):
-            with tarfile.open(path) as tf:
-                try:
-                    member = tf.getmember("tul-package.yml")
-                except KeyError:
-                    return None
-                extracted = tf.extractfile(member)
-                if extracted is None:
-                    return None
-                raw = extracted.read().decode("utf-8")
         else:
             return None
     except Exception:
@@ -175,7 +161,7 @@ def _archive_paths(global_config: dict) -> list[Path]:
         if not root.exists() or not root.is_dir():
             continue
         for path in sorted(root.glob("*")):
-            if path.suffix.lower() == ".zip" or path.name.lower().endswith(".tar.gz"):
+            if path.suffix.lower() == ".zip":
                 archives.append(path)
     return archives
 
@@ -372,12 +358,6 @@ def safe_extract(archive: Path, dest: Path) -> None:
             for member in zf.infolist():
                 _validate_archive_member(dest, member.filename)
             zf.extractall(dest)
-        return
-    if tarfile.is_tarfile(archive):
-        with tarfile.open(archive) as tf:
-            for member in tf.getmembers():
-                _validate_archive_member(dest, member.name)
-            tf.extractall(dest)
         return
     raise PackageError(f"unsupported package archive: {archive}")
 

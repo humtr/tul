@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import tarfile
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
 
-from lib.tulcore.package import import_package
+from lib.tulcore.errors import PackageError
+from lib.tulcore.package import discover_package_inventory, import_package, safe_extract
 
 
 def write_package(path: Path) -> None:
@@ -77,6 +79,33 @@ class PackageInboxIngestTest(unittest.TestCase):
 
             self.assertTrue(source.exists())
             self.assertIsNone(imported.ingested_source)
+
+    def test_tar_gz_packages_are_not_discovered_or_extracted(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inbox = root / "inbox"
+            work = root / "work"
+            dest = root / "dest"
+            inbox.mkdir()
+            work.mkdir()
+            package = inbox / "sample-package.tar.gz"
+            manifest = root / "tul-package.yml"
+            manifest.write_text("version: 1\nname: sample\n", encoding="utf-8")
+            with tarfile.open(package, "w:gz") as tf:
+                tf.add(manifest, "tul-package.yml")
+
+            discovery = discover_package_inventory(
+                {"platform": {"inbox_roots": [str(inbox)], "work_root": str(work)}},
+                project="tul",
+                repo="humtr/tul",
+                branch="main",
+            )
+
+            self.assertEqual([], discovery.matching)
+            self.assertEqual([], discovery.incompatible)
+            self.assertEqual([], discovery.invalid)
+            with self.assertRaises(PackageError):
+                safe_extract(package, dest)
 
 
 if __name__ == "__main__":

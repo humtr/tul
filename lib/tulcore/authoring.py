@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-import tarfile
 import tempfile
 import zipfile
 from dataclasses import dataclass
@@ -50,9 +49,6 @@ def _archive_names(path: Path) -> list[str]:
     if zipfile.is_zipfile(path):
         with zipfile.ZipFile(path) as zf:
             return zf.namelist()
-    if tarfile.is_tarfile(path):
-        with tarfile.open(path) as tf:
-            return [member.name for member in tf.getmembers()]
     raise TulError(f"unsupported package archive: {path}")
 
 
