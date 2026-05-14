@@ -82,6 +82,26 @@ from .state import (
 from .sweep import sweep_repo
 from .verify import run_verify, write_verify_artifacts
 
+
+def repo_root_from_module() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def read_repo_text(rel: str, *, repo: Path | None = None) -> str:
+    root = repo or repo_root_from_module()
+    path = root / rel
+    if not path.exists():
+        raise TulError(f"missing repo document: {rel}")
+    return path.read_text(encoding="utf-8")
+
+
+def read_project(args, *, command: str):
+    inferred = infer_project(getattr(args, "target", None), command=command, read_only=True)
+    warnings = format_inference_warnings(inferred)
+    if warnings:
+        print(warnings)
+    return inferred.ctx
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)

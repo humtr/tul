@@ -18,7 +18,9 @@ Warnings: none
 
 ## Stage 9C — structural debt reduction
 
-Active package: `tul-stage9c-structural-debt-reduction-v1`.
+Active corrective package: `tul-stage9c-cli-helper-restore-v1`.
+
+Correction target: restore the CLI helper seam removed during parser extraction. Stage 9C is not closed until both the regression harness and the release gate pass.
 
 Goal: make the largest remaining modules easier to change by extracting narrow, behavior-preserving seams under the Stage 9B regression harness.
 
@@ -56,6 +58,7 @@ Expected result:
 
 ```text
 unittest: PASS
+show/export/handoff commands: PASS
 Release gate: PASS
 Source bundle: current
 Review bundle: current

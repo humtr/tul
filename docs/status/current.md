@@ -1,6 +1,6 @@
 # current status
 
-Status: Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is closed. Stage 9C structural debt reduction is active in `tul-stage9c-structural-debt-reduction-v1`.
+Status: Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is closed. Stage 9C structural debt reduction is in corrective fix `tul-stage9c-cli-helper-restore-v1`.
 
 Verified baseline before this package:
 
@@ -18,7 +18,9 @@ Docs drift: clean
 Warnings: none
 ```
 
-Current package under review: `tul-stage9c-structural-debt-reduction-v1`.
+Current package under review: `tul-stage9c-cli-helper-restore-v1`.
+
+Reason: `tul-stage9c-structural-debt-reduction-v1` extracted CLI parser construction but accidentally removed CLI-local helper functions used by `show`, `export`, `verify`, `clean`, and `recover`. The release gate passed because its checks did not run the new unittest harness; the Stage 9B tests caught the regression. This fix restores those helpers without changing command behavior.
 
 ## Active read-next set
 
