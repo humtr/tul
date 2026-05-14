@@ -340,7 +340,7 @@ def _verify_review_zip(path: Path, *, minimum_files: int) -> None:
         raise RuntimeError(f"review bundle is not a valid zip: {path}")
     with zipfile.ZipFile(path) as z:
         names = set(z.namelist())
-        missing = [name for name in REQUIRED_REVIEW_ENTRIES if name not in names]
+        missing = [name for name in REVIEW_REQUIRED_ENTRIES if name not in names]
         if missing:
             raise RuntimeError(f"review bundle missing required entries: {', '.join(missing)}")
         bad = z.testzip()
