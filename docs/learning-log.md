@@ -479,3 +479,13 @@ Impact: Source export, verify, and Git remote state could all be current while t
 Reflected in: `tul-stage9a-review-current-head-export-v1` changes review export to use current Git HEAD as review evidence and records the latest state commit only as context.
 
 Follow-up: Later state-model work may distinguish package-run state from manual cleanup commits more explicitly, but review freshness should no longer depend on the latest package state matching HEAD.
+
+## Stage 9C — Split seams only after tests exist
+
+Observation: Large modules are easier to refactor safely once command surface, handoff, verify docs, and export integrity contracts have executable tests.
+
+Impact: Structural changes should first extract seams around existing behavior rather than rewrite command handlers or state rendering wholesale.
+
+Reflected in: `lib/tulcore/cli_parser.py`, `lib/tulcore/verify_checks.py`, export integrity tests, and the small `state.py` project-matching helper.
+
+Follow-up: Use the same acceptance gate before any larger `cli.py`, `verify.py`, or `state.py` decomposition.

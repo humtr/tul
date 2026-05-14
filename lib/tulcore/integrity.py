@@ -233,6 +233,7 @@ def inspect_review_bundle(ctx: ProjectContext, *, state: dict[str, Any] | None =
                 return result
             manifest = json.loads(z.read("export-manifest.json").decode("utf-8"))
             result["manifest_head"] = manifest.get("head")
+            result["basis"] = manifest.get("basis")
             result["changed_file_count"] = manifest.get("changed_file_count")
             result["created_at"] = manifest.get("created_at")
             if current_head and manifest.get("head") and manifest.get("head") != current_head:

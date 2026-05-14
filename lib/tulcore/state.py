@@ -79,20 +79,25 @@ def find_state_files(work_root: Path) -> list[Path]:
     return sorted(work_root.glob("*/state.json"), key=lambda p: p.stat().st_mtime, reverse=True)
 
 
+def matches_project(data: dict[str, Any], project: str | None) -> bool:
+    if project is None:
+        return True
+    return str(data.get("project") or "") == str(project)
+
+
 def latest_state(work_root: Path, *, project: str | None = None) -> tuple[Path, dict[str, Any]] | None:
     for path in find_state_files(work_root):
         data = read_state(path)
-        if project is None or str(data.get("project") or "") == str(project):
+        if matches_project(data, project):
             return path, data
     return None
-
 
 
 def iter_states(work_root: Path, *, project: str | None = None) -> list[tuple[Path, dict[str, Any]]]:
     result: list[tuple[Path, dict[str, Any]]] = []
     for path in find_state_files(work_root):
         data = read_state(path)
-        if project is None or str(data.get("project") or "") == str(project):
+        if matches_project(data, project):
             result.append((path, data))
     return result
 

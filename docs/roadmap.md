@@ -2,26 +2,44 @@
 
 ## Current baseline
 
-Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed.
+Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is closed.
 
 Current stable baseline before this package:
 
 ```text
-HEAD: 964365e1f425124632ab88fa65736b46c178c238
+HEAD: 1efc472191d58d62772ab5bd87838eaf34e39866
 Release gate: PASS
+Regression tests: 9 tests OK
 Source bundle: current
 Review bundle: current
 Docs drift: clean
 Warnings: none
 ```
 
-## Stage 9B — regression test harness
+## Stage 9C — structural debt reduction
 
-Active package: `tul-stage9b-regression-test-harness-fix-v1`.
+Active package: `tul-stage9c-structural-debt-reduction-v1`.
 
-Goal: repair the command-surface test matcher added by `tul-stage9b-regression-test-harness-v1`.
+Goal: make the largest remaining modules easier to change by extracting narrow, behavior-preserving seams under the Stage 9B regression harness.
 
-The failed test treated prose inside help descriptions as top-level command entries. The corrected matcher parses argparse's top-level choices from the usage line and checks command-entry lines only.
+Scope:
+
+```text
+1. verify.py release-gate checks -> lib/tulcore/verify_checks.py
+2. show/export status classification -> direct regression tests
+3. cli.py command registration -> lib/tulcore/cli_parser.py
+4. state.py touched last with a small project-matching helper
+```
+
+Non-goals:
+
+```text
+- no command surface change
+- no package contract change
+- no artifact path change
+- no state schema change
+- no broad cli.py/state.py rewrite
+```
 
 Acceptance:
 
@@ -47,21 +65,17 @@ Warnings: none
 
 ## Next candidates
 
-### Stage 9C — module decomposition
+### Stage 9D — larger module decomposition
 
-Only after Stage 9B passes.
+Only after Stage 9C passes. Candidate work:
 
-Candidate modules:
+- split CLI command handlers by command group;
+- split verify artifact rendering from verification execution;
+- split compact state rendering from state persistence.
 
-- `lib/tulcore/cli.py`
-- `lib/tulcore/verify.py`
-- `lib/tulcore/state.py`
+### Stage 9E — side-effecting integration tests
 
-Approach: split one responsibility at a time and keep all Stage 9B tests passing.
-
-### Stage 9D — integration tests
-
-Add side-effecting integration tests for export/package/update behavior after the read-only regression harness is stable.
+Add controlled integration tests for export/package/update behavior after the structural seams are stable.
 
 ## Deferred
 

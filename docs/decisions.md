@@ -499,3 +499,13 @@ Context: Stage 8 included a narrow manual `git rm` cleanup after package-based p
 Decision: `tul export review` uses current Git HEAD as the manifest `head` and changed-file evidence basis. The latest tul state commit may be recorded as `state_commit` context, and state `changed_files` may be reused only when the latest state commit equals current HEAD.
 
 Consequences: Manual commits and narrow cleanup commits can produce current review bundles without requiring a synthetic package state. The latest tul state remains useful runtime context, but review freshness is judged against the current Git HEAD. Future state-model work can separately distinguish package-run state from manual cleanup state.
+
+## ADR-Stage9C — Extract structural seams under regression tests
+
+Status: accepted
+
+Context: Stage 9B added a regression harness. The next source of risk is not feature behavior but large modules that mix parser construction, release-gate checks, artifact rendering, and state presentation.
+
+Decision: Stage 9C extracts narrow seams without changing public behavior: command registration moves to `lib/tulcore/cli_parser.py`, release-gate checks move to `lib/tulcore/verify_checks.py`, export status classification receives direct tests, and `state.py` is touched last with a small helper only.
+
+Consequences: Later module decomposition can proceed behind stable contracts. Behavior changes remain out of scope for this stage.

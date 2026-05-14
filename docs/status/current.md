@@ -1,14 +1,15 @@
 # current status
 
-Status: Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is active and this package fixes the command-surface test matcher.
+Status: Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is closed. Stage 9C structural debt reduction is active in `tul-stage9c-structural-debt-reduction-v1`.
 
 Verified baseline before this package:
 
 ```text
-HEAD: 964365e1f425124632ab88fa65736b46c178c238
-Remote HEAD: 964365e1f425124632ab88fa65736b46c178c238
-Latest package: tul-stage9b-regression-test-harness-v1
+HEAD: 1efc472191d58d62772ab5bd87838eaf34e39866
+Remote HEAD: 1efc472191d58d62772ab5bd87838eaf34e39866
+Latest package: tul-stage9b-regression-test-harness-fix-v1
 Release gate: PASS
+Regression tests: 9 tests OK
 Steps: 33 pass, 0 fail
 Fresh clone: PASS
 Source bundle: current
@@ -17,7 +18,7 @@ Docs drift: clean
 Warnings: none
 ```
 
-Current package under review: `tul-stage9b-regression-test-harness-fix-v1`.
+Current package under review: `tul-stage9c-structural-debt-reduction-v1`.
 
 ## Active read-next set
 
@@ -46,11 +47,14 @@ templates/milestone-checklist.md
 templates/project-instructions.md
 ```
 
-## Stage 9B objective
+## Stage 9C objective
 
-Maintain a small regression harness before any larger module split.
+Reduce structural debt without changing public behavior:
 
-This fix narrows `tests/test_command_surface.py` so it checks argparse top-level choices and command-entry lines, not arbitrary prose in command descriptions. The word `apply` may legitimately appear in the `update` description without being a top-level command.
+- move release-gate contract checks out of `lib/tulcore/verify.py` into `lib/tulcore/verify_checks.py`;
+- move command registration out of `lib/tulcore/cli.py` into `lib/tulcore/cli_parser.py`;
+- add regression tests for source/review export integrity status classification;
+- touch `lib/tulcore/state.py` last with a small project-matching helper only.
 
 ## Validation
 

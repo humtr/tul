@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import re
+import sys
 import unittest
 
-from helpers import run_tul
+from helpers import REPO_ROOT, run_tul
+
+sys.path.insert(0, str(REPO_ROOT / "lib"))
+
+from tulcore.cli_parser import build_parser  # noqa: E402
 
 
 CANONICAL_COMMANDS = [
@@ -76,6 +81,13 @@ class CommandSurfaceTest(unittest.TestCase):
                 re.search(rf"^    {re.escape(command)}\s", output, re.MULTILINE),
                 f"{command!r} appears as a top-level help entry",
             )
+
+
+    def test_parser_builder_exposes_canonical_choices(self) -> None:
+        parser = build_parser()
+        output = parser.format_help()
+        choices = top_level_choices(output)
+        self.assertEqual(set(CANONICAL_COMMANDS + ["help"]), choices)
 
     def test_export_namespace_rejects_status(self) -> None:
         result = run_tul("export", "status", check=False)
