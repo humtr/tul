@@ -116,7 +116,7 @@ def export_source_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
         "final_zip_sha256_recorded_externally": True,
         "excluded_dirs": sorted(EXCLUDED_DIR_NAMES | EXCLUDED_ROOT_DIR_NAMES),
         "excluded_suffixes": sorted(EXCLUDED_SUFFIXES),
-        "required_entries": list(REQUIRED_SOURCE_ENTRIES),
+        "required_entries": list(SOURCE_REQUIRED_ENTRIES),
         "notes": [
             "Archive files are written at repository root, without a wrapper directory.",
             "Final archive sha256 is recorded in command output and state; the zip cannot self-embed its own final sha256 without changing that sha256.",
@@ -272,7 +272,7 @@ def _verify_source_zip(path: Path) -> None:
             if bad:
                 raise TulError(f"source export zip corrupt entry: {bad}")
             names = set(z.namelist())
-            missing = [entry for entry in REQUIRED_SOURCE_ENTRIES if entry not in names]
+            missing = [entry for entry in SOURCE_REQUIRED_ENTRIES if entry not in names]
             if missing:
                 raise TulError("source export missing required entries: " + ", ".join(missing))
             for name in names:
