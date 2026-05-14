@@ -230,7 +230,7 @@ def command_package(args: argparse.Namespace) -> int:
         ctx = resolve_project(args.target) if args.target else None
         path = scaffold_package_dir(
             rest[0],
-            out=Path(args.out).expanduser() if args.out else Path.cwd(),
+            out_dir=Path(args.out).expanduser() if args.out else Path.cwd(),
             project=args.project or (ctx.project_id if ctx else None),
             repo=args.repo or (ctx.expected_repo if ctx else None),
             branch=args.branch or (ctx.expected_branch if ctx else None),
@@ -249,7 +249,7 @@ def command_package(args: argparse.Namespace) -> int:
     if sub == "zip":
         if not rest:
             raise TulError("package zip requires <package-dir>")
-        archive = zip_package_dir(Path(rest[0]), out=Path(args.out).expanduser() if args.out else None, force=args.force)
+        archive = zip_package_dir(Path(rest[0]), out_path=Path(args.out).expanduser() if args.out else None, force=args.force)
         print(f"Created package zip: {archive}")
         return 0
     if sub == "show":
