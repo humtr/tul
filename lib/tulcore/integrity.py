@@ -270,8 +270,6 @@ def docs_drift_warnings(ctx: ProjectContext, *, latest_state_data: dict[str, Any
             continue
         checked += 1
         text = path.read_text(encoding="utf-8", errors="replace")
-        if latest_package and rel == "docs/status/current.md" and latest_package not in text:
-            warnings.append(f"{rel} does not mention latest package {latest_package}")
         for phrase in SOURCE_NOT_IMPLEMENTED_PHRASES:
             if phrase in text:
                 warnings.append(f"{rel} still contains pre-implementation source-export wording: {phrase}")

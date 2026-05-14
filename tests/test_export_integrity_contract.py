@@ -12,7 +12,7 @@ from helpers import REPO_ROOT
 
 sys.path.insert(0, str(REPO_ROOT / "lib"))
 
-from tulcore.integrity import inspect_review_bundle, inspect_source_bundle  # noqa: E402
+from tulcore.integrity import docs_drift_warnings, inspect_review_bundle, inspect_source_bundle  # noqa: E402
 
 
 class ExportIntegrityContractTest(unittest.TestCase):
@@ -20,6 +20,13 @@ class ExportIntegrityContractTest(unittest.TestCase):
         return SimpleNamespace(
             project_id="tul",
             repo_path=REPO_ROOT,
+            global_config={},
+        )
+
+    def fake_context_for_repo(self, repo_path: Path):
+        return SimpleNamespace(
+            project_id="tul",
+            repo_path=repo_path,
             global_config={},
         )
 
@@ -73,6 +80,23 @@ class ExportIntegrityContractTest(unittest.TestCase):
         self.assertEqual("current-head", current["basis"])
         self.assertEqual("tul-vf-aaaaaaa.md", current["verify_markdown_entry"])
         self.assertTrue(any("stale" in item for item in stale["warnings"]))
+
+    def test_docs_drift_does_not_require_status_to_shadow_latest_package(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = Path(tmpdir)
+            (repo / "docs/status").mkdir(parents=True)
+            (repo / "docs/status/current.md").write_text("# current status\n\nRuntime facts live in tul show.\n", encoding="utf-8")
+            (repo / "docs/roadmap.md").write_text("# roadmap\n", encoding="utf-8")
+            (repo / "docs/manifest.md").write_text("# manifest\n", encoding="utf-8")
+
+            result = docs_drift_warnings(
+                self.fake_context_for_repo(repo),
+                latest_state_data={"package_name": "tul-macro-stage-a-artifact-test-split-v9"},
+            )
+
+        self.assertEqual("clean", result["status"])
+        self.assertEqual("tul-macro-stage-a-artifact-test-split-v9", result["latest_package"])
+        self.assertEqual([], result["warnings"])
 
 
 if __name__ == "__main__":

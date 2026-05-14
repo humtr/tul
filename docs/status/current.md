@@ -1,47 +1,18 @@
 # current status
 
-Status: Macro Stage A v8 is in progress via `tul-macro-stage-a-launcher-setup-hygiene-v8`.
+Status: Macro Stage A is closed through the head-tagged source/review/verify upload loop. Macro Stage B starts from artifact consistency and docs/runtime truth separation.
 
-Baseline before this package:
+## Runtime truth
 
-```text
-HEAD: 5c622640acc3458b946f4e1f09e976807b06d40b
-Remote HEAD: 5c622640acc3458b946f4e1f09e976807b06d40b
-Latest package: tul-macro-stage-a-head-tag-canonical-v7
-Release gate: PASS
-CLI runtime smoke: PASS
-Regression tests: PASS
-Source bundle: current
-Review bundle: current
-Docs drift: clean
-Warnings: none
-```
-
-## Objective
-
-Close the launcher/setup hygiene debt exposed by a fresh Termux tablet clone where `tul` was not available on `PATH` after `git pull --ff-only`.
-
-This package makes `tul setup install` the canonical launcher installation path and removes the stale top-level `install` call from platform scripts.
-
-## Launcher policy
+Current runtime facts are not stored in this document. Use the head-tagged verify markdown and runtime commands:
 
 ```text
-Canonical setup command: python3 bin/tul setup install [target]
-Installed launcher: ~/bin/tul on POSIX/Termux, ~/bin/tul.cmd on Windows
-No legacy top-level install command exists.
+tul-vf-<head7>.md
+tul show
+tul show exports
 ```
 
-On POSIX/Termux, `setup install` may idempotently add this line to `~/.profile` so future shells can find `tul`:
-
-```bash
-export PATH="$HOME/bin:$PATH"
-```
-
-The current shell may still require:
-
-```bash
-. ~/.profile && hash -r
-```
+The latest package identity belongs to state, `tul show`, `tul show exports`, and the verify artifact. This document should not be updated merely to mention the latest package name.
 
 ## Active read-next set
 
@@ -54,7 +25,7 @@ docs/commands.md
 docs/package-spec.md
 ```
 
-## Validation after applying
+## Validation target
 
 ```bash
 tul package
@@ -63,6 +34,6 @@ tul run
 
 Expected result: the final screen says `Decision: PASS`, release gate PASS, CLI runtime smoke PASS, regression tests PASS, source/review current, docs drift clean, warnings none, and head-tagged upload files are printed.
 
-## Macro Stage A v9 note
+## Artifact readiness
 
 Fresh devices may have a synced repo before they have local transport artifacts or tul run state. `tul verify` regression tests must therefore validate the `show exports` command surface without requiring source/review artifacts to already be current or recorded in latest state. Artifact readiness remains a post-export/run acceptance condition.
