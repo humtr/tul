@@ -1,54 +1,75 @@
 # roadmap
 
-This file owns future work only. Current verified state belongs in `docs/status/current.md`; durable invariants belong in `docs/manifest.md`.
+## Current baseline
 
-## Closed
+Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed.
 
-```text
-Stage 7: command surface and artifact loop stabilization
-Stage 8: active documentation tree compaction and ownership finalization
-Stage 8 environment-note normalization
-```
-
-Stage 8 closed outcomes:
+Current stable baseline before Stage 9B:
 
 ```text
-- active read-next reduced to six documents;
-- obsolete compatibility/workflow/experiment/template documents removed;
-- source tree reduced to the compact active surface;
-- ownership boundaries are explicit in docs/manifest.md;
-- Windows D:\work is no longer treated as a one-off active root doc and is normalized under docs/environments/;
-- no command-surface change introduced;
-- no package contract change introduced.
+HEAD: c3b4c4b3a23056432f52e28450a42b1f6bc94eea
+Release gate: PASS
+Source bundle: current
+Review bundle: current
+Docs drift: clean
+Warnings: none
 ```
 
-## Optional next work
+## Stage 9B — regression test harness
 
-These are candidates, not active work:
+Package: `tul-stage9b-regression-test-harness-v1`
 
-```text
-1. Review/state model improvement
-   - Stage 9A makes `tul export review` use current Git HEAD as review evidence;
-   - future work may still make latest state distinguish package-run commits from manual cleanup commits.
+Goal: add a stdlib `unittest` harness before larger technical-debt reduction work.
 
-2. Safe package-level delete support
-   - design only if deletion needs to re-enter the package mechanism;
-   - keep separate from ordinary copy-mode package application.
+Scope:
 
-3. Environment profile expansion
-   - add additional repo-relevant profiles under docs/environments/ only when they help reproduce or constrain tul work;
-   - keep machine secrets, private aliases, and one-off local paths outside the repo.
+- `tests/test_handoff_contract.py`
+- `tests/test_verify_contract.py`
+- `tests/test_command_surface.py`
+- `tests/test_export_contract.py`
+- `tests/helpers.py`
 
-4. Broader runtime hardening
-   - test harnesses, stale artifact diagnostics, and cross-repo onboarding remain separate stages.
+Acceptance:
+
+```bash
+python3 -m unittest discover -s tests
+python3 -m py_compile bin/tul lib/tulcore/*.py
+git diff --check
+tul verify fresh
+tul show exports
 ```
 
-## Stop point
-
-If no optional work is selected, the project can stop after `tul verify fresh` passes with:
+Expected result:
 
 ```text
 Release gate: PASS
-Read next: six active docs
+Source bundle: current
+Review bundle: current
 Docs drift: clean
+Warnings: none
 ```
+
+## Next candidates
+
+### Stage 9C — module decomposition
+
+Only after Stage 9B passes.
+
+Candidate modules:
+
+- `lib/tulcore/cli.py`
+- `lib/tulcore/verify.py`
+- `lib/tulcore/state.py`
+
+Approach: split one responsibility at a time and keep all Stage 9B tests passing.
+
+### Stage 9D — integration tests
+
+Add side-effecting integration tests for export/package/update behavior after the read-only regression harness is stable.
+
+## Deferred
+
+- safe package-level delete support;
+- broader state ledger redesign;
+- cross-repo onboarding;
+- full Windows profile expansion beyond `docs/environments/README.md`.
