@@ -64,6 +64,7 @@ from .package_hygiene import format_package_hygiene, run_package_hygiene
 from .pipeline import run_update
 from .report import build_report
 from .review import export_review_bundle, format_review_export
+from .runtime_lock import runtime_lock
 from .source import export_source_bundle, format_source_export
 from .state import (
     archive_inventory,
@@ -268,15 +269,16 @@ def command_update(args: argparse.Namespace) -> int:
     if dry:
         print_update_dry_run(ctx, package_path=package_path)
         return 0
-    result = run_update(
-        ctx,
-        package_path=package_path,
-        no_commit=args.no_commit,
-        no_push=args.no_push,
-        allow_dirty=args.allow_dirty,
-        verify_after=False,
-        post_export=False,
-    )
+    with runtime_lock(ctx, "update"):
+        result = run_update(
+            ctx,
+            package_path=package_path,
+            no_commit=args.no_commit,
+            no_push=args.no_push,
+            allow_dirty=args.allow_dirty,
+            verify_after=False,
+            post_export=False,
+        )
     print(result.report)
     print("\n--- NEXT ---\n")
     print("Run `tul verify fresh`, `tul export`, and `tul show`, or use `tul run` for the full loop.")
@@ -289,6 +291,13 @@ def command_verify(args: argparse.Namespace) -> int:
     target, mode_json, fresh = parse_verify_items(args.items)
     args.target = target
     ctx = read_project(args, command="verify")
+    if fresh:
+        with runtime_lock(ctx, "verify fresh"):
+            return run_verify_command(args, ctx, mode_json=mode_json, fresh=fresh)
+    return run_verify_command(args, ctx, mode_json=mode_json, fresh=fresh)
+
+
+def run_verify_command(args: argparse.Namespace, ctx, *, mode_json: bool, fresh: bool) -> int:
     result = run_verify(
         ctx,
         fresh_clone=fresh,
@@ -318,8 +327,9 @@ def command_export(args: argparse.Namespace) -> int:
         if args.out:
             raise TulError("--out is only valid with `tul export source` or `tul export review`")
         ctx = read_project(args, command="export")
-        source = export_source_bundle(ctx, update_state=not args.no_state_update)
-        review = export_review_bundle(ctx, update_state=not args.no_state_update)
+        with runtime_lock(ctx, "export"):
+            source = export_source_bundle(ctx, update_state=not args.no_state_update)
+            review = export_review_bundle(ctx, update_state=not args.no_state_update)
         print("# tul export")
         print()
         print(format_source_export(source))
@@ -329,13 +339,15 @@ def command_export(args: argparse.Namespace) -> int:
     ctx = read_project(args, command=f"export {args.kind}")
     out_path = Path(args.out).expanduser() if args.out else None
     if args.kind == "source":
-        result = export_source_bundle(ctx, out_path=out_path, update_state=not args.no_state_update)
+        with runtime_lock(ctx, "export source"):
+            result = export_source_bundle(ctx, out_path=out_path, update_state=not args.no_state_update)
         print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False) if args.json else format_source_export(result))
         return 0
     if args.kind == "review":
         if args.json:
             raise TulError("--json is only supported for `tul export source` in this version")
-        result = export_review_bundle(ctx, out_path=out_path, update_state=not args.no_state_update)
+        with runtime_lock(ctx, "export review"):
+            result = export_review_bundle(ctx, out_path=out_path, update_state=not args.no_state_update)
         print(format_review_export(result))
         return 0
     raise TulError(f"unknown export kind: {args.kind}")
@@ -370,6 +382,11 @@ def command_run(args: argparse.Namespace) -> int:
         print("Would then run: tul show")
         return 0
 
+    with runtime_lock(ctx, "run"):
+        return run_locked_command(args, ctx, package_available=package_available, package_path=package_path)
+
+
+def run_locked_command(args: argparse.Namespace, ctx, *, package_available: bool, package_path: Path | None) -> int:
     update_handoff: str | None = None
     source_export = None
     review_export = None

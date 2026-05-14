@@ -60,7 +60,9 @@ The import root should contain the three head-tagged upload files for the curren
 - clarify review bundle state context;
 - keep package archives zip-only;
 - split `tul run` refresh phases without behavior change;
-- centralize source/review artifact schema constants.
+- centralize source/review artifact schema constants;
+- create complete session handoff bundles with checksum coverage;
+- serialize artifact-writing runtime commands with a project lock.
 
 ### Macro Stage C — state and verify module decomposition
 
