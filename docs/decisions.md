@@ -518,3 +518,9 @@ Accepted in Macro Stage A. `tul verify` should run read-only CLI runtime smoke a
 `tul run` should end with a compact decision block so the user can decide from the last screen. Stable latest artifacts remain local automation anchors. Commit-named root aliases are upload conveniences and are pruned so the import root stays current.
 
 Reference package: `tul-macro-stage-a-run-final-upload-v4`.
+
+## Decision: import root is the human upload inbox, Download is intake only
+
+Accepted in Macro Stage A v5. The import root should contain stable latest artifacts plus one current commit-named upload alias for source, review, and verify markdown. Dated copies remain under logs. Older root commit aliases are pruned so the user can upload from one visible folder without sorting through stale files.
+
+Shared Download roots are not tul-owned storage. They may provide selected valid packages, but once such a package is selected and copied into the work area, the original archive is moved into the project-owned inbox under the import root.

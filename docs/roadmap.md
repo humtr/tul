@@ -68,3 +68,19 @@ Warnings: none
 - Keep latest JSON for local machine-readable refresh; it is not normally an upload requirement.
 
 Reference package: `tul-macro-stage-a-run-final-upload-v4`.
+
+## Macro Stage A v5 — final upload and inbox polish
+
+Goal: close the human-facing one-run loop. `tul run` should end with a fixed decision block that is enough for manual acceptance, and `/sdcard/termux/import/tul` should serve as the single upload inbox for the current source/review/verify artifacts.
+
+Scope:
+
+```text
+- keep stable latest artifacts for local automation
+- keep one current commit-named source/review/vf markdown alias in the import root
+- keep dated copies in logs/source, logs/review, and logs/verify
+- include source/review/verify upload aliases in verify artifact metadata
+- move selected packages from shared Download intake into the project-owned inbox after import
+```
+
+Reference package: `tul-macro-stage-a-final-upload-and-inbox-v5`.

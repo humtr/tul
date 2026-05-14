@@ -445,32 +445,6 @@ def format_run_final_summary(ctx, *, verify, source=None, review=None, artifacts
     review_status = review_data.get("status") or "skipped"
     docs_status = docs_data.get("status") or "unknown"
     warning_status = "none" if not warnings else f"{len(warnings)} warning(s)"
-    final_ok = (
-        release == "PASS"
-        and source_status == "current"
-        and review_status == "current"
-        and docs_status == "clean"
-        and not warnings
-    )
-
-    lines = [
-        "# tul run final",
-        "",
-        f"Decision: {'PASS' if final_ok else 'CHECK'}",
-        f"HEAD: {data.get('head') or getattr(verify, 'head', None) or 'unknown'}",
-        f"Remote HEAD: {data.get('remote_head') or getattr(verify, 'remote_head', None) or 'unknown'}",
-        "",
-        "## Gates",
-        f"- Release gate: {release}",
-        f"- CLI runtime smoke: {step_ok('CLI runtime smoke')}",
-        f"- Regression tests: {step_ok('regression tests')}",
-        "",
-        "## Artifacts",
-        f"- Source bundle: {source_status}",
-        f"- Review bundle: {review_status}",
-        f"- Docs drift: {docs_status}",
-        f"- Warnings: {warning_status}",
-    ]
     upload_files: list[tuple[str, str]] = []
     if source is not None and getattr(source, "upload_aliases", None):
         alias = source.upload_aliases.get("root_alias")
@@ -482,13 +456,46 @@ def format_run_final_summary(ctx, *, verify, source=None, review=None, artifacts
             upload_files.append(("review", alias))
     if artifacts and artifacts.get("upload_markdown"):
         upload_files.append(("verify", artifacts["upload_markdown"]))
+    upload_labels = {label for label, _ in upload_files}
+    upload_status = "ready" if {"source", "review", "verify"}.issubset(upload_labels) else "incomplete"
+    final_ok = (
+        release == "PASS"
+        and step_ok("CLI runtime smoke") == "PASS"
+        and step_ok("regression tests") == "PASS"
+        and source_status == "current"
+        and review_status == "current"
+        and docs_status == "clean"
+        and warning_status == "none"
+        and upload_status == "ready"
+    )
+
+    lines = [
+        "# tul run final",
+        f"Decision: {'PASS' if final_ok else 'CHECK'}",
+        f"HEAD: {data.get('head') or getattr(verify, 'head', None) or 'unknown'}",
+        f"Remote HEAD: {data.get('remote_head') or getattr(verify, 'remote_head', None) or 'unknown'}",
+        "",
+        "Gates: "
+        f"release={release}; "
+        f"cli-smoke={step_ok('CLI runtime smoke')}; "
+        f"regression={step_ok('regression tests')}",
+        "Artifacts: "
+        f"source={source_status}; "
+        f"review={review_status}; "
+        f"docs={docs_status}; "
+        f"warnings={warning_status}; "
+        f"upload={upload_status}",
+        "",
+        "Upload these files:",
+    ]
     if upload_files:
-        lines.extend(["", "## Upload these files"])
         for label, path in upload_files:
             lines.append(f"- {label}: {path}")
-        lines.append("- note: latest JSON is kept for local machine-readable refresh; upload the verify markdown unless JSON is explicitly requested.")
+    else:
+        lines.append("- none")
+    lines.append("Note: latest JSON is kept for local machine-readable refresh; upload the verify markdown unless JSON is explicitly requested.")
     if warnings:
-        lines.extend(["", "## Warning details"])
+        lines.extend(["", "Warning details:"])
         lines.extend(f"- {item}" for item in warnings)
     return "\n".join(lines)
 

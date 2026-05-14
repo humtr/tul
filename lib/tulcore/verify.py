@@ -15,7 +15,7 @@ from .gitops import remote_url
 from .handoff import generate_handoff
 from .integrity import format_export_integrity
 from .paths import expand_path, mkdirp
-from .state import summarize_compact_state
+from .state import latest_state, summarize_compact_state
 from .upload_aliases import publish_verify_upload_alias
 from .verify_checks import (
     REQUIRED_DOCS,
@@ -238,7 +238,10 @@ def write_verify_artifacts(
     latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
     alias = publish_verify_upload_alias(ctx, latest_md, json_path=latest_json, head=result.head).to_dict()
-    payload["artifact"]["upload_aliases"] = {"verify": alias}
+    alias_map = _merged_upload_aliases(ctx, verify_alias=alias)
+    payload["artifact"]["upload_aliases"] = alias_map
+    artifacts["upload_source"] = str((alias_map.get("source") or {}).get("root_alias") or "")
+    artifacts["upload_review"] = str((alias_map.get("review") or {}).get("root_alias") or "")
     artifacts["upload_markdown"] = alias.get("root_alias", "")
     artifacts["upload_dated_markdown"] = alias.get("dated_alias", "")
 
@@ -275,6 +278,21 @@ def rewrite_verify_artifacts_with_runtime_snapshots(
         payload = json.loads(json_path.read_text(encoding="utf-8"))
     else:
         payload = result.to_dict()
+    latest_json = Path(artifacts.get("latest_json", "")) if artifacts.get("latest_json") else None
+    latest_md = Path(artifacts["latest_markdown"])
+    verify_alias = publish_verify_upload_alias(
+        ctx,
+        latest_md,
+        json_path=latest_json if latest_json and latest_json.exists() else None,
+        head=result.head,
+    ).to_dict()
+    alias_map = _merged_upload_aliases(ctx, verify_alias=verify_alias)
+    payload.setdefault("artifact", {})["upload_aliases"] = alias_map
+    artifacts["upload_source"] = str((alias_map.get("source") or {}).get("root_alias") or "")
+    artifacts["upload_review"] = str((alias_map.get("review") or {}).get("root_alias") or "")
+    artifacts["upload_markdown"] = verify_alias.get("root_alias", "")
+    if latest_json and latest_json.exists():
+        latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     text = render_verify_artifact_markdown(
         ctx,
         result,
@@ -283,10 +301,7 @@ def rewrite_verify_artifacts_with_runtime_snapshots(
         include_runtime_snapshots=True,
     )
     Path(artifacts["markdown"]).write_text(text, encoding="utf-8", newline="\n")
-    latest_md = Path(artifacts["latest_markdown"])
     latest_md.write_text(text, encoding="utf-8", newline="\n")
-    latest_json = Path(artifacts.get("latest_json", "")) if artifacts.get("latest_json") else None
-    publish_verify_upload_alias(ctx, latest_md, json_path=latest_json if latest_json and latest_json.exists() else None, head=result.head)
 
 
 
@@ -314,6 +329,13 @@ def refresh_latest_verify_runtime_snapshots(ctx: ProjectContext) -> bool:
         "latest_markdown": str(artifact.get("latest_markdown") or latest_md),
         "latest_json": str(artifact.get("latest_json") or latest_json),
     }
+    verify_alias = publish_verify_upload_alias(ctx, latest_md, json_path=latest_json, head=result.head).to_dict()
+    alias_map = _merged_upload_aliases(ctx, verify_alias=verify_alias)
+    payload.setdefault("artifact", {})["upload_aliases"] = alias_map
+    artifacts["upload_source"] = str((alias_map.get("source") or {}).get("root_alias") or "")
+    artifacts["upload_review"] = str((alias_map.get("review") or {}).get("root_alias") or "")
+    artifacts["upload_markdown"] = verify_alias.get("root_alias", "")
+    latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     text = render_verify_artifact_markdown(
         ctx,
         result,
@@ -327,6 +349,41 @@ def refresh_latest_verify_runtime_snapshots(ctx: ProjectContext) -> bool:
         run_md.write_text(text, encoding="utf-8", newline="\n")
     return True
 
+
+
+def _merged_upload_aliases(ctx: ProjectContext, *, verify_alias: dict[str, Any]) -> dict[str, Any]:
+    aliases: dict[str, Any] = {}
+    state_aliases = _transport_upload_aliases_from_latest_state(ctx)
+    aliases.update(state_aliases)
+    aliases["verify"] = verify_alias
+    return aliases
+
+
+def _transport_upload_aliases_from_latest_state(ctx: ProjectContext) -> dict[str, Any]:
+    paths = platform_paths(ctx.global_config)
+    work_root = paths.get("work_root")
+    if not work_root:
+        return {}
+    found = latest_state(Path(work_root), project=ctx.project_id)
+    if not found:
+        return {}
+    _, data = found
+    aliases: dict[str, Any] = {}
+    for key, label in (("source_bundle_export", "source"), ("review_bundle_export", "review")):
+        export = data.get(key)
+        if isinstance(export, dict):
+            upload_aliases = export.get("upload_aliases")
+            if isinstance(upload_aliases, dict) and upload_aliases.get("root_alias"):
+                aliases[label] = upload_aliases
+    post = data.get("post_update_exports")
+    if isinstance(post, dict):
+        for label in ("source", "review"):
+            item = post.get(label)
+            if isinstance(item, dict):
+                upload_aliases = item.get("upload_aliases")
+                if isinstance(upload_aliases, dict) and upload_aliases.get("root_alias"):
+                    aliases[label] = upload_aliases
+    return aliases
 
 def _verify_result_from_payload(payload: dict[str, Any]) -> VerifyResult:
     result = VerifyResult(
@@ -440,6 +497,8 @@ def format_verify_artifacts(paths: dict[str, str]) -> str:
             f"- Latest JSON: {paths['latest_json']}",
             f"- Run log: {paths['markdown']}",
             f"- Run JSON: {paths['json']}",
+            *([f"- Upload source: {paths['upload_source']}"] if paths.get("upload_source") else []),
+            *([f"- Upload review: {paths['upload_review']}"] if paths.get("upload_review") else []),
             *([f"- Upload markdown: {paths['upload_markdown']}"] if paths.get("upload_markdown") else []),
         ]
     )

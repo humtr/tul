@@ -48,6 +48,8 @@ class ImportedPackage:
     extracted_dir: Path
     manifest: Manifest
     sha256: str
+    original_source: Path | None = None
+    ingested_source: Path | None = None
 
 
 def sha256_file(path: Path) -> str:
@@ -267,18 +269,99 @@ def select_package(global_config: dict, *, explicit: str | None, project: str, r
 
 def import_package(source: Path, global_config: dict) -> ImportedPackage:
     paths = platform_paths(global_config)
+    original_source = Path(source).expanduser().resolve()
     work_root = mkdirp(paths.get("work_root") or (Path.home() / ".cache" / "tul" / "work"))
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    package_id = f"{source.stem}-{stamp}"
+    package_id = f"{original_source.stem}-{stamp}"
     work_dir = mkdirp(work_root / package_id)
-    copied = work_dir / source.name
-    shutil.copy2(source, copied)
+    copied = work_dir / original_source.name
+    shutil.copy2(original_source, copied)
+    ingested_source = _ingest_external_inbox_package(original_source, paths)
     digest = sha256_file(copied)
     (work_dir / "source.sha256").write_text(digest + "  " + copied.name + "\n", encoding="utf-8")
+    (work_dir / "source-origin.json").write_text(
+        _package_origin_json(original_source=original_source, copied=copied, ingested_source=ingested_source),
+        encoding="utf-8",
+        newline="\n",
+    )
     extracted = mkdirp(work_dir / "extracted")
     safe_extract(copied, extracted)
     manifest = load_manifest(extracted / "tul-package.yml")
-    return ImportedPackage(source=copied, work_dir=work_dir, extracted_dir=extracted, manifest=manifest, sha256=digest)
+    return ImportedPackage(
+        source=copied,
+        work_dir=work_dir,
+        extracted_dir=extracted,
+        manifest=manifest,
+        sha256=digest,
+        original_source=original_source,
+        ingested_source=ingested_source,
+    )
+
+
+def _package_origin_json(*, original_source: Path, copied: Path, ingested_source: Path | None) -> str:
+    import json
+
+    return json.dumps({
+        "original_source": str(original_source),
+        "work_copy": str(copied),
+        "ingested_source": str(ingested_source) if ingested_source else None,
+    }, indent=2, ensure_ascii=False) + "\n"
+
+
+def _ingest_external_inbox_package(source: Path, paths: dict) -> Path | None:
+    """Move a selected package from shared inbox roots into the project inbox.
+
+    Shared locations such as `/sdcard/Download` are intake only. Once a package
+    is selected and copied into the tul work directory, move the original
+    matching package into the project-owned inbox so Download stays uncluttered.
+    Files already under the project import root are left in place.
+    """
+    project_root = _project_import_root(paths)
+    if project_root is None or _is_inside(source, project_root):
+        return None
+    inbox_roots = [Path(root) for root in (paths.get("inbox_roots") or [])]
+    if not any(_is_inside(source, root) for root in inbox_roots):
+        return None
+    if not source.exists() or not source.is_file():
+        return None
+    inbox = mkdirp(project_root / "inbox")
+    destination = _unique_inbox_destination(inbox, source)
+    if destination.resolve() == source.resolve():
+        return None
+    shutil.move(str(source), str(destination))
+    return destination
+
+
+def _project_import_root(paths: dict) -> Path | None:
+    work_root = paths.get("work_root")
+    if work_root:
+        return Path(work_root).parent
+    archive_root = paths.get("archive_root")
+    if archive_root:
+        return Path(archive_root).parent
+    return None
+
+
+def _is_inside(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+        return True
+    except Exception:
+        return False
+
+
+def _unique_inbox_destination(inbox: Path, source: Path) -> Path:
+    candidate = inbox / source.name
+    if not candidate.exists():
+        return candidate
+    stem = source.stem
+    suffix = source.suffix
+    counter = 1
+    while True:
+        candidate = inbox / f"{stem}-{counter}{suffix}"
+        if not candidate.exists():
+            return candidate
+        counter += 1
 
 
 def safe_extract(archive: Path, dest: Path) -> None:

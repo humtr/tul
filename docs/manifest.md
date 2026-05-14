@@ -98,3 +98,17 @@ Stage 8 document tree compaction is closed after active ownership consolidation,
 ## Review artifact basis
 
 Review export must use current Git HEAD as its manifest head. The latest tul state may be included as context, but it must not make a freshly exported review bundle stale after a manual commit or narrow `git rm` cleanup.
+
+## Human-facing upload inbox
+
+The import root is the manual upload inbox. Stable latest files remain local automation anchors, while commit-named aliases are the preferred manual upload files:
+
+```text
+tul-source-<head7>.zip
+tul-review-<head7>.zip
+tul-vf-<head7>.md
+```
+
+The latest JSON file is retained for local machine-readable refresh and future automation. It is not part of the default manual upload set unless explicitly requested.
+
+Shared Download roots are intake-only. A selected valid package from an external shared inbox is moved into the project-owned inbox after it is copied into the work area.

@@ -498,3 +498,7 @@ The Stage 9C helper regression showed that `py_compile` can pass while `show`, `
 Long verify logs are useful as artifacts but poor as terminal decision surfaces. `tul run` should finish with a short PASS/CHECK block and explicit upload paths.
 
 Reference package: `tul-macro-stage-a-run-final-upload-v4`.
+
+## Lesson: upload friction is a state-surface problem
+
+A technically correct release gate is still too hard to use if the user has to search long logs or multiple folders to decide what to upload. Macro Stage A v5 treats the final terminal screen and the import root as explicit human-facing surfaces: the last block says PASS/CHECK, and the import root keeps only the current commit-named upload aliases plus stable latest files.

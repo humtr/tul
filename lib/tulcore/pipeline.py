@@ -75,6 +75,8 @@ def run_update(
             package=str(source),
             package_name=imported.manifest.name,
             sha256=imported.sha256,
+            original_package=str(imported.original_source) if imported.original_source else None,
+            ingested_package=str(imported.ingested_source) if imported.ingested_source else None,
             precheck={
                 "dirty": precheck.dirty,
                 "ahead": precheck.ahead,
