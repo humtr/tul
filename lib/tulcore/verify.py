@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -305,7 +306,65 @@ def refresh_verify_upload_runtime_snapshots(ctx: ProjectContext) -> bool:
     surface is head-tagged only, so no latest-named file is refreshed.
     """
     remove_root_latest_artifacts(ctx, kinds=("vf",))
-    return False
+    current_head = _current_head(ctx)
+    if not current_head:
+        return False
+    log_root = verify_log_root(ctx)
+    upload_root = verify_upload_root(ctx, log_root)
+    upload_markdown = upload_root / f"{ctx.project_id}-vf-{current_head[:7]}.md"
+    if not upload_markdown.exists():
+        return False
+    payload = _payload_from_verify_markdown(upload_markdown)
+    if not payload:
+        return False
+    result = _verify_result_from_payload(payload)
+    if result.head and result.head != current_head:
+        return False
+    result.head = current_head
+    artifact = payload.setdefault("artifact", {})
+    run_markdown = Path(str(artifact.get("markdown") or upload_markdown))
+    json_value = artifact.get("json")
+    json_path = Path(str(json_value)) if json_value else None
+    artifacts = {
+        "markdown": str(run_markdown if run_markdown.exists() else upload_markdown),
+        "json": str(json_path) if json_path else "",
+        "upload_markdown": str(upload_markdown),
+    }
+    verify_alias = {
+        "kind": "vf",
+        "head": current_head,
+        "root_alias": str(upload_markdown),
+    }
+    alias_map = _merged_upload_aliases(ctx, verify_alias=verify_alias)
+    payload["artifact"]["upload_aliases"] = alias_map
+    artifacts["upload_source"] = str((alias_map.get("source") or {}).get("root_alias") or "")
+    artifacts["upload_review"] = str((alias_map.get("review") or {}).get("root_alias") or "")
+    text = render_verify_artifact_markdown(ctx, result, artifacts, payload, include_runtime_snapshots=True)
+    target_markdown = run_markdown if run_markdown.exists() else upload_markdown
+    target_markdown.write_text(text, encoding="utf-8", newline="\n")
+    upload_markdown.write_text(text, encoding="utf-8", newline="\n")
+    if json_path and json_path.exists():
+        json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    return True
+
+
+def _current_head(ctx: ProjectContext) -> str | None:
+    proc = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ctx.repo_path, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        return None
+    return proc.stdout.strip() or None
+
+
+def _payload_from_verify_markdown(path: Path) -> dict[str, Any] | None:
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"## Machine-readable summary\s+```json\s*(.*?)\s*```", text, flags=re.DOTALL)
+    if not match:
+        return None
+    try:
+        payload = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def _merged_upload_aliases(ctx: ProjectContext, *, verify_alias: dict[str, Any]) -> dict[str, Any]:
