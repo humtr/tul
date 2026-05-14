@@ -2,13 +2,11 @@
 
 ## Current baseline
 
-Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is closed. Stage 9C CLI/parser/verify seam extraction is closed after `tul-stage9c-cli-helper-restore-v1`.
+Macro Stage A is closed through the one-run verified upload loop and head-tagged artifact model. Macro Stage B is consolidating artifact consistency, package safety, and pipeline structure in small verified steps.
 
 ## Macro Stage A — one-run verified upload loop
 
-Active package: `tul-macro-stage-a-launcher-setup-hygiene-v8`.
-
-Goal: make one `tul run` invocation enough for normal package application, export, release verification, regression testing, and upload selection. The last screen should be sufficient for user decision-making.
+Goal: keep one `tul run` invocation sufficient for normal package application, export, release verification, regression testing, and upload selection. The last screen should be sufficient for user decision-making.
 
 Current scope:
 
@@ -54,13 +52,15 @@ The import root should contain the three head-tagged upload files for the curren
 - make POSIX/Termux launcher setup idempotently prepare `~/bin` and future-shell PATH wiring;
 - add regression coverage so install scripts cannot drift back to legacy top-level `install`.
 
-## Next macro candidates
+## Current macro candidates
 
 ### Macro Stage B — pipeline and artifact schema consolidation
 
-- split `run_update` into phase helpers;
-- centralize source/review manifest schemas;
-- clarify review bundle state context.
+- remove docs/status latest-package drift coupling;
+- clarify review bundle state context;
+- keep package archives zip-only;
+- split `tul run` refresh phases without behavior change;
+- centralize source/review artifact schema constants.
 
 ### Macro Stage C — state and verify module decomposition
 

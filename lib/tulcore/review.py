@@ -11,24 +11,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .artifact_schema import REVIEW_EMBEDDED_RUNTIME_RECORDS_ROLE, REVIEW_REQUIRED_ENTRIES, REVIEW_RUNTIME_TRUTH
 from .config import ProjectContext, platform_paths
 from .gitops import git, head, recent_commits, status_porcelain
 from .paths import expand_path, mkdirp
 from .state import latest_state, write_state
 from .upload_aliases import head_alias_path, publish_review_upload_alias, remove_root_latest_artifacts
-
-REQUIRED_REVIEW_FILES = ("state.json", "handoff.md")
-REQUIRED_REVIEW_ENTRIES = (
-    "README.md",
-    "git-head.txt",
-    "changed-files.txt",
-    "diff.patch",
-    # verify markdown entry is head-tagged and declared in export-manifest.json
-    "state.json",
-    "report.md",
-    "handoff.md",
-    "export-manifest.json",
-)
 
 
 @dataclass
@@ -136,8 +124,8 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
                 "created_at": started_at,
                 "target": str(target),
                 "changed_file_count": len(changed_files),
-                "runtime_truth": "head-tagged verify markdown upload artifact",
-                "embedded_runtime_records_role": "generation-context snapshot",
+                "runtime_truth": REVIEW_RUNTIME_TRUTH,
+                "embedded_runtime_records_role": REVIEW_EMBEDDED_RUNTIME_RECORDS_ROLE,
                 "verify_markdown_entry": verify_entry,
                 "verify_markdown_path": str(verify_path),
                 "verify_markdown_sha256": verify_sha256,
@@ -284,7 +272,7 @@ def _review_readme(ctx: ProjectContext, commit: str, changed_files: list[str]) -
         "This is not a backup and not a canonical source archive.",
         "Head-tagged artifacts are canonical; latest-named artifacts are not used.",
         "The embedded verify markdown is copied from the head-tagged upload artifact when available.",
-        "`state.json`, `report.md`, and `handoff.md` are generation-context snapshots, not final artifact truth.",
+        f"`state.json`, `report.md`, and `handoff.md` are {REVIEW_EMBEDDED_RUNTIME_RECORDS_ROLE}s, not final artifact truth.",
         "",
         f"Project: {ctx.project_id}",
         f"Repo: {ctx.repo_path}",

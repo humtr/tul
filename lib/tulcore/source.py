@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .artifact_schema import SOURCE_METADATA_ENTRIES, SOURCE_REQUIRED_ENTRIES, SOURCE_ROOT_LAYOUT
 from .config import ProjectContext, platform_paths
 from .errors import TulError
 from .gitops import current_branch, git, head, remote_head, status_porcelain
@@ -26,16 +27,7 @@ from .upload_aliases import head_alias_path, publish_source_upload_alias, remove
 EXCLUDED_DIR_NAMES = {".git", "__pycache__", ".pytest_cache", "node_modules", "dist", "build"}
 EXCLUDED_ROOT_DIR_NAMES = {"logs", "work", "archive"}
 EXCLUDED_SUFFIXES = {".pyc", ".zip", ".bak"}
-REQUIRED_SOURCE_ENTRIES = (
-    "README.md",
-    ".tul.yml",
-    "bin/tul",
-    "lib/tulcore/__init__.py",
-    "source-manifest.json",
-    "source-file-list.txt",
-    "source-file-sha256s.txt",
-)
-ROOT_LAYOUT = "repo-files-at-zip-root"
+ROOT_LAYOUT = SOURCE_ROOT_LAYOUT
 
 
 @dataclass
@@ -223,7 +215,7 @@ def _source_files(repo: Path) -> list[str]:
     missing = [entry for entry in ("README.md", ".tul.yml", "bin/tul", "lib/tulcore/__init__.py") if entry not in rels]
     if missing:
         raise TulError("source export missing required tracked files: " + ", ".join(missing))
-    if any(rel in {"source-manifest.json", "source-file-list.txt", "source-file-sha256s.txt"} for rel in rels):
+    if any(rel in SOURCE_METADATA_ENTRIES for rel in rels):
         raise TulError("source export metadata entry would collide with a tracked repo file")
     return rels
 

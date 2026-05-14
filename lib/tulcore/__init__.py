@@ -1,1 +1,1 @@
-__version__ = "0.8.33-stage7-clean-recover-setup-ux"
+__version__ = "0.8.34-macro-stage-b-artifact-consistency"

@@ -12,15 +12,16 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+from .artifact_schema import REVIEW_MANIFEST_ENTRY, SOURCE_REQUIRED_ENTRIES, SOURCE_ROOT_LAYOUT
 from .config import ProjectContext, platform_paths
 from .gitops import current_branch, head, remote_head
 from .review import review_bundle_path
-from .source import ROOT_LAYOUT, source_bundle_path
+from .source import source_bundle_path
 from .state import latest_state
 
 
-SOURCE_REQUIRED_ENTRIES = {"source-manifest.json", "source-file-list.txt", "source-file-sha256s.txt"}
-REVIEW_REQUIRED_ENTRIES = {"export-manifest.json", "state.json", "handoff.md"}
+SOURCE_INTEGRITY_REQUIRED_ENTRIES = set(SOURCE_REQUIRED_ENTRIES[-3:])
+REVIEW_INTEGRITY_REQUIRED_ENTRIES = {REVIEW_MANIFEST_ENTRY, "state.json", "handoff.md"}
 DOC_DRIFT_FILES = (
     "docs/status/current.md",
     "docs/roadmap.md",
@@ -169,7 +170,7 @@ def inspect_source_bundle(ctx: ProjectContext, *, state: dict[str, Any] | None =
                 result["warnings"].append(f"source bundle has corrupt member: {bad}")
                 return result
             names = set(z.namelist())
-            missing = sorted(SOURCE_REQUIRED_ENTRIES - names)
+            missing = sorted(SOURCE_INTEGRITY_REQUIRED_ENTRIES - names)
             if missing:
                 result["status"] = "invalid"
                 result["warnings"].append("source bundle missing required metadata: " + ", ".join(missing))
@@ -181,9 +182,9 @@ def inspect_source_bundle(ctx: ProjectContext, *, state: dict[str, Any] | None =
             result["file_count"] = manifest.get("file_count")
             result["payload_sha256"] = manifest.get("payload_sha256")
             result["created_at"] = manifest.get("created_at")
-            if manifest.get("root_layout") != ROOT_LAYOUT:
+            if manifest.get("root_layout") != SOURCE_ROOT_LAYOUT:
                 result["status"] = "invalid"
-                result["warnings"].append(f"source bundle root layout is {manifest.get('root_layout')!r}, expected {ROOT_LAYOUT!r}")
+                result["warnings"].append(f"source bundle root layout is {manifest.get('root_layout')!r}, expected {SOURCE_ROOT_LAYOUT!r}")
                 return result
             if current_head and manifest.get("head") and manifest.get("head") != current_head:
                 result["status"] = "stale"
@@ -226,7 +227,7 @@ def inspect_review_bundle(ctx: ProjectContext, *, state: dict[str, Any] | None =
                 result["warnings"].append(f"review bundle has corrupt member: {bad}")
                 return result
             names = set(z.namelist())
-            missing = sorted(REVIEW_REQUIRED_ENTRIES - names)
+            missing = sorted(REVIEW_INTEGRITY_REQUIRED_ENTRIES - names)
             if missing:
                 result["status"] = "invalid"
                 result["warnings"].append("review bundle missing required entries: " + ", ".join(missing))
