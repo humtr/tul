@@ -395,24 +395,11 @@ def command_run(args: argparse.Namespace) -> int:
 
     if can_refresh_artifacts:
         if not args.no_export:
-            print("\n--- EXPORT PRECHECK ---\n")
-            source_export = export_source_bundle(ctx, update_state=True)
-            review_export = export_review_bundle(ctx, update_state=True)
-            print(format_source_export(source_export))
-            print()
-            print(format_review_export(review_export))
-        print("\n--- VERIFY FRESH ---\n")
-        verify = run_verify(ctx, fresh_clone=True)
-        artifacts = write_verify_artifacts(ctx, verify, fresh_clone=True)
-        print(verify.to_text(artifacts))
+            source_export, review_export = run_export_precheck_phase(ctx)
+        verify, artifacts = run_verify_fresh_phase(ctx)
         ok = verify.ok
         if ok and not args.no_export:
-            print("\n--- EXPORT FINAL ---\n")
-            # Review bundles are canonical current-HEAD evidence. Re-export after
-            # verify so the bundle contains the head-tagged verify markdown for
-            # the same commit rather than a missing or previous-run marker.
-            review_export = export_review_bundle(ctx, update_state=True)
-            print(format_review_export(review_export))
+            review_export = run_final_review_export_phase(ctx)
     else:
         ok = True
         print("\n--- SKIPPED VERIFY/EXPORT ---\n")
@@ -430,6 +417,34 @@ def command_run(args: argparse.Namespace) -> int:
         print("\n--- FINAL DECISION ---\n")
         print(format_run_final_summary(ctx, verify=verify, source=source_export, review=review_export, artifacts=artifacts))
     return 0 if ok else 1
+
+
+def run_export_precheck_phase(ctx):
+    print("\n--- EXPORT PRECHECK ---\n")
+    source_export = export_source_bundle(ctx, update_state=True)
+    review_export = export_review_bundle(ctx, update_state=True)
+    print(format_source_export(source_export))
+    print()
+    print(format_review_export(review_export))
+    return source_export, review_export
+
+
+def run_verify_fresh_phase(ctx):
+    print("\n--- VERIFY FRESH ---\n")
+    verify = run_verify(ctx, fresh_clone=True)
+    artifacts = write_verify_artifacts(ctx, verify, fresh_clone=True)
+    print(verify.to_text(artifacts))
+    return verify, artifacts
+
+
+def run_final_review_export_phase(ctx):
+    print("\n--- EXPORT FINAL ---\n")
+    # Review bundles are canonical current-HEAD evidence. Re-export after
+    # verify so the bundle contains the head-tagged verify markdown for
+    # the same commit rather than a missing or previous-run marker.
+    review_export = export_review_bundle(ctx, update_state=True)
+    print(format_review_export(review_export))
+    return review_export
 
 
 def format_run_final_summary(ctx, *, verify, source=None, review=None, artifacts=None, skipped: bool = False) -> str:
