@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 import tempfile
 import unittest
@@ -43,17 +44,29 @@ class ExportIntegrityContractTest(unittest.TestCase):
             z.writestr("source-file-list.txt", "README.md\n")
             z.writestr("source-file-sha256s.txt", "README.md  dummy\n")
 
-    def write_review_bundle(self, path: Path, *, head: str) -> None:
+    def write_review_bundle(
+        self,
+        path: Path,
+        *,
+        head: str,
+        verify_text: str = "# tul verify\n",
+        verify_sha256: str | None = None,
+    ) -> None:
+        verify_sha256 = verify_sha256 or hashlib.sha256(verify_text.encode("utf-8")).hexdigest()
         manifest = {
             "kind": "review",
             "head": head,
+            "state_commit": "state-commit",
             "basis": "current-head",
             "changed_file_count": 0,
+            "runtime_truth": "head-tagged verify markdown upload artifact",
+            "embedded_runtime_records_role": "generation-context snapshot",
+            "verify_markdown_sha256": verify_sha256,
         }
         with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as z:
             manifest["verify_markdown_entry"] = "tul-vf-aaaaaaa.md"
             z.writestr("export-manifest.json", json.dumps(manifest))
-            z.writestr("tul-vf-aaaaaaa.md", "# tul verify\n")
+            z.writestr("tul-vf-aaaaaaa.md", verify_text)
             z.writestr("state.json", "{}\n")
             z.writestr("handoff.md", "# handoff\n")
 
@@ -79,7 +92,20 @@ class ExportIntegrityContractTest(unittest.TestCase):
         self.assertEqual("stale", stale["status"])
         self.assertEqual("current-head", current["basis"])
         self.assertEqual("tul-vf-aaaaaaa.md", current["verify_markdown_entry"])
+        self.assertEqual("state-commit", current["state_commit"])
+        self.assertEqual("head-tagged verify markdown upload artifact", current["runtime_truth"])
+        self.assertEqual("generation-context snapshot", current["embedded_runtime_records_role"])
         self.assertTrue(any("stale" in item for item in stale["warnings"]))
+
+    def test_review_bundle_rejects_verify_markdown_sha_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "review.zip"
+            self.write_review_bundle(path, head="A", verify_sha256="0" * 64)
+            state = {"review_bundle_export": {"path": str(path)}}
+            result = inspect_review_bundle(self.fake_context(), state=state, current_head="A")
+
+        self.assertEqual("invalid", result["status"])
+        self.assertTrue(any("verify markdown sha256" in item for item in result["warnings"]))
 
     def test_docs_drift_does_not_require_status_to_shadow_latest_package(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

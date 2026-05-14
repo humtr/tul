@@ -241,8 +241,22 @@ def inspect_review_bundle(ctx: ProjectContext, *, state: dict[str, Any] | None =
                 result["status"] = "invalid"
                 result["warnings"].append(f"review bundle missing verify markdown entry: {verify_entry}")
                 return result
+            verify_bytes = z.read(verify_entry)
+            verify_sha256 = hashlib.sha256(verify_bytes).hexdigest()
+            expected_verify_sha256 = str(manifest.get("verify_markdown_sha256") or "").strip()
+            if expected_verify_sha256 and expected_verify_sha256 != verify_sha256:
+                result["status"] = "invalid"
+                result["warnings"].append("review bundle verify markdown sha256 differs from export manifest")
+                return result
+            if verify_bytes.startswith(b"missing:"):
+                result["warnings"].append(f"review bundle verify markdown entry is a missing-artifact marker: {verify_entry}")
             result["verify_markdown_entry"] = verify_entry
+            result["verify_markdown_sha256"] = verify_sha256
+            result["verify_markdown_path"] = manifest.get("verify_markdown_path")
+            result["runtime_truth"] = manifest.get("runtime_truth")
+            result["embedded_runtime_records_role"] = manifest.get("embedded_runtime_records_role")
             result["manifest_head"] = manifest.get("head")
+            result["state_commit"] = manifest.get("state_commit")
             result["basis"] = manifest.get("basis")
             result["changed_file_count"] = manifest.get("changed_file_count")
             result["created_at"] = manifest.get("created_at")

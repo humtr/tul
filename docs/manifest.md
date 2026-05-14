@@ -109,6 +109,8 @@ Stage 8 document tree compaction is closed after active ownership consolidation,
 
 Review export must use current Git HEAD as its manifest head. The latest tul state may be included as context, but it must not make a freshly exported review bundle stale after a manual commit or narrow `git rm` cleanup.
 
+The review bundle's embedded verify markdown is copied from the head-tagged verify upload artifact when available and is checked by sha256 in `export-manifest.json`. The embedded `state.json`, `report.md`, and `handoff.md` are generation-context snapshots. They may describe the latest package state that existed when the review bundle was generated; they are not the final runtime verification authority.
+
 ## Human-facing upload inbox
 
 The import root is the manual upload inbox. Root-level upload artifacts are head-tagged only:

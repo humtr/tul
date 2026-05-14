@@ -113,6 +113,7 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
     commit = current_head
     verify_path = verify_markdown_path(ctx, commit)
     verify_entry = verify_markdown_entry(ctx, commit)
+    verify_sha256 = _sha256(verify_path) if verify_path.exists() else None
     changed_files = _changed_files_for_review(repo, state_data, commit, allow_state_files=(state_commit == current_head))
     diff_text = _diff_for_review(repo, commit, changed_files)
 
@@ -135,8 +136,11 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
                 "created_at": started_at,
                 "target": str(target),
                 "changed_file_count": len(changed_files),
+                "runtime_truth": "head-tagged verify markdown upload artifact",
+                "embedded_runtime_records_role": "generation-context snapshot",
                 "verify_markdown_entry": verify_entry,
                 "verify_markdown_path": str(verify_path),
+                "verify_markdown_sha256": verify_sha256,
             }, indent=2, ensure_ascii=False) + "\n")
 
             if verify_path.exists():
@@ -279,6 +283,8 @@ def _review_readme(ctx: ProjectContext, commit: str, changed_files: list[str]) -
         "Purpose: transport the current Git HEAD runtime facts and changed-file evidence to an LLM review session.",
         "This is not a backup and not a canonical source archive.",
         "Head-tagged artifacts are canonical; latest-named artifacts are not used.",
+        "The embedded verify markdown is copied from the head-tagged upload artifact when available.",
+        "`state.json`, `report.md`, and `handoff.md` are generation-context snapshots, not final artifact truth.",
         "",
         f"Project: {ctx.project_id}",
         f"Repo: {ctx.repo_path}",
