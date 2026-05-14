@@ -1,13 +1,13 @@
 # current status
 
-Status: Macro Stage A v5 is in progress via `tul-macro-stage-a-final-upload-and-inbox-v5`.
+Status: Macro Stage A v6 is in progress via `tul-macro-stage-a-head-only-upload-root-v6`.
 
 Baseline before this package:
 
 ```text
 HEAD: 85e13c75592ed87e8458d9b1531deea5b9a6c9db
 Remote HEAD: 85e13c75592ed87e8458d9b1531deea5b9a6c9db
-Latest package: tul-macro-stage-a-run-final-upload-v4
+Latest package: tul-macro-stage-a-final-upload-and-inbox-v5
 Release gate: PASS
 CLI runtime smoke: PASS
 Regression tests: PASS
@@ -23,19 +23,15 @@ Make one `tul run` invocation sufficient for the normal user loop and make its l
 
 ## Upload inbox policy
 
-The import root remains the human-facing upload inbox. It should show stable latest artifacts plus one current commit-named alias for each upload artifact:
+The import root is now a head-only human upload inbox. It should show only the current commit-named upload artifacts at the root:
 
 ```text
-tul-source-latest.zip
-tul-review-latest.zip
-tul-vf-latest.md
-tul-vf-latest.json
 tul-source-<head7>.zip
 tul-review-<head7>.zip
 tul-vf-<head7>.md
 ```
 
-Commit-named aliases are also kept in dated log folders. Older root aliases are pruned. `tul-vf-latest.json` is kept for local machine-readable refresh and is not a normal manual upload target.
+Root-level `*-latest.*` artifacts are removed after export/verify. Dated archival copies remain under `logs/source/YYMMDD`, `logs/review/YYMMDD`, and `logs/verify/YYMMDD`. Verify JSON remains in dated logs for machine-readable inspection, but it is not a normal manual upload target.
 
 ## Package intake policy
 
@@ -59,4 +55,4 @@ tul package
 tul run
 ```
 
-Expected result: the final screen says `Decision: PASS`, source/review/vf upload aliases are shown, release gate PASS, source/review current, docs drift clean, and warnings none.
+Expected result: the final screen says `Decision: PASS`, source/review/vf head-tagged upload files are shown, root latest files are absent, release gate PASS, source/review current, docs drift clean, and warnings none.

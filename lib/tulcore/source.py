@@ -21,7 +21,7 @@ from .errors import TulError
 from .gitops import current_branch, git, head, remote_head, status_porcelain
 from .paths import expand_path, mkdirp
 from .state import latest_state, write_state
-from .upload_aliases import publish_source_upload_alias
+from .upload_aliases import head_alias_path, publish_source_upload_alias, remove_root_latest_artifacts
 
 EXCLUDED_DIR_NAMES = {".git", "__pycache__", ".pytest_cache", "node_modules", "dist", "build"}
 EXCLUDED_ROOT_DIR_NAMES = {"logs", "work", "archive"}
@@ -84,7 +84,7 @@ def export_root(ctx: ProjectContext) -> Path:
 
 
 def source_bundle_path(ctx: ProjectContext) -> Path:
-    return export_root(ctx) / f"{ctx.project_id}-source-latest.zip"
+    return head_alias_path(ctx, kind="source", suffix=".zip")
 
 
 def export_source_bundle(ctx: ProjectContext, *, out_path: Path | None = None, update_state: bool = True) -> SourceBundleExport:
@@ -140,7 +140,7 @@ def export_source_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
             _write_text(z, "source-file-sha256s.txt", _format_file_hashes(file_hashes))
             _write_text(z, "source-manifest.json", json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
         _verify_source_zip(tmp)
-        _replace_latest_source_zip(tmp, target)
+        _replace_source_zip(tmp, target)
         os.utime(target, None)
         _verify_source_zip(target)
         stat = target.stat()
@@ -157,6 +157,9 @@ def export_source_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
             target_mtime_epoch=stat.st_mtime,
         )
         result.upload_aliases = publish_source_upload_alias(ctx, target, head=manifest["head"]).to_dict()
+        removed_latest = remove_root_latest_artifacts(ctx, kinds=("source",))
+        if removed_latest:
+            result.upload_aliases["removed_latest"] = removed_latest
     finally:
         if tmp.exists():
             tmp.unlink()
@@ -306,7 +309,7 @@ def _validate_entry_name(name: str) -> None:
         raise TulError(f"source export contains excluded file suffix: {name}")
 
 
-def _replace_latest_source_zip(tmp: Path, target: Path) -> None:
+def _replace_source_zip(tmp: Path, target: Path) -> None:
     tmp.replace(target)
 
 

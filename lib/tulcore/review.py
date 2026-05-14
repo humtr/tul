@@ -15,7 +15,7 @@ from .config import ProjectContext, platform_paths
 from .gitops import git, head, recent_commits, status_porcelain
 from .paths import expand_path, mkdirp
 from .state import latest_state, write_state
-from .upload_aliases import publish_review_upload_alias
+from .upload_aliases import head_alias_path, publish_review_upload_alias, remove_root_latest_artifacts
 
 REQUIRED_REVIEW_FILES = ("tul-vf-latest.md", "state.json", "handoff.md")
 REQUIRED_REVIEW_ENTRIES = (
@@ -75,7 +75,7 @@ def export_root(ctx: ProjectContext) -> Path:
 
 
 def review_bundle_path(ctx: ProjectContext) -> Path:
-    return export_root(ctx) / f"{ctx.project_id}-review-latest.zip"
+    return head_alias_path(ctx, kind="review", suffix=".zip")
 
 
 def latest_verify_markdown(ctx: ProjectContext) -> Path:
@@ -159,7 +159,7 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
                 file_count += _write_file(z, src, f"files/{rel}")
 
         _verify_review_zip(tmp, minimum_files=file_count)
-        _replace_latest_review_zip(tmp, target)
+        _replace_review_zip(tmp, target)
         # Explicitly touch after replace so Android/media providers expose this
         # export as a newly written file even when the archive contents are
         # similar to the previous review bundle.
@@ -179,6 +179,9 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
             target_mtime_epoch=stat.st_mtime,
         )
         result.upload_aliases = publish_review_upload_alias(ctx, target, head=commit).to_dict()
+        removed_latest = remove_root_latest_artifacts(ctx, kinds=("review",))
+        if removed_latest:
+            result.upload_aliases["removed_latest"] = removed_latest
     finally:
         if tmp.exists():
             tmp.unlink()
@@ -320,7 +323,7 @@ def _sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def _replace_latest_review_zip(tmp: Path, target: Path) -> None:
+def _replace_review_zip(tmp: Path, target: Path) -> None:
     if not tmp.exists():
         raise FileNotFoundError(f"temporary review bundle was not created: {tmp}")
     if tmp.stat().st_size <= 0:

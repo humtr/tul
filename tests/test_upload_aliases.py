@@ -17,7 +17,7 @@ class FakeContext:
 
 
 class UploadAliasTest(unittest.TestCase):
-    def test_source_alias_prunes_old_root_aliases_and_keeps_latest(self):
+    def test_source_alias_prunes_old_root_aliases_and_removes_latest(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             repo = root / "repo"
@@ -37,7 +37,9 @@ class UploadAliasTest(unittest.TestCase):
             self.assertEqual(Path(result.root_alias).name, "tul-source-1234567.zip")
             self.assertTrue(Path(result.dated_alias).exists())
             self.assertFalse((import_root / "tul-source-abcdef0.zip").exists())
-            self.assertTrue((import_root / "tul-source-latest.zip").exists())
+            removed = __import__("lib.tulcore.upload_aliases", fromlist=["remove_root_latest_artifacts"]).remove_root_latest_artifacts(ctx, kinds=("source",))
+            self.assertIn(str(import_root / "tul-source-latest.zip"), removed)
+            self.assertFalse((import_root / "tul-source-latest.zip").exists())
 
     def test_verify_root_alias_is_markdown_only(self):
         with tempfile.TemporaryDirectory() as tmp:

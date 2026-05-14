@@ -76,11 +76,26 @@ Goal: close the human-facing one-run loop. `tul run` should end with a fixed dec
 Scope:
 
 ```text
-- keep stable latest artifacts for local automation
-- keep one current commit-named source/review/vf markdown alias in the import root
+- remove stable latest artifacts from the human-visible root
+- keep one current commit-named source/review/vf markdown artifact in the import root
 - keep dated copies in logs/source, logs/review, and logs/verify
-- include source/review/verify upload aliases in verify artifact metadata
+- include source/review/verify head-tagged upload paths in verify artifact metadata
 - move selected packages from shared Download intake into the project-owned inbox after import
 ```
 
 Reference package: `tul-macro-stage-a-final-upload-and-inbox-v5`.
+
+## Macro Stage A v6 — head-only upload root
+
+Goal: remove `latest` artifacts from the human-visible import root. The root upload inbox should contain only the current head-tagged source, review, and verify markdown artifacts. Dated logs keep historical artifacts and verify JSON.
+
+Scope:
+
+```text
+- keep root upload files as tul-source-<head7>.zip, tul-review-<head7>.zip, tul-vf-<head7>.md
+- remove root tul-source-latest.zip, tul-review-latest.zip, tul-vf-latest.md, and tul-vf-latest.json
+- keep dated archives under logs/source, logs/review, and logs/verify
+- keep verify JSON only in dated verify logs unless explicitly requested later
+```
+
+Reference package: `tul-macro-stage-a-head-only-upload-root-v6`.

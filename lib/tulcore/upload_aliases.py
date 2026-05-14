@@ -1,8 +1,8 @@
-"""Upload-friendly alias helpers for source/review/verify artifacts.
+"""Upload-friendly head-tagged artifact helpers.
 
-Stable `latest` artifacts remain the machine-readable local authority. These
-helpers create bounded, commit-named aliases for manual upload workflows while
-keeping the import root uncluttered.
+The human-facing import root is an upload surface, not a historical archive.
+It should show only the current commit-tagged source/review/verify artifacts.
+Dated archival copies remain under logs/<kind>/YYMMDD.
 """
 from __future__ import annotations
 
@@ -52,6 +52,34 @@ def import_root(ctx: ProjectContext) -> Path:
     return ctx.repo_path.parent
 
 
+def head_alias_path(ctx: ProjectContext, *, kind: str, suffix: str, head: str | None = None) -> Path:
+    """Return the canonical human-upload root alias for a kind and HEAD."""
+    full_head = _head(ctx, head)
+    return import_root(ctx) / f"{ctx.project_id}-{kind}-{full_head[:7]}{suffix}"
+
+
+def remove_root_latest_artifacts(ctx: ProjectContext, *, kinds: tuple[str, ...] = ("source", "review", "vf")) -> list[str]:
+    """Remove obsolete root-level *-latest artifacts from the upload surface.
+
+    Dated logs are preserved. This intentionally affects only files directly
+    under the project import root so historical run artifacts remain available.
+    """
+    root = import_root(ctx)
+    removed: list[str] = []
+    suffixes = {
+        "source": (".zip",),
+        "review": (".zip",),
+        "vf": (".md", ".json"),
+    }
+    for kind in kinds:
+        for suffix in suffixes.get(kind, ()):  # defensive: unknown kinds remove nothing
+            path = root / f"{ctx.project_id}-{kind}-latest{suffix}"
+            if path.exists() and path.is_file():
+                path.unlink()
+                removed.append(str(path))
+    return removed
+
+
 def publish_source_upload_alias(ctx: ProjectContext, source_path: Path, *, head: str | None = None, now: datetime | None = None) -> UploadAliasResult:
     return _publish_file_alias(ctx, kind="source", src=source_path, suffix=".zip", head=head, now=now)
 
@@ -71,9 +99,8 @@ def publish_verify_upload_alias(
     """Publish a root upload alias for verify markdown and dated md/json aliases.
 
     The root intentionally receives only the markdown alias, because that is the
-    human/LLM upload artifact. `tul-vf-latest.json` remains in the import root as
-    local machine-readable state for refresh operations, but commit-named JSON
-    aliases are stored only in the dated verify log folder.
+    human/LLM upload artifact. Commit-named JSON aliases are stored only in the
+    dated verify log folder.
     """
     result = _publish_file_alias(ctx, kind="vf", src=markdown_path, suffix=".md", head=head, now=now, log_kind="verify")
     if json_path and json_path.exists():
@@ -123,7 +150,10 @@ def _dated_dir(ctx: ProjectContext, kind: str, stamp: datetime) -> Path:
 def _head(ctx: ProjectContext, explicit: str | None) -> str:
     if explicit:
         return explicit
-    return git_head(ctx.repo_path)
+    try:
+        return git_head(ctx.repo_path)
+    except Exception:
+        return "unknown"
 
 
 def _copy_replace(src: Path, dst: Path) -> None:

@@ -502,3 +502,7 @@ Reference package: `tul-macro-stage-a-run-final-upload-v4`.
 ## Lesson: upload friction is a state-surface problem
 
 A technically correct release gate is still too hard to use if the user has to search long logs or multiple folders to decide what to upload. Macro Stage A v5 treats the final terminal screen and the import root as explicit human-facing surfaces: the last block says PASS/CHECK, and the import root keeps only the current commit-named upload aliases plus stable latest files.
+
+## 2026-05-14 — Head-tagged upload root beats latest aliases
+
+When the user manually uploads artifacts, `latest` filenames are a liability because repeated uploads can bind to stale files in another session. Commit-tagged filenames are clearer. The import root should therefore be a human upload surface containing only the current head-tagged source, review, and verify markdown files; dated logs remain the archive.

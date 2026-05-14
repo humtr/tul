@@ -524,3 +524,11 @@ Reference package: `tul-macro-stage-a-run-final-upload-v4`.
 Accepted in Macro Stage A v5. The import root should contain stable latest artifacts plus one current commit-named upload alias for source, review, and verify markdown. Dated copies remain under logs. Older root commit aliases are pruned so the user can upload from one visible folder without sorting through stale files.
 
 Shared Download roots are not tul-owned storage. They may provide selected valid packages, but once such a package is selected and copied into the work area, the original archive is moved into the project-owned inbox under the import root.
+
+## ADR-035 — Head-only human upload root
+
+Context: Head-tagged upload artifacts solved stale `latest` ambiguity for LLM handoff, but leaving both head-tagged and `latest` files in `/sdcard/termux/import/tul` still made the human upload surface noisy.
+
+Decision: The import root is a head-only upload inbox. Keep only `tul-source-<head7>.zip`, `tul-review-<head7>.zip`, and `tul-vf-<head7>.md` at the root. Remove root-level `*-latest.*` artifacts after export/verify. Preserve dated archival copies under `logs/source`, `logs/review`, and `logs/verify`; keep verify JSON in dated logs for machine-readable inspection.
+
+Consequences: A user can upload the three visible head-tagged files from one folder without checking `latest` ambiguity. Local automation that needs machine-readable verify data should read dated verify JSON or state metadata rather than root `latest` JSON.

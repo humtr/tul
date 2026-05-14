@@ -83,9 +83,9 @@ tul-package.yml + files/ + README.md
 | Artifact | Role |
 |---|---|
 | Git remote + commit hash | canonical source/recovery authority |
-| `tul-vf-latest.md` | runtime verification evidence |
-| `tul-source-latest.zip` | source-context transport artifact |
-| `tul-review-latest.zip` | current-HEAD changed-file review transport artifact |
+| `tul-vf-<head7>.md` | runtime verification evidence for upload |
+| `tul-source-<head7>.zip` | source-context transport artifact for upload |
+| `tul-review-<head7>.zip` | current-HEAD changed-file review transport artifact for upload |
 | state/report/handoff files | local runtime records |
 
 ## Stage status
@@ -101,7 +101,7 @@ Review export must use current Git HEAD as its manifest head. The latest tul sta
 
 ## Human-facing upload inbox
 
-The import root is the manual upload inbox. Stable latest files remain local automation anchors, while commit-named aliases are the preferred manual upload files:
+The import root is the manual upload inbox. Root-level upload artifacts are head-tagged only:
 
 ```text
 tul-source-<head7>.zip
@@ -109,6 +109,6 @@ tul-review-<head7>.zip
 tul-vf-<head7>.md
 ```
 
-The latest JSON file is retained for local machine-readable refresh and future automation. It is not part of the default manual upload set unless explicitly requested.
+Root-level `*-latest.*` files are removed after export/verify. Dated logs preserve source, review, verify markdown, and verify JSON history. Verify JSON is not part of the default manual upload set unless explicitly requested.
 
 Shared Download roots are intake-only. A selected valid package from an external shared inbox is moved into the project-owned inbox after it is copied into the work area.

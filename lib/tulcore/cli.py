@@ -493,7 +493,7 @@ def format_run_final_summary(ctx, *, verify, source=None, review=None, artifacts
             lines.append(f"- {label}: {path}")
     else:
         lines.append("- none")
-    lines.append("Note: latest JSON is kept for local machine-readable refresh; upload the verify markdown unless JSON is explicitly requested.")
+    lines.append("Note: root latest artifacts are removed; upload the three head-tagged files above.")
     if warnings:
         lines.extend(["", "Warning details:"])
         lines.extend(f"- {item}" for item in warnings)
