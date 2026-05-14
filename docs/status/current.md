@@ -62,3 +62,7 @@ tul run
 ```
 
 Expected result: the final screen says `Decision: PASS`, release gate PASS, CLI runtime smoke PASS, regression tests PASS, source/review current, docs drift clean, warnings none, and head-tagged upload files are printed.
+
+## Macro Stage A v9 note
+
+Fresh devices may have a synced repo before they have local transport artifacts or tul run state. `tul verify` regression tests must therefore validate the `show exports` command surface without requiring source/review artifacts to already be current or recorded in latest state. Artifact readiness remains a post-export/run acceptance condition.

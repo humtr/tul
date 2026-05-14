@@ -122,3 +122,7 @@ tul-vf-<head7>.md
 Root-level `*-latest.*` files are removed after export/verify. Dated logs preserve source, review, verify markdown, and verify JSON history. Verify JSON is not part of the default manual upload set unless explicitly requested.
 
 Shared Download roots are intake-only. A selected valid package from an external shared inbox is moved into the project-owned inbox after it is copied into the work area.
+
+## Verification layering
+
+Regression tests validate code contracts and command reachability. They must not require local transport artifacts to exist before the first export on a freshly synced device. Current source/review artifacts and warnings-none status are final run/export acceptance conditions.

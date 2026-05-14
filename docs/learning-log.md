@@ -522,3 +522,11 @@ Observation: A repo can be fully synced while the device shell cannot find `tul`
 Lesson: Platform install scripts must call the canonical command surface. Leaving old top-level commands in scripts is structural debt because it fails exactly on fresh devices.
 
 Action: Move launcher installation helpers out of `cli.py`, update platform scripts to use `tul setup install`, and test the scripts so they cannot drift back to a removed command.
+
+## Macro Stage A v9 — Separate code regression from local artifact readiness
+
+Observation: On a second device, `tul verify` can run before the device has generated source/review transport artifacts or a latest run state. Treating `show exports` warnings as a regression-test failure conflates code correctness with local artifact readiness.
+
+Lesson: Regression tests should cover command reachability and contract shape. Artifact readiness should be enforced by `tul run` final acceptance and explicit export checks after artifacts are generated.
+
+Action: Relax `tests/test_export_contract.py` so it checks `show exports` structure and HEAD reporting without requiring current artifacts or warnings none.

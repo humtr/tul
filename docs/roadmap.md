@@ -79,3 +79,9 @@ The import root should contain the three head-tagged upload files for the curren
 - v6: root upload aliases are head-tagged and old head aliases are pruned.
 - v7: head-tagged artifacts become canonical; latest-named root artifacts are not current evidence.
 - v8: launcher/setup hygiene removes the stale top-level install path and makes `setup install` the canonical bootstrap command.
+
+### Macro Stage A artifact test split
+
+- keep `show exports` runtime coverage in regression tests;
+- stop requiring local source/review artifacts to be generated or recorded before `tul verify` can pass on a fresh synced device;
+- keep source/review current + warnings none as the final `tul run` / post-export acceptance condition.

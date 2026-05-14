@@ -550,3 +550,11 @@ Context: A fresh Termux tablet clone could have a correct repo and synced `main`
 Decision: Extract launcher installation and diagnostics to `lib/tulcore/launcher.py`. Keep `tul setup install [target]` as the only launcher installation command. Update platform scripts to call `setup install`, and let POSIX/Termux setup idempotently prepare `~/bin` plus future-shell PATH wiring through `~/.profile`. Do not add a legacy top-level `install` alias.
 
 Consequences: Fresh devices can bootstrap with `python3 bin/tul setup install` and then use `tul` normally. The canonical command surface remains unchanged, and launcher drift is tested as part of the regression harness.
+
+## ADR-MacroA-v9 — Regression tests must not require local transport artifacts
+
+Context: A freshly synced tablet can have a clean repo and matching remote HEAD while `/sdcard/termux/import/tul` has no source/review artifacts or no latest tul run state. After Macro Stage A moved regression tests into `tul verify`, the `show exports` test incorrectly required current artifacts and warnings none, making `tul verify` fail before the first local export/run.
+
+Decision: Regression tests should verify that `tul show exports` runs and reports the expected sections, heads, and warning surface. They must not require local transport artifacts to be generated or recorded in latest state. Artifact readiness remains a final `tul run` / post-export acceptance condition, not a prerequisite for baseline repo verification.
+
+Consequences: Fresh devices can run `tul verify` immediately after `git pull --ff-only`. `tul run` still produces the head-tagged source/review/verify artifacts and final PASS decision when artifacts are current and warnings are none.
