@@ -17,7 +17,7 @@ from .handoff import generate_handoff
 from .integrity import format_export_integrity
 from .paths import expand_path, mkdirp
 from .state import latest_state, summarize_compact_state
-from .upload_aliases import publish_verify_upload_alias, remove_root_latest_artifacts
+from .upload_aliases import head_alias_path, publish_verify_upload_alias, remove_root_latest_artifacts
 from .verify_checks import (
     REQUIRED_DOCS,
     check_cli_runtime_smoke,
@@ -368,10 +368,21 @@ def _payload_from_verify_markdown(path: Path) -> dict[str, Any] | None:
 
 
 def _merged_upload_aliases(ctx: ProjectContext, *, verify_alias: dict[str, Any]) -> dict[str, Any]:
-    aliases: dict[str, Any] = {}
+    aliases = _transport_upload_aliases_from_root(ctx, head=str(verify_alias.get("head") or ""))
     state_aliases = _transport_upload_aliases_from_latest_state(ctx)
     aliases.update(state_aliases)
     aliases["verify"] = verify_alias
+    return aliases
+
+
+def _transport_upload_aliases_from_root(ctx: ProjectContext, *, head: str) -> dict[str, Any]:
+    aliases: dict[str, Any] = {}
+    if not head:
+        return aliases
+    for label, kind in (("source", "source"), ("review", "review")):
+        path = head_alias_path(ctx, kind=kind, suffix=".zip", head=head)
+        if path.exists():
+            aliases[label] = {"kind": kind, "head": head, "root_alias": str(path)}
     return aliases
 
 

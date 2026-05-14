@@ -48,7 +48,6 @@ class VerifySnapshotRefreshTest(unittest.TestCase):
             write_state(
                 work / "run" / "state.json",
                 project="tul",
-                source_bundle_export={"upload_aliases": {"root_alias": str(source)}},
                 review_bundle_export={"upload_aliases": {"root_alias": str(review)}},
             )
 
