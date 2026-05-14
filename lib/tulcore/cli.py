@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import shutil
 import subprocess
 import sys
+from contextlib import redirect_stdout
 from pathlib import Path
 from typing import Any
 
@@ -357,6 +359,29 @@ def command_run(args: argparse.Namespace) -> int:
     target, package_path, dry = parse_target_package_dry(args.items)
     inferred = infer_mutating_project(target, command="run")
     ctx = inferred.ctx
+    if args.json:
+        return command_run_json(args, ctx, target=target, package_path=package_path, dry=dry, inferred=inferred)
+    return command_run_text(args, ctx, target=target, package_path=package_path, dry=dry, inferred=inferred)
+
+
+def command_run_json(args: argparse.Namespace, ctx, *, target: str | None, package_path: Path | None, dry: bool, inferred) -> int:
+    buffer = io.StringIO()
+    with redirect_stdout(buffer):
+        exit_code = command_run_text(args, ctx, target=target, package_path=package_path, dry=dry, inferred=inferred)
+    payload = {
+        "command": "run",
+        "project": ctx.project_id,
+        "repo": str(ctx.repo_path),
+        "dry": dry,
+        "exit_code": exit_code,
+        "ok": exit_code == 0,
+        "output": buffer.getvalue(),
+    }
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    return exit_code
+
+
+def command_run_text(args: argparse.Namespace, ctx, *, target: str | None, package_path: Path | None, dry: bool, inferred) -> int:
     if target is None:
         print(format_inference_summary(inferred, command="run"))
         print()

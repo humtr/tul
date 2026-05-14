@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import sys
 import unittest
@@ -93,6 +94,15 @@ class CommandSurfaceTest(unittest.TestCase):
         result = run_tul("export", "status", check=False)
         self.assertNotEqual(0, result.returncode)
         self.assertIn("status", result.stdout.lower())
+
+    def test_run_dry_json_is_machine_readable(self) -> None:
+        result = run_tul("run", "--json", "dry")
+        payload = json.loads(result.stdout)
+        self.assertEqual("run", payload["command"])
+        self.assertTrue(payload["dry"])
+        self.assertEqual(0, payload["exit_code"])
+        self.assertTrue(payload["ok"])
+        self.assertIn("# tul run dry", payload["output"])
 
 
 if __name__ == "__main__":

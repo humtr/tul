@@ -26,6 +26,7 @@ tul run
 ```
 
 `run` is the normal Terminal Update Loop. It applies a package when one is available. If no compatible package is available, it refreshes current verification and transport artifacts.
+Use `tul run --json` when the same result must be captured as one machine-readable object; the human run log is carried in the JSON `output` field.
 
 ## Optional preflight
 

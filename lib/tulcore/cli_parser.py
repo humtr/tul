@@ -59,6 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-push", action="store_true")
     p.add_argument("--allow-dirty", action="store_true")
     p.add_argument("--no-export", action="store_true", help="skip source/review export after update")
+    p.add_argument("--json", action="store_true", help="print machine-readable run result")
 
     p = sub.add_parser("clean", help="show or run guarded cleanup plans")
     p.add_argument("scope", nargs="?", choices=["states", "packages", "backups", "run"])
