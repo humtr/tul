@@ -178,3 +178,78 @@ def check_command_surface(repo: Path, result: StepRecorderProtocol, *, label: st
         not missing_markers,
         "missing: " + "; ".join(missing_markers) if missing_markers else "package-not-found refresh markers present",
     )
+
+
+def check_cli_runtime_smoke(repo: Path, result: StepRecorderProtocol, *, label: str) -> None:
+    """Run read-only CLI commands that exercise command handler runtime paths.
+
+    `py_compile` and parser/help checks cannot catch missing helpers inside
+    command handlers. These smoke checks intentionally use only read-only
+    commands so they can run inside `tul verify` without rewriting transport
+    artifacts.
+    """
+    launcher = repo / "bin" / "tul"
+    if not launcher.exists():
+        result.add(f"{label}: CLI runtime smoke", False, "missing: bin/tul")
+        return
+
+    commands = [
+        [sys.executable, str(launcher), "show", "handoff"],
+        [sys.executable, str(launcher), "show", "exports"],
+    ]
+    failures: list[str] = []
+    details: list[str] = []
+    for cmd in commands:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(repo),
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        display = " ".join([sys.executable, "bin/tul", *cmd[2:]])
+        if proc.returncode != 0:
+            failures.append(display)
+            snippet = (proc.stdout or "").strip()
+            if len(snippet) > 1200:
+                snippet = snippet[:1200].rstrip() + "\n..."
+            details.append(f"$ {display}\n{snippet or '(no output)'}")
+    result.add(
+        f"{label}: CLI runtime smoke",
+        not failures,
+        "read-only CLI commands passed"
+        if not failures
+        else "failed commands: " + ", ".join(failures) + "\n" + "\n\n".join(details),
+        command="; ".join(" ".join([sys.executable, "bin/tul", *cmd[2:]]) for cmd in commands),
+    )
+
+
+def check_regression_tests(repo: Path, result: StepRecorderProtocol, *, label: str) -> None:
+    """Run the repo regression harness as part of the release gate.
+
+    This promotes the Stage 9B `unittest` suite from a manual acceptance step
+    into the normal verification path. It is intentionally local-repo scoped in
+    `verify.py`; fresh clones still validate parser/help and release documents
+    without depending on the user's current transport artifact state.
+    """
+    tests_dir = repo / "tests"
+    if not tests_dir.exists():
+        result.add(f"{label}: regression tests", False, "missing: tests/")
+        return
+    cmd = [sys.executable, "-m", "unittest", "discover", "-s", "tests"]
+    proc = subprocess.run(
+        cmd,
+        cwd=str(repo),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    output = (proc.stdout or "").strip() or "ok"
+    if len(output) > 2000:
+        output = output[:2000].rstrip() + "\n..."
+    result.add(
+        f"{label}: regression tests",
+        proc.returncode == 0,
+        output,
+        command="python3 -m unittest discover -s tests",
+    )

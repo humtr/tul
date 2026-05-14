@@ -367,6 +367,7 @@ def command_run(args: argparse.Namespace) -> int:
         if not args.no_export:
             print("Would then run: tul export")
         print("Would then run: tul verify fresh")
+        print("Verification now includes CLI runtime smoke and regression tests.")
         print("Would then run: tul show")
         return 0
 

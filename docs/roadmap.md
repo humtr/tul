@@ -2,45 +2,22 @@
 
 ## Current baseline
 
-Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is closed.
+Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is closed. Stage 9C CLI/parser/verify seam extraction is closed after `tul-stage9c-cli-helper-restore-v1`.
 
-Current stable baseline before this package:
+## Macro Stage A — run-verified artifact loop
 
-```text
-HEAD: 1efc472191d58d62772ab5bd87838eaf34e39866
-Release gate: PASS
-Regression tests: 9 tests OK
-Source bundle: current
-Review bundle: current
-Docs drift: clean
-Warnings: none
-```
+Active package: `tul-macro-stage-a-run-verified-artifacts-v2`.
 
-## Stage 9C — structural debt reduction
-
-Active corrective package: `tul-stage9c-cli-helper-restore-v1`.
-
-Correction target: restore the CLI helper seam removed during parser extraction. Stage 9C is not closed until both the regression harness and the release gate pass.
-
-Goal: make the largest remaining modules easier to change by extracting narrow, behavior-preserving seams under the Stage 9B regression harness.
+Goal: reduce user round-trips by making the normal `tul run` path refresh source/review artifacts and then run a release gate that includes regression tests and read-only CLI runtime smoke.
 
 Scope:
 
 ```text
-1. verify.py release-gate checks -> lib/tulcore/verify_checks.py
-2. show/export status classification -> direct regression tests
-3. cli.py command registration -> lib/tulcore/cli_parser.py
-4. state.py touched last with a small project-matching helper
-```
-
-Non-goals:
-
-```text
-- no command surface change
-- no package contract change
-- no artifact path change
-- no state schema change
-- no broad cli.py/state.py rewrite
+- add CLI runtime smoke to the verify gate for the local repo
+- add regression tests to the verify gate for the local repo
+- keep fresh-clone verification focused on repo/doc/parser/compile checks
+- keep export side effects outside verify; `tul run` continues to export before verify
+- preserve command surface, package contract, and artifact paths
 ```
 
 Acceptance:
@@ -49,6 +26,7 @@ Acceptance:
 python3 -m unittest discover -s tests
 python3 -m py_compile bin/tul lib/tulcore/*.py
 git diff --check
+tul run dry
 tul export
 tul verify fresh
 tul show exports
@@ -58,7 +36,8 @@ Expected result:
 
 ```text
 unittest: PASS
-show/export/handoff commands: PASS
+verify includes local repo: CLI runtime smoke
+verify includes local repo: regression tests
 Release gate: PASS
 Source bundle: current
 Review bundle: current
@@ -66,23 +45,19 @@ Docs drift: clean
 Warnings: none
 ```
 
-## Next candidates
+## Next macro candidates
 
-### Stage 9D — larger module decomposition
+### Macro Stage B — pipeline and artifact schema consolidation
 
-Only after Stage 9C passes. Candidate work:
+- split `run_update` into phase helpers;
+- centralize source/review manifest schemas;
+- clarify review bundle state context.
 
-- split CLI command handlers by command group;
-- split verify artifact rendering from verification execution;
-- split compact state rendering from state persistence.
+### Macro Stage C — state and verify module decomposition
 
-### Stage 9E — side-effecting integration tests
+- split state store/select/format/archive;
+- split verify runner/artifact/snapshot rendering.
 
-Add controlled integration tests for export/package/update behavior after the structural seams are stable.
+### Macro Stage D — safe delete/rename package operations
 
-## Deferred
-
-- safe package-level delete support;
-- broader state ledger redesign;
-- cross-repo onboarding;
-- full Windows profile expansion beyond `docs/environments/README.md`.
+- add guarded delete/rename support to the package contract.

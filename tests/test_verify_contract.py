@@ -8,6 +8,7 @@ from helpers import REPO_ROOT, read_text
 sys.path.insert(0, str(REPO_ROOT / "lib"))
 
 from tulcore.verify import REQUIRED_DOCS  # noqa: E402
+from tulcore.verify_checks import check_cli_runtime_smoke, check_regression_tests  # noqa: E402
 
 
 EXPECTED_REQUIRED_DOCS = [
@@ -39,6 +40,10 @@ class VerifyContractTest(unittest.TestCase):
         text = read_text("README.md")
         for term in README_GATE_TERMS:
             self.assertIn(term, text)
+
+    def test_verify_gate_exposes_runtime_and_regression_checks(self) -> None:
+        self.assertTrue(callable(check_cli_runtime_smoke))
+        self.assertTrue(callable(check_regression_tests))
 
 
 if __name__ == "__main__":

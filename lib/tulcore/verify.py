@@ -18,8 +18,10 @@ from .paths import expand_path, mkdirp
 from .state import summarize_compact_state
 from .verify_checks import (
     REQUIRED_DOCS,
+    check_cli_runtime_smoke,
     check_command_surface,
     check_readme_entrypoint_terms,
+    check_regression_tests,
     check_required_docs,
 )
 
@@ -495,6 +497,9 @@ def _verify_repo(repo: Path, result: VerifyResult, *, label: str) -> None:
     check_required_docs(repo, result, label=label)
     check_readme_entrypoint_terms(repo, result, label=label)
     check_command_surface(repo, result, label=label)
+    if label == "local repo":
+        check_cli_runtime_smoke(repo, result, label=label)
+        check_regression_tests(repo, result, label=label)
 
 
 def _py_compile(result: VerifyResult, repo: Path, name: str, files: list[Path]) -> None:

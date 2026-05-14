@@ -489,3 +489,7 @@ Impact: Structural changes should first extract seams around existing behavior r
 Reflected in: `lib/tulcore/cli_parser.py`, `lib/tulcore/verify_checks.py`, export integrity tests, and the small `state.py` project-matching helper.
 
 Follow-up: Use the same acceptance gate before any larger `cli.py`, `verify.py`, or `state.py` decomposition.
+
+## Lesson: one-run loops need executable acceptance, not only syntax checks
+
+The Stage 9C helper regression showed that `py_compile` can pass while `show`, `export`, or `verify` command handlers fail at runtime. Macro Stage A moves CLI runtime smoke and regression tests into the verify gate so `tul run` can serve as the normal one-command loop for applying, exporting, verifying, and saving artifacts.

@@ -509,3 +509,7 @@ Context: Stage 9B added a regression harness. The next source of risk is not fea
 Decision: Stage 9C extracts narrow seams without changing public behavior: command registration moves to `lib/tulcore/cli_parser.py`, release-gate checks move to `lib/tulcore/verify_checks.py`, export status classification receives direct tests, and `state.py` is touched last with a small helper only.
 
 Consequences: Later module decomposition can proceed behind stable contracts. Behavior changes remain out of scope for this stage.
+
+## Decision: promote regression tests into the verify gate
+
+Accepted in Macro Stage A. `tul verify` should run read-only CLI runtime smoke and the Stage 9B regression harness for the local repo. This closes the gap where `py_compile` passed but command handlers could still fail at runtime. Fresh clone verification remains focused on repo/doc/parser/compile checks to avoid coupling clone validation to user-local transport artifact state.
