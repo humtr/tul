@@ -1,13 +1,13 @@
 # current status
 
-Status: Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is the current package.
+Status: Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed. Stage 9B regression test harness is active and this package fixes the command-surface test matcher.
 
 Verified baseline before this package:
 
 ```text
-HEAD: c3b4c4b3a23056432f52e28450a42b1f6bc94eea
-Remote HEAD: c3b4c4b3a23056432f52e28450a42b1f6bc94eea
-Latest package: tul-stage9a-review-current-head-export-v1
+HEAD: 964365e1f425124632ab88fa65736b46c178c238
+Remote HEAD: 964365e1f425124632ab88fa65736b46c178c238
+Latest package: tul-stage9b-regression-test-harness-v1
 Release gate: PASS
 Steps: 33 pass, 0 fail
 Fresh clone: PASS
@@ -17,7 +17,7 @@ Docs drift: clean
 Warnings: none
 ```
 
-Current package under review: `tul-stage9b-regression-test-harness-v1`.
+Current package under review: `tul-stage9b-regression-test-harness-fix-v1`.
 
 ## Active read-next set
 
@@ -48,16 +48,9 @@ templates/project-instructions.md
 
 ## Stage 9B objective
 
-Add a small regression harness before any larger module split.
+Maintain a small regression harness before any larger module split.
 
-The harness should protect:
-
-- six-file handoff read-next;
-- active required-doc gate;
-- README entrypoint terms;
-- canonical command surface;
-- export namespace boundary;
-- source/review current-head export status.
+This fix narrows `tests/test_command_surface.py` so it checks argparse top-level choices and command-entry lines, not arbitrary prose in command descriptions. The word `apply` may legitimately appear in the `update` description without being a top-level command.
 
 ## Validation
 
@@ -65,6 +58,7 @@ The harness should protect:
 python3 -m unittest discover -s tests
 python3 -m py_compile bin/tul lib/tulcore/*.py
 git diff --check
+tul export
 tul verify fresh
 tul show exports
 ```

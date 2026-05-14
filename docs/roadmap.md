@@ -4,10 +4,10 @@
 
 Stage 8 document compaction is closed. Stage 9A review/current-HEAD export hardening is closed.
 
-Current stable baseline before Stage 9B:
+Current stable baseline before this package:
 
 ```text
-HEAD: c3b4c4b3a23056432f52e28450a42b1f6bc94eea
+HEAD: 964365e1f425124632ab88fa65736b46c178c238
 Release gate: PASS
 Source bundle: current
 Review bundle: current
@@ -17,17 +17,11 @@ Warnings: none
 
 ## Stage 9B — regression test harness
 
-Package: `tul-stage9b-regression-test-harness-v1`
+Active package: `tul-stage9b-regression-test-harness-fix-v1`.
 
-Goal: add a stdlib `unittest` harness before larger technical-debt reduction work.
+Goal: repair the command-surface test matcher added by `tul-stage9b-regression-test-harness-v1`.
 
-Scope:
-
-- `tests/test_handoff_contract.py`
-- `tests/test_verify_contract.py`
-- `tests/test_command_surface.py`
-- `tests/test_export_contract.py`
-- `tests/helpers.py`
+The failed test treated prose inside help descriptions as top-level command entries. The corrected matcher parses argparse's top-level choices from the usage line and checks command-entry lines only.
 
 Acceptance:
 
@@ -35,6 +29,7 @@ Acceptance:
 python3 -m unittest discover -s tests
 python3 -m py_compile bin/tul lib/tulcore/*.py
 git diff --check
+tul export
 tul verify fresh
 tul show exports
 ```
@@ -42,6 +37,7 @@ tul show exports
 Expected result:
 
 ```text
+unittest: PASS
 Release gate: PASS
 Source bundle: current
 Review bundle: current
