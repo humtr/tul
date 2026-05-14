@@ -25,7 +25,7 @@ class UploadAliasTest(unittest.TestCase):
             work = root / "import" / "tul" / "work"
             work.mkdir(parents=True)
             ctx = FakeContext("tul", repo, {"platform": {"work_root": str(work)}})
-            source = root / "tul-source-latest.zip"
+            source = root / "source-input.zip"
             source.write_bytes(b"source")
             import_root = work.parent
             (import_root / "tul-source-abcdef0.zip").write_bytes(b"old")
@@ -49,8 +49,8 @@ class UploadAliasTest(unittest.TestCase):
             work = root / "import" / "tul" / "work"
             work.mkdir(parents=True)
             ctx = FakeContext("tul", repo, {"platform": {"work_root": str(work)}})
-            md = root / "tul-vf-latest.md"
-            js = root / "tul-vf-latest.json"
+            md = root / "verify-input.md"
+            js = root / "verify-input.json"
             md.write_text("verify\n", encoding="utf-8")
             js.write_text("{}\n", encoding="utf-8")
 

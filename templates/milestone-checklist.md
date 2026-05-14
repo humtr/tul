@@ -17,7 +17,7 @@ Use this checklist before closing a milestone.
 - [ ] `tul package` discovers, inspects, validates, and authors packages.
 - [ ] `tul update` applies one compatible package and stages only manifest-declared files.
 - [ ] `tul verify` remains quick/local by default.
-- [ ] `tul verify fresh` writes latest verify artifacts.
+- [ ] `tul verify fresh` writes head-tagged verify artifacts.
 - [ ] `tul export` creates file artifacts only.
 - [ ] `tul run` remains the normal user loop.
 - [ ] `tul clean` is plan-only by default.
@@ -26,9 +26,9 @@ Use this checklist before closing a milestone.
 
 ## Artifact model
 
-- [ ] `tul-vf-latest.md` is current runtime verification evidence.
-- [ ] `tul-source-latest.zip` is current when source context is needed.
-- [ ] `tul-review-latest.zip` is current when changed-file review is needed, or a stale warning is explicitly understood.
+- [ ] `tul-vf-<head7>.md` is current runtime verification evidence.
+- [ ] `tul-source-<head7>.zip` is current when source context is needed.
+- [ ] `tul-review-<head7>.zip` is current when changed-file review is needed.
 - [ ] `tul show exports` reports current artifacts or known warning boundaries.
 
 ## Package safety

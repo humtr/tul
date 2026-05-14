@@ -532,3 +532,13 @@ Context: Head-tagged upload artifacts solved stale `latest` ambiguity for LLM ha
 Decision: The import root is a head-only upload inbox. Keep only `tul-source-<head7>.zip`, `tul-review-<head7>.zip`, and `tul-vf-<head7>.md` at the root. Remove root-level `*-latest.*` artifacts after export/verify. Preserve dated archival copies under `logs/source`, `logs/review`, and `logs/verify`; keep verify JSON in dated logs for machine-readable inspection.
 
 Consequences: A user can upload the three visible head-tagged files from one folder without checking `latest` ambiguity. Local automation that needs machine-readable verify data should read dated verify JSON or state metadata rather than root `latest` JSON.
+
+## ADR-040 — Head-tagged artifacts are canonical
+
+Status: accepted
+
+Context: Macro Stage A made commit-tagged upload artifacts available, but earlier stages still treated `latest` filenames as compatibility anchors or local automation fallbacks. During active development that extra layer creates ambiguity and makes the upload surface harder to reason about.
+
+Decision: The canonical upload artifacts are `tul-source-<head7>.zip`, `tul-review-<head7>.zip`, and `tul-vf-<head7>.md`. Root-level latest-named source, review, verify markdown, and verify JSON artifacts are not produced or displayed as current evidence. Verify JSON remains available only as a dated run-log artifact unless explicitly requested.
+
+Consequences: The user uploads exactly three head-tagged files from the import root. Review bundles include head-tagged verify markdown evidence, not a latest-named verify entry. Any future automation should consume state metadata or dated JSON logs instead of root latest files.

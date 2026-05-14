@@ -26,7 +26,7 @@ Use `tul package` only when you want to inspect the newest compatible package be
 If you are an LLM, coding agent, or a new session reviewing this repo, start from runtime evidence and then the active documents:
 
 ```text
-tul-vf-latest.md
+tul-vf-<head7>.md
 README.md
 docs/status/current.md
 docs/manifest.md
@@ -35,16 +35,16 @@ docs/commands.md
 docs/package-spec.md
 ```
 
-Do not use prior chat context when uploaded artifacts and repo files answer the question. Runtime facts live in `tul-vf-latest.md` and `tul show` snapshots. Repo docs carry durable guidance.
+Do not use prior chat context when uploaded artifacts and repo files answer the question. Runtime facts live in the uploaded head-tagged `tul-vf-<head7>.md` and `tul show` snapshots. Repo docs carry durable guidance.
 
 ## Artifact model
 
 | Artifact | Role |
 |---|---|
 | Git remote + commit hash | canonical source/recovery authority |
-| `tul-vf-latest.md` | runtime verification evidence |
-| `tul-source-latest.zip` | source-context transport artifact |
-| `tul-review-latest.zip` | changed-file review transport artifact |
+| `tul-vf-<head7>.md` | runtime verification evidence |
+| `tul-source-<head7>.zip` | source-context transport artifact |
+| `tul-review-<head7>.zip` | changed-file review transport artifact |
 | state/report/handoff files | local runtime records |
 
 Zip artifacts are transport artifacts, not backup authority. Recovery authority is Git remote plus commit hashes and recovery state.

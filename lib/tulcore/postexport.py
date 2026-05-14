@@ -129,9 +129,9 @@ def run_post_update_exports(
                 result.side_effect_errors.append(f"{path.name}: {type(exc).__name__}: {exc}")
 
     try:
-        from .verify import refresh_latest_verify_runtime_snapshots
+        from .verify import refresh_verify_upload_runtime_snapshots
 
-        refreshed = refresh_latest_verify_runtime_snapshots(ctx)
+        refreshed = refresh_verify_upload_runtime_snapshots(ctx)
         result.snapshot_refreshed = refreshed
         write_state(state_file, post_update_exports=result.to_dict())
     except Exception as exc:  # pragma: no cover - defensive artifact update

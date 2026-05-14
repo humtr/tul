@@ -57,15 +57,15 @@ def build_report(
         if verify_fresh_ok is not None:
             lines.append(f"Release gate: {'PASS' if verify_fresh_ok else 'FAIL'}")
         if verify_artifacts:
-            latest_md = verify_artifacts.get("latest_markdown")
+            upload_md = verify_artifacts.get("upload_markdown")
             md = verify_artifacts.get("markdown")
-            latest_json = verify_artifacts.get("latest_json")
-            if latest_md:
-                lines.append(f"- Latest markdown: {latest_md}")
+            js = verify_artifacts.get("json")
+            if upload_md:
+                lines.append(f"- Upload markdown: {upload_md}")
             if md:
-                lines.append(f"- Timestamped markdown: {md}")
-            if latest_json:
-                lines.append(f"- Latest JSON: {latest_json}")
+                lines.append(f"- Run markdown: {md}")
+            if js:
+                lines.append(f"- Run JSON: {js}")
     if changed_files is not None:
         lines.extend(["", "## Changed files", ""])
         if changed_files:

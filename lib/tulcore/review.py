@@ -17,13 +17,13 @@ from .paths import expand_path, mkdirp
 from .state import latest_state, write_state
 from .upload_aliases import head_alias_path, publish_review_upload_alias, remove_root_latest_artifacts
 
-REQUIRED_REVIEW_FILES = ("tul-vf-latest.md", "state.json", "handoff.md")
+REQUIRED_REVIEW_FILES = ("state.json", "handoff.md")
 REQUIRED_REVIEW_ENTRIES = (
     "README.md",
     "git-head.txt",
     "changed-files.txt",
     "diff.patch",
-    "tul-vf-latest.md",
+    # verify markdown entry is head-tagged and declared in export-manifest.json
     "state.json",
     "report.md",
     "handoff.md",
@@ -78,11 +78,13 @@ def review_bundle_path(ctx: ProjectContext) -> Path:
     return head_alias_path(ctx, kind="review", suffix=".zip")
 
 
-def latest_verify_markdown(ctx: ProjectContext) -> Path:
-    paths = platform_paths(ctx.global_config)
-    verify_root = paths.get("verify_log_root") or paths.get("log_root") or (ctx.repo_path.parent / "logs" / "verify")
-    latest_root = Path(verify_root).parent.parent if Path(verify_root).name == "verify" else Path(verify_root).parent
-    return latest_root / f"{ctx.project_id}-vf-latest.md"
+def verify_markdown_path(ctx: ProjectContext, commit: str) -> Path:
+    """Return the canonical head-tagged verify markdown upload artifact."""
+    return head_alias_path(ctx, kind="vf", suffix=".md", head=commit)
+
+
+def verify_markdown_entry(ctx: ProjectContext, commit: str) -> str:
+    return f"{ctx.project_id}-vf-{commit[:7]}.md"
 
 
 def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, update_state: bool = True) -> ReviewBundleExport:
@@ -100,8 +102,6 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
     state_data = state_entry[1] if state_entry else {}
     report_path = _path_from_state(repo, state_data.get("report"))
     handoff_path = _path_from_state(repo, state_data.get("handoff"))
-    verify_path = latest_verify_markdown(ctx)
-
     current_head = head(repo)
     state_commit = str(state_data.get("commit") or "").strip()
     # Review exports are evidence for the current Git HEAD, not merely for the
@@ -111,6 +111,8 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
     # bundle stale immediately. Reuse state changed_files only when the latest
     # state commit is the current HEAD.
     commit = current_head
+    verify_path = verify_markdown_path(ctx, commit)
+    verify_entry = verify_markdown_entry(ctx, commit)
     changed_files = _changed_files_for_review(repo, state_data, commit, allow_state_files=(state_commit == current_head))
     diff_text = _diff_for_review(repo, commit, changed_files)
 
@@ -133,12 +135,14 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
                 "created_at": started_at,
                 "target": str(target),
                 "changed_file_count": len(changed_files),
+                "verify_markdown_entry": verify_entry,
+                "verify_markdown_path": str(verify_path),
             }, indent=2, ensure_ascii=False) + "\n")
 
             if verify_path.exists():
-                file_count += _write_file(z, verify_path, "tul-vf-latest.md")
+                file_count += _write_file(z, verify_path, verify_entry)
             else:
-                file_count += _write_text(z, "tul-vf-latest.md", f"missing: {verify_path}\n")
+                file_count += _write_text(z, verify_entry, f"missing: {verify_path}\n")
             if state_path and state_path.exists():
                 file_count += _write_file(z, state_path, "state.json")
             else:
@@ -189,8 +193,7 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
     if update_state and state_path:
         write_state(state_path, review_bundle_export=result.to_dict())
         _record_review_export_side_effects(ctx, state_path, report_path, handoff_path, result)
-        # The side-effect refresh updates tul-vf-latest.md after the zip is
-        # created. Touch the zip once more so file-manager/ls views show the
+        # Touch the zip once more so file-manager/ls views show the
         # review bundle as part of the same export action, not as an old stale
         # artifact. Content SHA is unchanged.
         try:
@@ -275,6 +278,7 @@ def _review_readme(ctx: ProjectContext, commit: str, changed_files: list[str]) -
         "",
         "Purpose: transport the current Git HEAD runtime facts and changed-file evidence to an LLM review session.",
         "This is not a backup and not a canonical source archive.",
+        "Head-tagged artifacts are canonical; latest-named artifacts are not used.",
         "",
         f"Project: {ctx.project_id}",
         f"Repo: {ctx.repo_path}",
@@ -283,7 +287,7 @@ def _review_readme(ctx: ProjectContext, commit: str, changed_files: list[str]) -
         f"Changed files: {len(changed_files)}",
         "",
         "Contents:",
-        "- tul-vf-latest.md",
+        f"- {verify_markdown_entry(ctx, commit)}",
         "- state.json",
         "- report.md",
         "- handoff.md",
@@ -371,9 +375,9 @@ def _record_review_export_side_effects(
         except Exception as exc:  # pragma: no cover - defensive artifact update
             errors.append(f"handoff: {type(exc).__name__}: {exc}")
     try:
-        from .verify import refresh_latest_verify_runtime_snapshots
+        from .verify import refresh_verify_upload_runtime_snapshots
 
-        refreshed = refresh_latest_verify_runtime_snapshots(ctx)
+        refreshed = refresh_verify_upload_runtime_snapshots(ctx)
         write_state(state_path, review_bundle_snapshot_refreshed=refreshed)
     except Exception as exc:  # pragma: no cover - defensive artifact update
         errors.append(f"verify-snapshot: {type(exc).__name__}: {exc}")

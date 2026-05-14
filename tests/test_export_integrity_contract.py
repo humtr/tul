@@ -44,8 +44,9 @@ class ExportIntegrityContractTest(unittest.TestCase):
             "changed_file_count": 0,
         }
         with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as z:
+            manifest["verify_markdown_entry"] = "tul-vf-aaaaaaa.md"
             z.writestr("export-manifest.json", json.dumps(manifest))
-            z.writestr("tul-vf-latest.md", "# tul verify\n")
+            z.writestr("tul-vf-aaaaaaa.md", "# tul verify\n")
             z.writestr("state.json", "{}\n")
             z.writestr("handoff.md", "# handoff\n")
 
@@ -70,6 +71,7 @@ class ExportIntegrityContractTest(unittest.TestCase):
         self.assertEqual("current", current["status"])
         self.assertEqual("stale", stale["status"])
         self.assertEqual("current-head", current["basis"])
+        self.assertEqual("tul-vf-aaaaaaa.md", current["verify_markdown_entry"])
         self.assertTrue(any("stale" in item for item in stale["warnings"]))
 
 

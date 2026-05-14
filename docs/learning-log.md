@@ -506,3 +506,11 @@ A technically correct release gate is still too hard to use if the user has to s
 ## 2026-05-14 — Head-tagged upload root beats latest aliases
 
 When the user manually uploads artifacts, `latest` filenames are a liability because repeated uploads can bind to stale files in another session. Commit-tagged filenames are clearer. The import root should therefore be a human upload surface containing only the current head-tagged source, review, and verify markdown files; dated logs remain the archive.
+
+## 2026-05-14 — Head tags are the artifact authority
+
+Observation: Keeping both head-tagged artifacts and latest-named artifacts preserves ambiguity. The user-facing workflow needs one visible truth, not a canonical file plus a fallback pointer.
+
+Lesson: During active development, head-tagged artifacts should be the artifact authority. `latest` names are not needed for manual upload and should not remain as compatibility surface in the import root.
+
+Action: Macro Stage A v7 makes source, review, and verify upload artifacts head-tag canonical and keeps verify JSON in dated logs only.

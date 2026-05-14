@@ -20,7 +20,7 @@ from .state import latest_state
 
 
 SOURCE_REQUIRED_ENTRIES = {"source-manifest.json", "source-file-list.txt", "source-file-sha256s.txt"}
-REVIEW_REQUIRED_ENTRIES = {"export-manifest.json", "tul-vf-latest.md", "state.json", "handoff.md"}
+REVIEW_REQUIRED_ENTRIES = {"export-manifest.json", "state.json", "handoff.md"}
 DOC_DRIFT_FILES = (
     "docs/status/current.md",
     "docs/roadmap.md",
@@ -232,6 +232,16 @@ def inspect_review_bundle(ctx: ProjectContext, *, state: dict[str, Any] | None =
                 result["warnings"].append("review bundle missing required entries: " + ", ".join(missing))
                 return result
             manifest = json.loads(z.read("export-manifest.json").decode("utf-8"))
+            verify_entry = str(manifest.get("verify_markdown_entry") or "")
+            if not verify_entry:
+                result["status"] = "invalid"
+                result["warnings"].append("review bundle manifest missing verify_markdown_entry")
+                return result
+            if verify_entry not in names:
+                result["status"] = "invalid"
+                result["warnings"].append(f"review bundle missing verify markdown entry: {verify_entry}")
+                return result
+            result["verify_markdown_entry"] = verify_entry
             result["manifest_head"] = manifest.get("head")
             result["basis"] = manifest.get("basis")
             result["changed_file_count"] = manifest.get("changed_file_count")

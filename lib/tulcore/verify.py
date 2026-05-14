@@ -128,10 +128,10 @@ def verify_log_root(ctx: ProjectContext, explicit: Path | None = None) -> Path:
     Windows derives `D:/work/files/downloads/.tul/logs/verify` from the work
     root unless `platform.verify_log_root` or `platform.log_root` is configured.
 
-    The stable latest markdown/json pair is intentionally written outside this
-    run-log root by `verify_latest_root()`, so the import root can hold
-    runtime evidence beside manually supplied source-context archives. Verify
-    does not create `tul-main.zip` or any other source archive.
+    Head-tagged upload markdown is written outside this run-log root by
+    `verify_upload_root()`, so the import root can hold the three canonical
+    upload artifacts. Verify does not create `tul-main.zip` or any other
+    source archive.
     """
     if explicit is not None:
         return explicit.expanduser().resolve()
@@ -147,16 +147,15 @@ def verify_log_root(ctx: ProjectContext, explicit: Path | None = None) -> Path:
     return Path.home() / ".cache" / "tul" / "logs" / "verify"
 
 
-def verify_latest_root(ctx: ProjectContext, log_root: Path) -> Path:
-    """Return the import root used for head-tagged verify upload aliases.
+def verify_upload_root(ctx: ProjectContext, log_root: Path) -> Path:
+    """Return the import root used for canonical head-tagged upload artifacts.
 
-    Timestamped run artifacts remain in `logs/verify/YYMMDD/`. The root no
-    longer keeps `tul-vf-latest.*`; it keeps only the current head-tagged
-    upload markdown.
+    Timestamped run artifacts remain in `logs/verify/YYMMDD/`. The root uses
+    head-tagged names only; latest-named verify artifacts are not generated.
     """
     platform = ctx.global_config.get("platform") or {}
-    if platform.get("verify_latest_root"):
-        return expand_path(str(platform["verify_latest_root"]))
+    if platform.get("verify_upload_root"):
+        return expand_path(str(platform["verify_upload_root"]))
     paths = platform_paths(ctx.global_config)
     work_root = paths.get("work_root")
     if work_root:
@@ -178,16 +177,14 @@ def write_verify_artifacts(
     """Persist verify output as canonical markdown and JSON artifacts.
 
     Timestamped run artifacts are stored under the verify run-log root in a
-    YYMMDD date folder. Stable latest markdown/json files are written to the import root. They may
-    be uploaded from the same directory as manually supplied source-context
-    archives, but verify itself only writes verify artifacts.
-
-    Legacy `*-verify-latest.*` aliases are intentionally not generated.
+    YYMMDD date folder. Head-tagged markdown aliases are written to the import root for upload.
+    Machine-readable JSON is kept in dated logs, not as a root latest file.
+    Latest-named artifacts are intentionally not generated.
     """
     log_root = verify_log_root(ctx, log_dir)
-    latest_root = verify_latest_root(ctx, log_root)
+    upload_root = verify_upload_root(ctx, log_root)
     mkdirp(log_root)
-    mkdirp(latest_root)
+    mkdirp(upload_root)
     now = datetime.now()
     date_key = now.strftime("%y%m%d")
     time_key = now.strftime("%H%M%S")
@@ -199,8 +196,7 @@ def write_verify_artifacts(
     stem = f"{ctx.project_id}-vf-{mode_key}-{date_key}-{time_key}-{head_short}"
     md_path = run_root / f"{stem}.md"
     json_path = run_root / f"{stem}.json"
-    root_verify_md = latest_root / f"{ctx.project_id}-vf-{head_short}.md"
-    root_verify_json = latest_root / f"{ctx.project_id}-vf-{head_short}.json"
+    root_verify_md = upload_root / f"{ctx.project_id}-vf-{head_short}.md"
 
     payload = result.to_dict()
     payload["artifact"] = {
@@ -208,18 +204,16 @@ def write_verify_artifacts(
         "created_at": now.isoformat(timespec="seconds"),
         "log_root": str(log_root),
         "run_root": str(run_root),
-        "latest_root": str(latest_root),
+        "upload_root": str(upload_root),
         "markdown": str(md_path),
         "json": str(json_path),
         "upload_markdown": str(root_verify_md),
-        "upload_json": str(root_verify_json),
     }
 
     artifacts = {
         "markdown": str(md_path),
         "json": str(json_path),
         "upload_markdown": str(root_verify_md),
-        "upload_json": str(root_verify_json),
     }
     text = render_verify_artifact_markdown(
         ctx,
@@ -304,12 +298,11 @@ def rewrite_verify_artifacts_with_runtime_snapshots(
 
 
 
-def refresh_latest_verify_runtime_snapshots(ctx: ProjectContext) -> bool:
-    """Refresh verify upload aliases when possible.
+def refresh_verify_upload_runtime_snapshots(ctx: ProjectContext) -> bool:
+    """Refresh head-tagged verify upload aliases when possible.
 
-    Head-tagged upload mode does not keep root-level `tul-vf-latest.*` files.
-    The original dated run artifact remains the durable verify record, so there
-    is no root latest file to refresh here.
+    The dated run artifact remains the durable verify record. The root upload
+    surface is head-tagged only, so no latest-named file is refreshed.
     """
     remove_root_latest_artifacts(ctx, kinds=("vf",))
     return False
@@ -386,8 +379,8 @@ def render_verify_artifact_markdown(
         text += f"- Log root: {artifact['log_root']}\n"
     if artifact.get("run_root"):
         text += f"- Run root: {artifact['run_root']}\n"
-    if artifact.get("latest_root"):
-        text += f"- Upload root: {artifact['latest_root']}\n"
+    if artifact.get("upload_root"):
+        text += f"- Upload root: {artifact['upload_root']}\n"
     text += f"- Run markdown: {artifacts['markdown']}\n"
     text += f"- Run JSON: {artifacts['json']}\n"
     if artifacts.get("upload_markdown"):

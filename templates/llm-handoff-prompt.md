@@ -1,6 +1,6 @@
 # tul LLM handoff prompt
 
-Use the uploaded `tul-vf-latest.md` as runtime evidence. If code or full file context is needed, also use `tul-source-latest.zip`. If changed-file context is needed and current, use `tul-review-latest.zip`.
+Use the uploaded head-tagged `tul-vf-<head7>.md` as runtime evidence. If code or full file context is needed, also use `tul-source-<head7>.zip`. If changed-file context is needed, use `tul-review-<head7>.zip`.
 
 Treat `tul show`, `tul show handoff`, and `tul show exports` snapshots as runtime facts.
 

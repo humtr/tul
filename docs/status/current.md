@@ -1,13 +1,13 @@
 # current status
 
-Status: Macro Stage A v6 is in progress via `tul-macro-stage-a-head-only-upload-root-v6`.
+Status: Macro Stage A v7 is in progress via `tul-macro-stage-a-head-tag-canonical-v7`.
 
 Baseline before this package:
 
 ```text
-HEAD: 85e13c75592ed87e8458d9b1531deea5b9a6c9db
-Remote HEAD: 85e13c75592ed87e8458d9b1531deea5b9a6c9db
-Latest package: tul-macro-stage-a-final-upload-and-inbox-v5
+HEAD: ddb0cdde0bebf435b6402c29b41c672a0aefeb5b
+Remote HEAD: ddb0cdde0bebf435b6402c29b41c672a0aefeb5b
+Latest package: tul-macro-stage-a-head-only-upload-root-v6
 Release gate: PASS
 CLI runtime smoke: PASS
 Regression tests: PASS
@@ -19,11 +19,7 @@ Warnings: none
 
 ## Objective
 
-Make one `tul run` invocation sufficient for the normal user loop and make its last screen enough for a human decision. The final block should show PASS/CHECK, gate status, artifact status, warning status, and the three commit-named upload files.
-
-## Upload inbox policy
-
-The import root is now a head-only human upload inbox. It should show only the current commit-named upload artifacts at the root:
+Make head-tagged artifacts the only current upload artifacts. The canonical upload set is:
 
 ```text
 tul-source-<head7>.zip
@@ -31,7 +27,11 @@ tul-review-<head7>.zip
 tul-vf-<head7>.md
 ```
 
-Root-level `*-latest.*` artifacts are removed after export/verify. Dated archival copies remain under `logs/source/YYMMDD`, `logs/review/YYMMDD`, and `logs/verify/YYMMDD`. Verify JSON remains in dated logs for machine-readable inspection, but it is not a normal manual upload target.
+No root-level `latest` transport or verify files should be produced or displayed as current evidence. Verify JSON remains a dated run-log artifact only.
+
+## Upload inbox policy
+
+The import root is a head-tagged human upload inbox. It should show only the current commit-named upload artifacts at the root. Dated archival copies remain under `logs/source/YYMMDD`, `logs/review/YYMMDD`, and `logs/verify/YYMMDD`.
 
 ## Package intake policy
 
@@ -55,4 +55,4 @@ tul package
 tul run
 ```
 
-Expected result: the final screen says `Decision: PASS`, source/review/vf head-tagged upload files are shown, root latest files are absent, release gate PASS, source/review current, docs drift clean, and warnings none.
+Expected result: the final screen says `Decision: PASS`, source/review/vf head-tagged upload files are shown, root `latest` files are absent, release gate PASS, source/review current, docs drift clean, and warnings none.

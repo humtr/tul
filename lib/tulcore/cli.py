@@ -396,7 +396,7 @@ def command_run(args: argparse.Namespace) -> int:
 
     if can_refresh_artifacts:
         if not args.no_export:
-            print("\n--- EXPORT ---\n")
+            print("\n--- EXPORT PRECHECK ---\n")
             source_export = export_source_bundle(ctx, update_state=True)
             review_export = export_review_bundle(ctx, update_state=True)
             print(format_source_export(source_export))
@@ -407,6 +407,13 @@ def command_run(args: argparse.Namespace) -> int:
         artifacts = write_verify_artifacts(ctx, verify, fresh_clone=True)
         print(verify.to_text(artifacts))
         ok = verify.ok
+        if ok and not args.no_export:
+            print("\n--- EXPORT FINAL ---\n")
+            # Review bundles are canonical current-HEAD evidence. Re-export after
+            # verify so the bundle contains the head-tagged verify markdown for
+            # the same commit rather than a missing or previous-run marker.
+            review_export = export_review_bundle(ctx, update_state=True)
+            print(format_review_export(review_export))
     else:
         ok = True
         print("\n--- SKIPPED VERIFY/EXPORT ---\n")

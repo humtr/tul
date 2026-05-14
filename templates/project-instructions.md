@@ -4,7 +4,7 @@ You are working with `humtr/tul`, the Terminal Update Loop runtime.
 
 ## Start here
 
-1. Read `tul-vf-latest.md` when the user uploads it.
+1. Read the uploaded head-tagged `tul-vf-<head7>.md` when the user uploads it.
 2. Read `README.md`.
 3. Read `docs/status/current.md`.
 4. Read `docs/manifest.md`.

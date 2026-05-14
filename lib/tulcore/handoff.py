@@ -103,12 +103,12 @@ def runtime_facts(
     if verify_fresh_ok is not None:
         lines.append(f"Verify fresh: {'PASS' if verify_fresh_ok else 'FAIL'}")
     if verify_artifacts:
-        latest_md = verify_artifacts.get("latest_markdown")
+        upload_md = verify_artifacts.get("upload_markdown")
         md = verify_artifacts.get("markdown")
-        if latest_md:
-            lines.append(f"Verify latest markdown: {latest_md}")
+        if upload_md:
+            lines.append(f"Verify upload markdown: {upload_md}")
         if md:
-            lines.append(f"Verify timestamped markdown: {md}")
+            lines.append(f"Verify run markdown: {md}")
     if changed_files is not None:
         lines.extend(["", "## Changed files"])
         if changed_files:
@@ -132,7 +132,7 @@ def compact_handoff(*, repo: Path, project: str, mode: str, expected_repo: str |
         "",
         "1. Verify remote repo, branch, HEAD, and working tree facts when remote access is available.",
         "2. Read `README.md`, `docs/status/current.md`, `docs/manifest.md`, `docs/roadmap.md`, `docs/commands.md`, and `docs/package-spec.md` before proposing the next package.",
-        "3. Treat `tul-vf-latest.md`, `tul show`, and handoff output as runtime facts; treat repo docs as durable guidance.",
+        "3. Treat the head-tagged `tul-vf-<head7>.md`, `tul show`, and handoff output as runtime facts; treat repo docs as durable guidance.",
         "4. Preserve push-by-default, no broad staging, no force push, and config/policy separation.",
         "5. Check bundle overlap and serialize work when files or acceptance gates conflict.",
         "6. Use `tul show exports` and `tul show` to distinguish current, stale, missing, and unrecorded source/review artifacts.",
@@ -174,7 +174,7 @@ def full_handoff(*, repo: Path, project: str, mode: str, expected_repo: str | No
         "2. Verify remote repo, branch, and expected HEAD when possible.",
         "3. If remote verification is unavailable, say so explicitly.",
         "4. Read `README.md`, `docs/status/current.md`, `docs/manifest.md`, `docs/roadmap.md`, `docs/commands.md`, and `docs/package-spec.md` before proposing implementation.",
-        "5. Compare terminal-verified facts against remote state and the latest verify artifact.",
+        "5. Compare terminal-verified facts against remote state and the head-tagged verify artifact.",
         "6. Identify structural debt, missing automation, and next package boundary.",
         "7. Preserve all tul invariants and do not regress push-by-default semantics.",
         "8. Use `tul show exports` and `tul show` to check source/review artifact freshness without treating warnings as release-gate failures.",
