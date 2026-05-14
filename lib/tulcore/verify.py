@@ -16,6 +16,7 @@ from .handoff import generate_handoff
 from .integrity import format_export_integrity
 from .paths import expand_path, mkdirp
 from .state import summarize_compact_state
+from .upload_aliases import publish_verify_upload_alias
 from .verify_checks import (
     REQUIRED_DOCS,
     check_cli_runtime_smoke,
@@ -236,6 +237,24 @@ def write_verify_artifacts(
     latest_md.write_text(text, encoding="utf-8", newline="\n")
     latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
+    alias = publish_verify_upload_alias(ctx, latest_md, json_path=latest_json, head=result.head).to_dict()
+    payload["artifact"]["upload_aliases"] = {"verify": alias}
+    artifacts["upload_markdown"] = alias.get("root_alias", "")
+    artifacts["upload_dated_markdown"] = alias.get("dated_alias", "")
+
+    text = render_verify_artifact_markdown(
+        ctx,
+        result,
+        artifacts,
+        payload,
+        include_runtime_snapshots=include_runtime_snapshots,
+    )
+    md_path.write_text(text, encoding="utf-8", newline="\n")
+    json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    latest_md.write_text(text, encoding="utf-8", newline="\n")
+    latest_json.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    publish_verify_upload_alias(ctx, latest_md, json_path=latest_json, head=result.head)
+
     return artifacts
 
 
@@ -264,7 +283,10 @@ def rewrite_verify_artifacts_with_runtime_snapshots(
         include_runtime_snapshots=True,
     )
     Path(artifacts["markdown"]).write_text(text, encoding="utf-8", newline="\n")
-    Path(artifacts["latest_markdown"]).write_text(text, encoding="utf-8", newline="\n")
+    latest_md = Path(artifacts["latest_markdown"])
+    latest_md.write_text(text, encoding="utf-8", newline="\n")
+    latest_json = Path(artifacts.get("latest_json", "")) if artifacts.get("latest_json") else None
+    publish_verify_upload_alias(ctx, latest_md, json_path=latest_json if latest_json and latest_json.exists() else None, head=result.head)
 
 
 
@@ -418,6 +440,7 @@ def format_verify_artifacts(paths: dict[str, str]) -> str:
             f"- Latest JSON: {paths['latest_json']}",
             f"- Run log: {paths['markdown']}",
             f"- Run JSON: {paths['json']}",
+            *([f"- Upload markdown: {paths['upload_markdown']}"] if paths.get("upload_markdown") else []),
         ]
     )
 

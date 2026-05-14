@@ -21,6 +21,7 @@ from .errors import TulError
 from .gitops import current_branch, git, head, remote_head, status_porcelain
 from .paths import expand_path, mkdirp
 from .state import latest_state, write_state
+from .upload_aliases import publish_source_upload_alias
 
 EXCLUDED_DIR_NAMES = {".git", "__pycache__", ".pytest_cache", "node_modules", "dist", "build"}
 EXCLUDED_ROOT_DIR_NAMES = {"logs", "work", "archive"}
@@ -50,6 +51,7 @@ class SourceBundleExport:
     target_mtime: str
     target_mtime_epoch: float
     root_layout: str = ROOT_LAYOUT
+    upload_aliases: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -66,6 +68,7 @@ class SourceBundleExport:
             "target_mtime": self.target_mtime,
             "target_mtime_epoch": self.target_mtime_epoch,
             "root_layout": self.root_layout,
+            "upload_aliases": self.upload_aliases,
         }
 
 
@@ -153,6 +156,7 @@ def export_source_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
             target_mtime=datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
             target_mtime_epoch=stat.st_mtime,
         )
+        result.upload_aliases = publish_source_upload_alias(ctx, target, head=manifest["head"]).to_dict()
     finally:
         if tmp.exists():
             tmp.unlink()
@@ -166,7 +170,7 @@ def export_source_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
 
 
 def format_source_export(result: SourceBundleExport) -> str:
-    return "\n".join([
+    lines = [
         "# tul export source",
         "",
         "Source bundle export: PASS",
@@ -182,7 +186,13 @@ def format_source_export(result: SourceBundleExport) -> str:
         f"Rewritten: {str(result.rewritten).lower()}",
         f"Verified after replace: {str(result.verified_after_replace).lower()}",
         f"Target mtime: {result.target_mtime}",
-    ])
+    ]
+    aliases = result.upload_aliases or {}
+    if aliases.get("root_alias"):
+        lines.append(f"Upload alias: {aliases['root_alias']}")
+    if aliases.get("dated_alias"):
+        lines.append(f"Dated alias: {aliases['dated_alias']}")
+    return "\n".join(lines)
 
 
 def _latest_state_entry(ctx: ProjectContext) -> tuple[Path, dict[str, Any]] | None:

@@ -493,3 +493,8 @@ Follow-up: Use the same acceptance gate before any larger `cli.py`, `verify.py`,
 ## Lesson: one-run loops need executable acceptance, not only syntax checks
 
 The Stage 9C helper regression showed that `py_compile` can pass while `show`, `export`, or `verify` command handlers fail at runtime. Macro Stage A moves CLI runtime smoke and regression tests into the verify gate so `tul run` can serve as the normal one-command loop for applying, exporting, verifying, and saving artifacts.
+## Lesson: final-screen evidence matters
+
+Long verify logs are useful as artifacts but poor as terminal decision surfaces. `tul run` should finish with a short PASS/CHECK block and explicit upload paths.
+
+Reference package: `tul-macro-stage-a-run-final-upload-v4`.

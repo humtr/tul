@@ -15,6 +15,7 @@ from .config import ProjectContext, platform_paths
 from .gitops import git, head, recent_commits, status_porcelain
 from .paths import expand_path, mkdirp
 from .state import latest_state, write_state
+from .upload_aliases import publish_review_upload_alias
 
 REQUIRED_REVIEW_FILES = ("tul-vf-latest.md", "state.json", "handoff.md")
 REQUIRED_REVIEW_ENTRIES = (
@@ -42,6 +43,7 @@ class ReviewBundleExport:
     verified_after_replace: bool
     target_mtime: str
     target_mtime_epoch: float
+    upload_aliases: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -57,6 +59,7 @@ class ReviewBundleExport:
             "verified_after_replace": self.verified_after_replace,
             "target_mtime": self.target_mtime,
             "target_mtime_epoch": self.target_mtime_epoch,
+            "upload_aliases": self.upload_aliases,
         }
 
 
@@ -175,6 +178,7 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
             target_mtime=datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
             target_mtime_epoch=stat.st_mtime,
         )
+        result.upload_aliases = publish_review_upload_alias(ctx, target, head=commit).to_dict()
     finally:
         if tmp.exists():
             tmp.unlink()
@@ -194,7 +198,7 @@ def export_review_bundle(ctx: ProjectContext, *, out_path: Path | None = None, u
 
 
 def format_review_export(result: ReviewBundleExport) -> str:
-    return "\n".join([
+    lines = [
         "# tul export review",
         "",
         "Review bundle export: PASS",
@@ -207,7 +211,13 @@ def format_review_export(result: ReviewBundleExport) -> str:
         f"Rewritten: {str(result.rewritten).lower()}",
         f"Verified after replace: {str(result.verified_after_replace).lower()}",
         f"Target mtime: {result.target_mtime}",
-    ])
+    ]
+    aliases = result.upload_aliases or {}
+    if aliases.get("root_alias"):
+        lines.append(f"Upload alias: {aliases['root_alias']}")
+    if aliases.get("dated_alias"):
+        lines.append(f"Dated alias: {aliases['dated_alias']}")
+    return "\n".join(lines)
 
 
 def _latest_state_entry(ctx: ProjectContext) -> tuple[Path, dict[str, Any]] | None:

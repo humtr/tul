@@ -1,13 +1,13 @@
 # current status
 
-Status: Macro Stage A is in progress via `tul-macro-stage-a-run-verified-artifacts-v2`.
+Status: Macro Stage A v4 is in progress via `tul-macro-stage-a-run-final-upload-v4`.
 
 Baseline before this package:
 
 ```text
 HEAD: ec1ddedf10fea2659aa96a88615b5d055913aae3
 Remote HEAD: ec1ddedf10fea2659aa96a88615b5d055913aae3
-Latest package: tul-stage9c-cli-helper-restore-v1
+Latest package: tul-macro-stage-a-run-final-upload-v4
 Release gate: PASS
 Source bundle: current
 Review bundle: current
@@ -43,3 +43,4 @@ tul show exports
 ```
 
 Expected result: regression tests pass, release gate PASS, source/review current, docs drift clean, and warnings none.
+- Macro Stage A v4 target: `tul run` prints a final decision block and writes commit-named upload aliases in the import root.

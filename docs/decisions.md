@@ -513,3 +513,8 @@ Consequences: Later module decomposition can proceed behind stable contracts. Be
 ## Decision: promote regression tests into the verify gate
 
 Accepted in Macro Stage A. `tul verify` should run read-only CLI runtime smoke and the Stage 9B regression harness for the local repo. This closes the gap where `py_compile` passed but command handlers could still fail at runtime. Fresh clone verification remains focused on repo/doc/parser/compile checks to avoid coupling clone validation to user-local transport artifact state.
+## Decision: commit-named upload aliases and final run summary
+
+`tul run` should end with a compact decision block so the user can decide from the last screen. Stable latest artifacts remain local automation anchors. Commit-named root aliases are upload conveniences and are pruned so the import root stays current.
+
+Reference package: `tul-macro-stage-a-run-final-upload-v4`.

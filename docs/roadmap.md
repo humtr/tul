@@ -61,3 +61,10 @@ Warnings: none
 ### Macro Stage D — safe delete/rename package operations
 
 - add guarded delete/rename support to the package contract.
+## Macro Stage A v4
+
+- Add final `tul run` decision summary.
+- Keep stable latest artifacts and bounded root upload aliases: source/review/vf markdown.
+- Keep latest JSON for local machine-readable refresh; it is not normally an upload requirement.
+
+Reference package: `tul-macro-stage-a-run-final-upload-v4`.

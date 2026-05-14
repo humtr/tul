@@ -372,6 +372,10 @@ def command_run(args: argparse.Namespace) -> int:
         return 0
 
     update_handoff: str | None = None
+    source_export = None
+    review_export = None
+    verify = None
+    artifacts = None
     if package_available:
         update = run_update(
             ctx,
@@ -393,11 +397,11 @@ def command_run(args: argparse.Namespace) -> int:
     if can_refresh_artifacts:
         if not args.no_export:
             print("\n--- EXPORT ---\n")
-            source = export_source_bundle(ctx, update_state=True)
-            review = export_review_bundle(ctx, update_state=True)
-            print(format_source_export(source))
+            source_export = export_source_bundle(ctx, update_state=True)
+            review_export = export_review_bundle(ctx, update_state=True)
+            print(format_source_export(source_export))
             print()
-            print(format_review_export(review))
+            print(format_review_export(review_export))
         print("\n--- VERIFY FRESH ---\n")
         verify = run_verify(ctx, fresh_clone=True)
         artifacts = write_verify_artifacts(ctx, verify, fresh_clone=True)
@@ -416,7 +420,77 @@ def command_run(args: argparse.Namespace) -> int:
     else:
         print("\n--- LLM HANDOFF ---\n")
         print(generate_handoff(repo=ctx.repo_path, project=ctx.project_id, mode="verify-snapshot", expected_repo=ctx.expected_repo))
+    if verify is not None:
+        print("\n--- FINAL DECISION ---\n")
+        print(format_run_final_summary(ctx, verify=verify, source=source_export, review=review_export, artifacts=artifacts))
     return 0 if ok else 1
+
+
+def format_run_final_summary(ctx, *, verify, source=None, review=None, artifacts=None, skipped: bool = False) -> str:
+    """Return the last, decision-oriented block printed by `tul run`."""
+    data = export_integrity_data(ctx)
+    source_data = data.get("source_bundle") or {}
+    review_data = data.get("review_bundle") or {}
+    docs_data = data.get("docs_drift") or {}
+    warnings = data.get("warnings") or []
+
+    def step_ok(name: str) -> str:
+        for step in getattr(verify, "steps", []):
+            if step.name.endswith(name):
+                return "PASS" if step.ok else "FAIL"
+        return "SKIPPED" if skipped else "MISSING"
+
+    release = "PASS" if getattr(verify, "ok", False) else "FAIL"
+    source_status = source_data.get("status") or "skipped"
+    review_status = review_data.get("status") or "skipped"
+    docs_status = docs_data.get("status") or "unknown"
+    warning_status = "none" if not warnings else f"{len(warnings)} warning(s)"
+    final_ok = (
+        release == "PASS"
+        and source_status == "current"
+        and review_status == "current"
+        and docs_status == "clean"
+        and not warnings
+    )
+
+    lines = [
+        "# tul run final",
+        "",
+        f"Decision: {'PASS' if final_ok else 'CHECK'}",
+        f"HEAD: {data.get('head') or getattr(verify, 'head', None) or 'unknown'}",
+        f"Remote HEAD: {data.get('remote_head') or getattr(verify, 'remote_head', None) or 'unknown'}",
+        "",
+        "## Gates",
+        f"- Release gate: {release}",
+        f"- CLI runtime smoke: {step_ok('CLI runtime smoke')}",
+        f"- Regression tests: {step_ok('regression tests')}",
+        "",
+        "## Artifacts",
+        f"- Source bundle: {source_status}",
+        f"- Review bundle: {review_status}",
+        f"- Docs drift: {docs_status}",
+        f"- Warnings: {warning_status}",
+    ]
+    upload_files: list[tuple[str, str]] = []
+    if source is not None and getattr(source, "upload_aliases", None):
+        alias = source.upload_aliases.get("root_alias")
+        if alias:
+            upload_files.append(("source", alias))
+    if review is not None and getattr(review, "upload_aliases", None):
+        alias = review.upload_aliases.get("root_alias")
+        if alias:
+            upload_files.append(("review", alias))
+    if artifacts and artifacts.get("upload_markdown"):
+        upload_files.append(("verify", artifacts["upload_markdown"]))
+    if upload_files:
+        lines.extend(["", "## Upload these files"])
+        for label, path in upload_files:
+            lines.append(f"- {label}: {path}")
+        lines.append("- note: latest JSON is kept for local machine-readable refresh; upload the verify markdown unless JSON is explicitly requested.")
+    if warnings:
+        lines.extend(["", "## Warning details"])
+        lines.extend(f"- {item}" for item in warnings)
+    return "\n".join(lines)
 
 
 def command_clean(args: argparse.Namespace) -> int:
