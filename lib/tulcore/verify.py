@@ -286,6 +286,7 @@ def rewrite_verify_artifacts_with_runtime_snapshots(
     artifacts["upload_source"] = str((alias_map.get("source") or {}).get("root_alias") or "")
     artifacts["upload_review"] = str((alias_map.get("review") or {}).get("root_alias") or "")
     artifacts["upload_markdown"] = verify_alias.get("root_alias", "")
+    artifacts["upload_dated_markdown"] = verify_alias.get("dated_alias", "")
     if json_path_obj and json_path_obj.exists():
         json_path_obj.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     text = render_verify_artifact_markdown(

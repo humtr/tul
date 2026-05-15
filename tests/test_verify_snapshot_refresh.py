@@ -8,7 +8,12 @@ from pathlib import Path
 
 from lib.tulcore.config import ProjectContext
 from lib.tulcore.state import write_state
-from lib.tulcore.verify import VerifyResult, refresh_verify_upload_runtime_snapshots, write_verify_artifacts
+from lib.tulcore.verify import (
+    VerifyResult,
+    refresh_verify_upload_runtime_snapshots,
+    rewrite_verify_artifacts_with_runtime_snapshots,
+    write_verify_artifacts,
+)
 
 
 def init_repo(repo: Path) -> str:
@@ -67,6 +72,34 @@ class VerifySnapshotRefreshTest(unittest.TestCase):
             self.assertEqual(str(review), aliases["review"]["root_alias"])
             self.assertEqual(upload_markdown.read_text(encoding="utf-8"), dated_markdown.read_text(encoding="utf-8"))
             self.assertFalse((import_root / "logs" / "verify" / dated_markdown.parent.name / f"tul-vf-{head[:7]}.json").exists())
+
+    def test_rewrite_refreshes_dated_markdown_after_final_render(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = root / "repo"
+            repo.mkdir()
+            head = init_repo(repo)
+            work = root / "import" / "tul" / "work"
+            ctx = ProjectContext(
+                target=str(repo),
+                project_id="tul",
+                repo_path=repo,
+                global_config={"platform": {"work_root": str(work)}},
+                repo_config={"name": "tul", "repo": "humtr/tul", "branch": "main"},
+                global_config_path=root / "config.yml",
+            )
+            result = VerifyResult(project="tul", repo=str(repo), branch="main", head=head, remote_head=head)
+            result.add("local repo: smoke", True, "ok")
+            artifacts = write_verify_artifacts(ctx, result, include_runtime_snapshots=False)
+            upload_markdown = Path(artifacts["upload_markdown"])
+            dated_markdown = Path(artifacts["upload_dated_markdown"])
+            dated_markdown.write_text("stale\n", encoding="utf-8")
+
+            rewrite_verify_artifacts_with_runtime_snapshots(ctx, result, artifacts)
+
+            self.assertEqual(upload_markdown.read_text(encoding="utf-8"), dated_markdown.read_text(encoding="utf-8"))
+            self.assertIn("## Runtime snapshots", dated_markdown.read_text(encoding="utf-8"))
+            self.assertFalse((work.parent / "logs" / "verify" / dated_markdown.parent.name / f"tul-vf-{head[:7]}.json").exists())
 
 
 if __name__ == "__main__":
