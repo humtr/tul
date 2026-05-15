@@ -41,6 +41,10 @@ class VerifySnapshotRefreshTest(unittest.TestCase):
             result.add("local repo: smoke", True, "ok")
             artifacts = write_verify_artifacts(ctx, result, include_runtime_snapshots=False)
             import_root = work.parent
+            upload_markdown = Path(artifacts["upload_markdown"])
+            dated_markdown = Path(artifacts["upload_dated_markdown"])
+            self.assertEqual(upload_markdown.read_text(encoding="utf-8"), dated_markdown.read_text(encoding="utf-8"))
+            self.assertFalse((import_root / "logs" / "verify" / dated_markdown.parent.name / f"tul-vf-{head[:7]}.json").exists())
             source = import_root / f"tul-source-{head[:7]}.zip"
             review = import_root / f"tul-review-{head[:7]}.zip"
             source.write_bytes(b"source")
@@ -53,7 +57,6 @@ class VerifySnapshotRefreshTest(unittest.TestCase):
 
             self.assertTrue(refresh_verify_upload_runtime_snapshots(ctx))
 
-            upload_markdown = Path(artifacts["upload_markdown"])
             text = upload_markdown.read_text(encoding="utf-8")
             self.assertIn("## Runtime snapshots", text)
             self.assertIn(f"- Upload source: {source}", text)
@@ -62,6 +65,8 @@ class VerifySnapshotRefreshTest(unittest.TestCase):
             aliases = payload["artifact"]["upload_aliases"]
             self.assertEqual(str(source), aliases["source"]["root_alias"])
             self.assertEqual(str(review), aliases["review"]["root_alias"])
+            self.assertEqual(upload_markdown.read_text(encoding="utf-8"), dated_markdown.read_text(encoding="utf-8"))
+            self.assertFalse((import_root / "logs" / "verify" / dated_markdown.parent.name / f"tul-vf-{head[:7]}.json").exists())
 
 
 if __name__ == "__main__":

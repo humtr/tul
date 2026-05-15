@@ -96,21 +96,14 @@ def publish_verify_upload_alias(
     head: str | None = None,
     now: datetime | None = None,
 ) -> UploadAliasResult:
-    """Publish a root upload alias for verify markdown and dated md/json aliases.
+    """Publish a root upload alias and dated markdown alias for verify evidence.
 
     The root intentionally receives only the markdown alias, because that is the
-    human/LLM upload artifact. Commit-named JSON aliases are stored only in the
-    dated verify log folder.
+    human/LLM upload artifact. Timestamped run JSON remains the machine-readable
+    verify log; commit-named dated verify JSON aliases are intentionally not
+    generated.
     """
-    result = _publish_file_alias(ctx, kind="vf", src=markdown_path, suffix=".md", head=head, now=now, log_kind="verify")
-    if json_path and json_path.exists():
-        stamp = now or datetime.now()
-        full_head = _head(ctx, head)
-        head7 = full_head[:7]
-        dated_json = _dated_dir(ctx, "verify", stamp) / f"{ctx.project_id}-vf-{head7}.json"
-        _copy_replace(json_path, dated_json)
-        result.dated_json_alias = str(dated_json)
-    return result
+    return _publish_file_alias(ctx, kind="vf", src=markdown_path, suffix=".md", head=head, now=now, log_kind="verify")
 
 
 def _publish_file_alias(

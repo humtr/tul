@@ -41,7 +41,7 @@ class UploadAliasTest(unittest.TestCase):
             self.assertIn(str(import_root / "tul-source-latest.zip"), removed)
             self.assertFalse((import_root / "tul-source-latest.zip").exists())
 
-    def test_verify_root_alias_is_markdown_only(self):
+    def test_verify_root_alias_is_markdown_only_and_does_not_create_dated_json_alias(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             repo = root / "repo"
@@ -59,7 +59,8 @@ class UploadAliasTest(unittest.TestCase):
 
             self.assertTrue((import_root / "tul-vf-abcdef1.md").exists())
             self.assertFalse((import_root / "tul-vf-abcdef1.json").exists())
-            self.assertTrue(Path(result.dated_json_alias).exists())
+            self.assertIsNone(result.dated_json_alias)
+            self.assertFalse((import_root / "logs" / "verify" / "260514" / "tul-vf-abcdef1.json").exists())
 
 
 if __name__ == "__main__":

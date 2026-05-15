@@ -241,15 +241,18 @@ def write_verify_artifacts(
         payload,
         include_runtime_snapshots=include_runtime_snapshots,
     )
-    md_path.write_text(text, encoding="utf-8", newline="\n")
-    json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
-    # Refresh the root upload markdown from the final rendered content and keep
-    # machine-readable JSON only in the dated verify log.
-    Path(artifacts["upload_markdown"]).write_text(text, encoding="utf-8", newline="\n")
+    _write_verify_artifact_set(ctx, artifacts, payload, text)
     removed_latest = remove_root_latest_artifacts(ctx, kinds=("vf",))
     if removed_latest:
         payload.setdefault("artifact", {}).setdefault("upload_aliases", {}).setdefault("verify", {})["removed_latest"] = removed_latest
-        json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+        text = render_verify_artifact_markdown(
+            ctx,
+            result,
+            artifacts,
+            payload,
+            include_runtime_snapshots=include_runtime_snapshots,
+        )
+        _write_verify_artifact_set(ctx, artifacts, payload, text)
     return artifacts
 
 
@@ -292,10 +295,40 @@ def rewrite_verify_artifacts_with_runtime_snapshots(
         payload,
         include_runtime_snapshots=True,
     )
-    Path(artifacts["markdown"]).write_text(text, encoding="utf-8", newline="\n")
-    if artifacts.get("upload_markdown"):
-        Path(artifacts["upload_markdown"]).write_text(text, encoding="utf-8", newline="\n")
+    _write_verify_artifact_set(ctx, artifacts, payload, text)
     remove_root_latest_artifacts(ctx, kinds=("vf",))
+
+
+def _write_verify_artifact_set(ctx: ProjectContext, artifacts: dict[str, str], payload: dict[str, Any], text: str) -> None:
+    markdown_paths = [
+        Path(artifacts["markdown"]),
+        Path(artifacts["upload_markdown"]) if artifacts.get("upload_markdown") else None,
+        Path(artifacts["upload_dated_markdown"]) if artifacts.get("upload_dated_markdown") else None,
+    ]
+    for path in markdown_paths:
+        if path:
+            path.write_text(text, encoding="utf-8", newline="\n")
+    if artifacts.get("json"):
+        Path(artifacts["json"]).write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    _remove_dated_verify_json_aliases(ctx, payload)
+
+
+def _remove_dated_verify_json_aliases(ctx: ProjectContext, payload: dict[str, Any]) -> list[str]:
+    artifact = payload.get("artifact") if isinstance(payload.get("artifact"), dict) else {}
+    aliases = artifact.get("upload_aliases") if isinstance(artifact.get("upload_aliases"), dict) else {}
+    verify_alias = aliases.get("verify") if isinstance(aliases.get("verify"), dict) else {}
+    head = str(verify_alias.get("head") or payload.get("head") or "").strip()
+    if not head:
+        return []
+    log_root_value = artifact.get("log_root")
+    log_root = Path(str(log_root_value)) if log_root_value else verify_log_root(ctx)
+    removed: list[str] = []
+    pattern = f"{ctx.project_id}-vf-{head[:7]}.json"
+    for path in log_root.glob(f"*/{pattern}"):
+        if path.is_file():
+            path.unlink()
+            removed.append(str(path))
+    return removed
 
 
 
@@ -330,22 +363,36 @@ def refresh_verify_upload_runtime_snapshots(ctx: ProjectContext) -> bool:
         "json": str(json_path) if json_path else "",
         "upload_markdown": str(upload_markdown),
     }
+    dated_markdown = _dated_verify_markdown_alias_from_payload(ctx, payload, current_head)
+    if dated_markdown:
+        artifacts["upload_dated_markdown"] = str(dated_markdown)
     verify_alias = {
         "kind": "vf",
         "head": current_head,
         "root_alias": str(upload_markdown),
     }
+    if dated_markdown:
+        verify_alias["dated_alias"] = str(dated_markdown)
     alias_map = _merged_upload_aliases(ctx, verify_alias=verify_alias)
     payload["artifact"]["upload_aliases"] = alias_map
     artifacts["upload_source"] = str((alias_map.get("source") or {}).get("root_alias") or "")
     artifacts["upload_review"] = str((alias_map.get("review") or {}).get("root_alias") or "")
     text = render_verify_artifact_markdown(ctx, result, artifacts, payload, include_runtime_snapshots=True)
-    target_markdown = run_markdown if run_markdown.exists() else upload_markdown
-    target_markdown.write_text(text, encoding="utf-8", newline="\n")
-    upload_markdown.write_text(text, encoding="utf-8", newline="\n")
-    if json_path and json_path.exists():
-        json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    _write_verify_artifact_set(ctx, artifacts, payload, text)
     return True
+
+
+def _dated_verify_markdown_alias_from_payload(ctx: ProjectContext, payload: dict[str, Any], head: str) -> Path | None:
+    artifact = payload.get("artifact") if isinstance(payload.get("artifact"), dict) else {}
+    aliases = artifact.get("upload_aliases") if isinstance(artifact.get("upload_aliases"), dict) else {}
+    verify_alias = aliases.get("verify") if isinstance(aliases.get("verify"), dict) else {}
+    dated_alias = verify_alias.get("dated_alias")
+    if dated_alias and Path(str(dated_alias)).exists():
+        return Path(str(dated_alias))
+    log_root_value = artifact.get("log_root")
+    log_root = Path(str(log_root_value)) if log_root_value else verify_log_root(ctx)
+    matches = sorted(path for path in log_root.glob(f"*/{ctx.project_id}-vf-{head[:7]}.md") if path.is_file())
+    return matches[-1] if matches else None
 
 
 def _current_head(ctx: ProjectContext) -> str | None:
