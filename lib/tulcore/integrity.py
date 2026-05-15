@@ -16,7 +16,7 @@ from .artifact_schema import REVIEW_MANIFEST_ENTRY, SOURCE_METADATA_ENTRIES, SOU
 from .config import ProjectContext, platform_paths
 from .gitops import current_branch, head, remote_head
 from .review import review_bundle_path
-from .source import source_bundle_path
+from .source import EXCLUDED_DIR_NAMES, EXCLUDED_ROOT_DIR_NAMES, EXCLUDED_SUFFIXES, source_bundle_path
 from .state import latest_state
 
 
@@ -221,6 +221,15 @@ def _source_payload_warning(z: zipfile.ZipFile, names: set[str], manifest: dict[
     if manifest.get("file_count") != len(listed_files):
         return f"source bundle file_count {manifest.get('file_count')!r} does not match listed files {len(listed_files)}"
 
+    for name in sorted(names):
+        path_warning = _source_entry_path_warning(name)
+        if path_warning:
+            return path_warning
+    for rel in listed_files:
+        path_warning = _source_entry_path_warning(rel)
+        if path_warning:
+            return path_warning
+
     unexpected = sorted(name for name in names if name not in SOURCE_METADATA_ENTRIES and name not in set(listed_files))
     if unexpected:
         return "source bundle contains unlisted payload entries: " + ", ".join(unexpected[:5])
@@ -238,6 +247,20 @@ def _source_payload_warning(z: zipfile.ZipFile, names: set[str], manifest: dict[
         actual_digest = hashlib.sha256(data).hexdigest()
         if actual_digest != digest:
             return f"source bundle payload sha256 mismatch for {rel}"
+    return None
+
+
+def _source_entry_path_warning(name: str) -> str | None:
+    path = Path(name)
+    parts = path.parts
+    if not parts or name.startswith("/") or ".." in parts:
+        return f"unsafe source bundle entry: {name}"
+    if parts[0] in EXCLUDED_ROOT_DIR_NAMES:
+        return f"source bundle contains runtime root entry: {name}"
+    if any(part in EXCLUDED_DIR_NAMES for part in parts):
+        return f"source bundle contains excluded directory entry: {name}"
+    if path.suffix in EXCLUDED_SUFFIXES:
+        return f"source bundle contains excluded file suffix: {name}"
     return None
 
 

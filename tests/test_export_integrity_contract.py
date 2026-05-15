@@ -36,6 +36,7 @@ class ExportIntegrityContractTest(unittest.TestCase):
         path: Path,
         *,
         head: str,
+        rel: str = "README.md",
         working_tree: str = "clean",
         payload_text: str = "# readme\n",
         payload_sha256: str | None = None,
@@ -43,7 +44,7 @@ class ExportIntegrityContractTest(unittest.TestCase):
     ) -> None:
         payload_digest = hashlib.sha256(payload_text.encode("utf-8")).hexdigest()
         payload_size = len(payload_text.encode("utf-8"))
-        source_hashes = [(payload_digest, "README.md", payload_size)]
+        source_hashes = [(payload_digest, rel, payload_size)]
         computed_payload_sha256 = self.source_payload_sha256(source_hashes)
         manifest = {
             "kind": "source",
@@ -55,9 +56,9 @@ class ExportIntegrityContractTest(unittest.TestCase):
         }
         with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as z:
             z.writestr("source-manifest.json", json.dumps(manifest))
-            z.writestr("source-file-list.txt", "README.md\n")
-            z.writestr("source-file-sha256s.txt", f"{payload_digest}  README.md  {payload_size}\n")
-            z.writestr("README.md", payload_text)
+            z.writestr("source-file-list.txt", f"{rel}\n")
+            z.writestr("source-file-sha256s.txt", f"{payload_digest}  {rel}  {payload_size}\n")
+            z.writestr(rel, payload_text)
 
     def source_payload_sha256(self, file_hashes: list[tuple[str, str, int]]) -> str:
         h = hashlib.sha256()
@@ -136,6 +137,24 @@ class ExportIntegrityContractTest(unittest.TestCase):
 
         self.assertEqual("invalid", result["status"])
         self.assertTrue(any("file_count" in item for item in result["warnings"]))
+
+    def test_source_bundle_rejects_unsafe_payload_paths(self) -> None:
+        cases = [
+            ("../evil", "unsafe source bundle entry"),
+            ("/absolute", "unsafe source bundle entry"),
+            (".git/config", "excluded directory entry"),
+            ("logs/verify.md", "runtime root entry"),
+            ("README.pyc", "excluded file suffix"),
+        ]
+        for rel, warning in cases:
+            with self.subTest(rel=rel), tempfile.TemporaryDirectory() as tmpdir:
+                path = Path(tmpdir) / "source.zip"
+                self.write_source_bundle(path, head="A", rel=rel)
+                state = {"source_bundle_export": {"path": str(path)}}
+                result = inspect_source_bundle(self.fake_context(), state=state, current_head="A")
+
+            self.assertEqual("invalid", result["status"])
+            self.assertTrue(any(warning in item for item in result["warnings"]))
 
     def test_review_bundle_current_and_stale_status(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
