@@ -31,18 +31,44 @@ class ExportIntegrityContractTest(unittest.TestCase):
             global_config={},
         )
 
-    def write_source_bundle(self, path: Path, *, head: str) -> None:
+    def write_source_bundle(
+        self,
+        path: Path,
+        *,
+        head: str,
+        working_tree: str = "clean",
+        payload_text: str = "# readme\n",
+        payload_sha256: str | None = None,
+        file_count: int | None = None,
+    ) -> None:
+        payload_digest = hashlib.sha256(payload_text.encode("utf-8")).hexdigest()
+        payload_size = len(payload_text.encode("utf-8"))
+        source_hashes = [(payload_digest, "README.md", payload_size)]
+        computed_payload_sha256 = self.source_payload_sha256(source_hashes)
         manifest = {
             "kind": "source",
             "head": head,
             "root_layout": "repo-files-at-zip-root",
-            "file_count": 3,
-            "payload_sha256": "dummy",
+            "working_tree": working_tree,
+            "file_count": file_count if file_count is not None else len(source_hashes),
+            "payload_sha256": payload_sha256 or computed_payload_sha256,
         }
         with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as z:
             z.writestr("source-manifest.json", json.dumps(manifest))
             z.writestr("source-file-list.txt", "README.md\n")
-            z.writestr("source-file-sha256s.txt", "README.md  dummy\n")
+            z.writestr("source-file-sha256s.txt", f"{payload_digest}  README.md  {payload_size}\n")
+            z.writestr("README.md", payload_text)
+
+    def source_payload_sha256(self, file_hashes: list[tuple[str, str, int]]) -> str:
+        h = hashlib.sha256()
+        for digest, rel, size in file_hashes:
+            h.update(rel.encode("utf-8"))
+            h.update(b"\0")
+            h.update(str(size).encode("ascii"))
+            h.update(b"\0")
+            h.update(digest.encode("ascii"))
+            h.update(b"\n")
+        return h.hexdigest()
 
     def write_review_bundle(
         self,
@@ -80,6 +106,36 @@ class ExportIntegrityContractTest(unittest.TestCase):
         self.assertEqual("current", current["status"])
         self.assertEqual("stale", stale["status"])
         self.assertTrue(any("stale" in item for item in stale["warnings"]))
+
+    def test_source_bundle_rejects_dirty_export_as_current(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "source.zip"
+            self.write_source_bundle(path, head="A", working_tree="dirty")
+            state = {"source_bundle_export": {"path": str(path)}}
+            result = inspect_source_bundle(self.fake_context(), state=state, current_head="A")
+
+        self.assertEqual("stale", result["status"])
+        self.assertTrue(any("dirty working tree" in item for item in result["warnings"]))
+
+    def test_source_bundle_rejects_payload_sha_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "source.zip"
+            self.write_source_bundle(path, head="A", payload_sha256="0" * 64)
+            state = {"source_bundle_export": {"path": str(path)}}
+            result = inspect_source_bundle(self.fake_context(), state=state, current_head="A")
+
+        self.assertEqual("invalid", result["status"])
+        self.assertTrue(any("payload sha256" in item for item in result["warnings"]))
+
+    def test_source_bundle_rejects_file_count_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "source.zip"
+            self.write_source_bundle(path, head="A", file_count=2)
+            state = {"source_bundle_export": {"path": str(path)}}
+            result = inspect_source_bundle(self.fake_context(), state=state, current_head="A")
+
+        self.assertEqual("invalid", result["status"])
+        self.assertTrue(any("file_count" in item for item in result["warnings"]))
 
     def test_review_bundle_current_and_stale_status(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

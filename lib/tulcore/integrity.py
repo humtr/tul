@@ -12,7 +12,7 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-from .artifact_schema import REVIEW_MANIFEST_ENTRY, SOURCE_REQUIRED_ENTRIES, SOURCE_ROOT_LAYOUT
+from .artifact_schema import REVIEW_MANIFEST_ENTRY, SOURCE_METADATA_ENTRIES, SOURCE_REQUIRED_ENTRIES, SOURCE_ROOT_LAYOUT
 from .config import ProjectContext, platform_paths
 from .gitops import current_branch, head, remote_head
 from .review import review_bundle_path
@@ -186,6 +186,15 @@ def inspect_source_bundle(ctx: ProjectContext, *, state: dict[str, Any] | None =
                 result["status"] = "invalid"
                 result["warnings"].append(f"source bundle root layout is {manifest.get('root_layout')!r}, expected {SOURCE_ROOT_LAYOUT!r}")
                 return result
+            if manifest.get("working_tree") != "clean":
+                result["status"] = "stale"
+                result["warnings"].append(f"source bundle was exported from a {manifest.get('working_tree') or 'unknown'} working tree")
+                return result
+            payload_warning = _source_payload_warning(z, names, manifest)
+            if payload_warning:
+                result["status"] = "invalid"
+                result["warnings"].append(payload_warning)
+                return result
             if current_head and manifest.get("head") and manifest.get("head") != current_head:
                 result["status"] = "stale"
                 result["warnings"].append(f"source bundle is stale: manifest head {manifest.get('head')} != current HEAD {current_head}")
@@ -196,6 +205,80 @@ def inspect_source_bundle(ctx: ProjectContext, *, state: dict[str, Any] | None =
         result["status"] = "invalid"
         result["warnings"].append(f"source bundle cannot be inspected: {type(exc).__name__}: {exc}")
         return result
+
+
+def _source_payload_warning(z: zipfile.ZipFile, names: set[str], manifest: dict[str, Any]) -> str | None:
+    try:
+        listed_files = _parse_source_file_list(z.read("source-file-list.txt").decode("utf-8"))
+        listed_hashes = _parse_source_file_hashes(z.read("source-file-sha256s.txt").decode("utf-8"))
+    except (UnicodeDecodeError, ValueError) as exc:
+        return f"source bundle payload metadata is invalid: {exc}"
+
+    if len(listed_files) != len(listed_hashes):
+        return "source bundle file list and sha256 list disagree"
+    if set(listed_files) != {rel for rel, _, _ in listed_hashes}:
+        return "source bundle file list and sha256 list contain different paths"
+    if manifest.get("file_count") != len(listed_files):
+        return f"source bundle file_count {manifest.get('file_count')!r} does not match listed files {len(listed_files)}"
+
+    unexpected = sorted(name for name in names if name not in SOURCE_METADATA_ENTRIES and name not in set(listed_files))
+    if unexpected:
+        return "source bundle contains unlisted payload entries: " + ", ".join(unexpected[:5])
+
+    expected_payload = _source_payload_sha256(listed_hashes)
+    if manifest.get("payload_sha256") != expected_payload:
+        return "source bundle payload sha256 differs from source-file-sha256s.txt"
+
+    for rel, digest, size in listed_hashes:
+        if rel not in names:
+            return f"source bundle is missing listed payload file: {rel}"
+        data = z.read(rel)
+        if len(data) != size:
+            return f"source bundle payload size mismatch for {rel}"
+        actual_digest = hashlib.sha256(data).hexdigest()
+        if actual_digest != digest:
+            return f"source bundle payload sha256 mismatch for {rel}"
+    return None
+
+
+def _parse_source_file_list(text: str) -> list[str]:
+    return [line.strip() for line in text.splitlines() if line.strip()]
+
+
+def _parse_source_file_hashes(text: str) -> list[tuple[str, str, int]]:
+    items: list[tuple[str, str, int]] = []
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        try:
+            digest, rest = line.split("  ", 1)
+            rel, size_text = rest.rsplit("  ", 1)
+        except ValueError as exc:
+            raise ValueError(f"malformed sha256 entry {line!r}") from exc
+        if not digest or not rel or not size_text:
+            raise ValueError(f"malformed sha256 entry {line!r}")
+        if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+            raise ValueError(f"invalid sha256 digest for {rel}")
+        try:
+            size = int(size_text)
+        except ValueError as exc:
+            raise ValueError(f"invalid size for {rel}") from exc
+        if size < 0:
+            raise ValueError(f"invalid size for {rel}")
+        items.append((rel, digest, size))
+    return items
+
+
+def _source_payload_sha256(file_hashes: list[tuple[str, str, int]]) -> str:
+    h = hashlib.sha256()
+    for rel, digest, size in file_hashes:
+        h.update(rel.encode("utf-8"))
+        h.update(b"\0")
+        h.update(str(size).encode("ascii"))
+        h.update(b"\0")
+        h.update(digest.encode("ascii"))
+        h.update(b"\n")
+    return h.hexdigest()
 
 
 def inspect_review_bundle(ctx: ProjectContext, *, state: dict[str, Any] | None = None, current_head: str | None = None) -> dict[str, Any]:
