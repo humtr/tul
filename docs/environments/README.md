@@ -22,10 +22,47 @@ Durable rules:
 Current profile:
 
 ```text
+termux-local = Termux local repository and runtime environment
 windows-dwork = Windows D:\work development environment
 ```
 
 Future profiles can be added as sections or split into child documents under `docs/environments/` when they become large enough.
+
+---
+
+# Profile: termux-local
+
+## Purpose
+
+The Termux local profile describes repository work on Android/Termux where the shell, repo, and runtime artifacts live under the Termux app home and shared storage import/export roots.
+
+This is an environment note, not a command-surface source of truth. Current `tul` commands remain owned by `docs/commands.md`.
+
+## Temporary output
+
+Use the Termux home temporary directory for local scratch files, review output captures, and agent-side command logs:
+
+```text
+~/tmp
+```
+
+Do not use `/tmp` as the repo-local or review-output default in Termux. In this environment `/tmp` can be outside the app-owned home boundary and may be unavailable or permission-restricted for shell redirection.
+
+The existing `tul` defaults follow this boundary for fresh-clone verification and backups:
+
+```text
+~/tmp/tul-verify-fresh
+~/tmp/tul-backups
+```
+
+## AI-agent boundaries
+
+When capturing verification or review output during Termux repo work, write under `~/tmp`, for example:
+
+```text
+mkdir -p ~/tmp
+./bin/tul verify > ~/tmp/tul-verify.out
+```
 
 ---
 
